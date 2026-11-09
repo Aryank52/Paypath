@@ -1,0 +1,274 @@
+{
+  "info": {
+    "name": "PayPath API & Commerce Verification Suite",
+    "_postman_id": "7b8e1a23-4567-4890-abcd-ef0123456789",
+    "description": "Comprehensive Postman test and workflow collection for PayPath AI Transaction Intelligence, Agentic Commerce & PayPal Action Platform.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1", "type": "string" },
+    { "key": "auth_token", "value": "", "type": "string" },
+    { "key": "transaction_id", "value": "tx_nova_anc_hero", "type": "string" },
+    { "key": "reclaim_case_id", "value": "", "type": "string" },
+    { "key": "order_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Health & Readiness",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "http://localhost:8000/health", "protocol": "http", "host": ["localhost"], "port": "8000", "path": ["health"] }
+      }
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Login Demo User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) { pm.collectionVariables.set('auth_token', jsonData.access_token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@paypath.finance\",\n  \"password\": \"paypath123!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Current Session Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Transactions & AG Grid Explorer",
+      "item": [
+        {
+          "name": "List Transactions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/transactions", "host": ["{{base_url}}"], "path": ["transactions"] }
+          }
+        },
+        {
+          "name": "Get Transaction Details",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/transactions/{{transaction_id}}", "host": ["{{base_url}}"], "path": ["transactions", "{{transaction_id}}"] }
+          }
+        },
+        {
+          "name": "Get Lifecycle Event Timeline",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/transactions/{{transaction_id}}/events", "host": ["{{base_url}}"], "path": ["transactions", "{{transaction_id}}", "events"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Intent & Agentic Commerce",
+      "item": [
+        {
+          "name": "Parse Natural Language Intent",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"I need headphones under $100 for travel. Don't purchase anything unless I approve it.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/intent/parse", "host": ["{{base_url}}"], "path": ["intent", "parse"] }
+          }
+        },
+        {
+          "name": "Search Products with Intent",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/shop/search?category=headphones&budget=100.0&purpose=travel",
+              "host": ["{{base_url}}"],
+              "path": ["shop", "search"],
+              "query": [
+                { "key": "category", "value": "headphones" },
+                { "key": "budget", "value": "100.0" },
+                { "key": "purpose", "value": "travel" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Run End-to-End Commerce Workflow",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prompt\": \"Find travel wireless noise-cancelling headphones under $100\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/agents/run-commerce", "host": ["{{base_url}}"], "path": ["agents", "run-commerce"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. PayCore (PayPal Sandbox & Verification)",
+      "item": [
+        {
+          "name": "Create PayPal Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.order_id) { pm.collectionVariables.set('order_id', jsonData.order_id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 89.00,\n  \"currency\": \"USD\",\n  \"merchant_name\": \"Nova Electronics\",\n  \"item_description\": \"NovaSound ANC Pro Headphones\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/paycore/orders/create", "host": ["{{base_url}}"], "path": ["paycore", "orders", "create"] }
+          }
+        },
+        {
+          "name": "Capture PayPal Order & Verify",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"{{order_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/paycore/orders/capture", "host": ["{{base_url}}"], "path": ["paycore", "orders", "capture"] }
+          }
+        },
+        {
+          "name": "Independent Read-Back Verification",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/paycore/verify/3C498126Y8012941P?action_type=CAPTURE&expected_amount=89.00&expected_currency=USD",
+              "host": ["{{base_url}}"],
+              "path": ["paycore", "verify", "3C498126Y8012941P"],
+              "query": [
+                { "key": "action_type", "value": "CAPTURE" },
+                { "key": "expected_amount", "value": "89.00" },
+                { "key": "expected_currency", "value": "USD" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. RECLAIM Resolution Suite",
+      "item": [
+        {
+          "name": "Create Dispute Case",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) { pm.collectionVariables.set('reclaim_case_id', jsonData.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_id\": \"{{transaction_id}}\",\n  \"issue_type\": \"DAMAGED_ITEM\",\n  \"description\": \"Headphones arrived with cracked plastic headband.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/reclaim/cases", "host": ["{{base_url}}"], "path": ["reclaim", "cases"] }
+          }
+        },
+        {
+          "name": "Evaluate Dispute with Multi-Agent RAG",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/reclaim/cases/{{reclaim_case_id}}/evaluate", "host": ["{{base_url}}"], "path": ["reclaim", "cases", "{{reclaim_case_id}}", "evaluate"] }
+          }
+        },
+        {
+          "name": "User Approves Refund & PayPal Settles",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/reclaim/cases/{{reclaim_case_id}}/approve", "host": ["{{base_url}}"], "path": ["reclaim", "cases", "{{reclaim_case_id}}", "approve"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Recovery Intelligence",
+      "item": [
+        {
+          "name": "Get Suspected Duplicate Payments",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/recover/duplicates", "host": ["{{base_url}}"], "path": ["recover", "duplicates"] }
+          }
+        },
+        {
+          "name": "Get Active Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{auth_token}}" }],
+            "url": { "raw": "{{base_url}}/recover/subscriptions", "host": ["{{base_url}}"], "path": ["recover", "subscriptions"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Audit Observability",
+      "item": [
+        {
+          "name": "Get Audit Trail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/audit", "host": ["{{base_url}}"], "path": ["audit"] }
+          }
+        }
+      ]
+    }
+  ]
+}

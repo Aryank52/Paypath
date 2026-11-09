@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #0b0f19;
+    color: #f1f5f9;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+}
+
+/* Custom AG Grid Dark Fintech styling */
+.ag-theme-quartz-dark {
+  --ag-background-color: #0d121f;
+  --ag-header-background-color: #111827;
+  --ag-odd-row-background-color: #0d121f;
+  --ag-row-hover-color: #1e293b;
+  --ag-border-color: #1e293b;
+  --ag-foreground-color: #f1f5f9;
+  --ag-header-foreground-color: #94a3b8;
+  --ag-selected-row-background-color: rgba(99, 102, 241, 0.15);
+  font-size: 13px;
+}
