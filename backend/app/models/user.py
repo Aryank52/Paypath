@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Boolean, Enum
+from sqlalchemy import Column, String, Boolean, Enum, DateTime, Integer
 from app.models.base import TimeStampedModel
 import enum
 
@@ -16,4 +16,16 @@ class User(TimeStampedModel):
     full_name = Column(String(255), nullable=True)
     role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    
+    # MFA / 2FA Security
+    mfa_enabled = Column(Boolean, default=False, nullable=False)
+    mfa_secret = Column(String(64), nullable=True)
+    
+    # Password Reset Security
+    password_reset_token = Column(String(128), nullable=True)
+    password_reset_expires = Column(DateTime(timezone=True), nullable=True)
+    
+    # Brute Force Protection
+    failed_login_attempts = Column(Integer, default=0, nullable=False)
+    locked_until = Column(DateTime(timezone=True), nullable=True)
 

@@ -21,6 +21,18 @@ export const TransactionExplorer: React.FC = () => {
   const { selectedTransaction, setSelectedTransaction, setActiveTab } = useStore();
   const gridRef = useRef<AgGridReact>(null);
 
+  const [prefetchedIds, setPrefetchedIds] = useState<Set<string>>(new Set());
+
+  // Intent-aware prefetching on hover
+  const handleCellMouseOver = (params: any) => {
+    const tx = params.data as Transaction | undefined;
+    if (tx && tx.id && !prefetchedIds.has(tx.id)) {
+      setPrefetchedIds((prev) => new Set(prev).add(tx.id));
+      // Prefetch lifecycle events in background so modal opens instantly
+      api.getTransactionEvents(tx.id).catch(() => {});
+    }
+  };
+
   const fetchTransactions = () => {
     setIsLoading(true);
     api.getTransactions()
@@ -189,6 +201,7 @@ export const TransactionExplorer: React.FC = () => {
             defaultColDef={defaultColDef}
             quickFilterText={quickFilterText}
             rowSelection="single"
+            onCellMouseOver={handleCellMouseOver}
             onRowClicked={(event) => setSelectedTransaction(event.data)}
             animateRows={true}
           />

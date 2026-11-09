@@ -71,22 +71,22 @@ async def upload_evidence(
     if not case:
         raise HTTPException(status_code=404, detail="Dispute case not found.")
 
-    # Read uploaded file metadata
-    file_name = file.filename or "evidence_photo.jpg"
-    file_url = f"/uploads/{case_id}/{file_name}"
+    # Validate and securely store file with magic-byte and size checks
+    from app.core.upload_security import validate_and_save_upload
+    unique_name, file_url, file_size, verified_mime = await validate_and_save_upload(file, subfolder=case_id)
 
     # Analyze via Evidence Agent
     from app.agents.evidence_agent import evidence_agent
     analysis = await evidence_agent.analyze_evidence(
-        file_name=file_name,
+        file_name=unique_name,
         issue_type=case.issue_type,
         user_description=case.description
     )
 
     evidence = Evidence(
         reclaim_case_id=case.id,
-        file_name=file_name,
-        file_type=file.content_type or "image/jpeg",
+        file_name=unique_name,
+        file_type=verified_mime,
         file_url=file_url,
         evidence_type="PHOTO_DAMAGE",
         analysis_summary=analysis["analysis_summary"],

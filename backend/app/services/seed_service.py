@@ -17,11 +17,11 @@ NOVA_MERCHANT_ID = "mch_nova_electronics"
 
 async def seed_demo_data(db: AsyncSession) -> None:
     """Seeds the database with realistic sandbox data for the demo narrative."""
-    # Check if already seeded
-    user_stmt = select(User).where(User.email == "demo@paypath.finance")
-    user = (await db.execute(user_stmt)).scalar_one_or_none()
-    if user:
-        logger.info("Demo data already seeded.")
+    # Check if any user already exists
+    user_stmt = select(User)
+    existing_user = (await db.execute(user_stmt)).scalars().first()
+    if existing_user:
+        logger.info("Demo data already seeded in database. Skipping startup seeding.")
         return
 
     logger.info("Seeding demo merchants, users, policies, and transactions...")
@@ -36,6 +36,7 @@ async def seed_demo_data(db: AsyncSession) -> None:
         is_active=True
     )
     db.add(demo_user)
+    await db.flush()
 
     # 2. Merchants
     merchants_data = [
@@ -53,6 +54,7 @@ async def seed_demo_data(db: AsyncSession) -> None:
             is_verified=True
         )
         db.add(merchant)
+    await db.flush()
 
     # 3. Policies & RAG Chunks
     nova_policy_text = """
@@ -85,10 +87,18 @@ Approved refunds are processed via PayPal back to the original funding source wi
     )
     db.add(nova_policy)
 
-    # Index into RAG vector store
+    # Index into RAG vector store and database
     chunks = policy_chunker.chunk_document(nova_policy_text, merchant_id=NOVA_MERCHANT_ID, title=nova_policy.title)
     for c in chunks:
         vector_store.add_chunk(c)
+        chunk_obj = PolicyChunk(
+            policy_id=nova_policy.id,
+            merchant_id=NOVA_MERCHANT_ID,
+            section_title=c.get("title", "Policy Section"),
+            content=c["content"],
+            embedding=vector_store.generate_embedding(c["content"])
+        )
+        db.add(chunk_obj)
 
     # 4. Historical Transactions
     now = datetime.now(timezone.utc)

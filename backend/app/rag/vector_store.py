@@ -12,7 +12,7 @@ class VectorStore:
         # In-memory index of chunks: list of dicts with embedding, content, metadata
         self._chunks: List[Dict[str, Any]] = []
 
-    def _generate_embedding(self, text: str) -> List[float]:
+    def generate_embedding(self, text: str) -> List[float]:
         """Generates a deterministic 128-dimensional semantic hash vector."""
         words = re.findall(r'\w+', text.lower())
         vec = [0.0] * 128
@@ -26,6 +26,9 @@ class VectorStore:
         if norm > 0:
             vec = [x / norm for x in vec]
         return vec
+
+    def _generate_embedding(self, text: str) -> List[float]:
+        return self.generate_embedding(text)
 
     def add_chunk(self, chunk: Dict[str, Any]) -> None:
         embedding = self._generate_embedding(chunk["content"])

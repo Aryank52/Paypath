@@ -68,13 +68,33 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
 
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
+import os
+
+# Ensure upload directory exists and mount safely
+UPLOAD_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "uploads"))
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
 # Health & Readiness checks
 @app.get("/health")
+@app.get(f"{settings.API_V1_STR}/health")
 async def health_check():
+    db_status = "CONNECTED"
+    try:
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        db_status = f"ERROR: {str(e)}"
+
     return {
-        "status": "HEALTHY",
+        "status": "HEALTHY" if db_status == "CONNECTED" else "DEGRADED",
         "service": settings.APP_NAME,
         "environment": settings.APP_ENV,
+        "database": "PostgreSQL 16",
+        "database_status": db_status,
         "paypal_configured": bool(settings.PAYPAL_CLIENT_ID and settings.PAYPAL_CLIENT_SECRET)
     }
 

@@ -10,10 +10,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "paypath-dev-secret-key-326ebfdb-5cc7-4b18-a149"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     
-    # Database
+    # Database (PostgreSQL is authoritative; SQLite restricted to test environments)
     DATABASE_URL: str = Field(
-        default="sqlite+aiosqlite:///./paypath.db",
-        description="Async SQLAlchemy database URL. Defaults to SQLite, supports PostgreSQL."
+        default="postgresql+asyncpg://postgres:postgres@localhost:5432/paypath",
+        description="Async SQLAlchemy database URL. PostgreSQL is the authoritative system of record."
     )
     
     # Redis
