@@ -9,6 +9,7 @@ os.environ["DATABASE_URL"] = f"sqlite+aiosqlite:///{TEST_DB_FILE.as_posix()}"
 
 from app.core.database import init_db, engine, Base, AsyncSessionLocal
 from app.core.config import settings
+import app.models  # Ensure all SQLAlchemy models are registered in Base.metadata
 from app.services.seed_service import seed_demo_data
 
 @pytest.fixture(scope="session", autouse=True)

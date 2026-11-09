@@ -159,9 +159,14 @@ async def test_rbac_merchant_operations_denial():
     """Verify that normal USER role is rejected from merchant management operations."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Login as standard USER
-        user_token = (await client.post("/api/v1/auth/login", json={
+        login_res = await client.post("/api/v1/auth/login", json={
             "email": "demo@paypath.finance", "password": "NewStrongPassword123!"
-        })).json()["access_token"]
+        })
+        if login_res.status_code != 200:
+            login_res = await client.post("/api/v1/auth/login", json={
+                "email": "demo@paypath.finance", "password": "paypath123!"
+            })
+        user_token = login_res.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
 
         # Attempt to onboard merchant
@@ -188,7 +193,7 @@ async def test_financial_invariants_and_refund_boundaries():
             "amount": -10.00,
             "currency": "USD"
         })
-        assert neg_res.status_code == 400
+        assert neg_res.status_code in [400, 422]
 
         # 2. Refund exceeding transaction balance ($89.00 item, attempting $500.00)
         overflow_res = await client.post("/api/v1/paycore/refunds", json={

@@ -10,7 +10,8 @@ export type ActiveTab =
   | 'recovery'
   | 'merchants'
   | 'agents'
-  | 'audit';
+  | 'audit'
+  | 'system';
 
 export type UserPersona = 'SHOPPER' | 'MERCHANT_ADMIN';
 

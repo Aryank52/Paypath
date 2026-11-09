@@ -1,0 +1,52 @@
+{
+  "version": "v1.0.0",
+  "feature_version": "f12_v1",
+  "feature_names": [
+    "amount",
+    "velocity_24h",
+    "velocity_7d",
+    "amount_velocity_24h",
+    "hour_of_day",
+    "day_of_week",
+    "is_weekend",
+    "user_avg_amount_ratio",
+    "merchant_risk_historical",
+    "is_subscription",
+    "high_risk_mcc",
+    "duplicate_window_match"
+  ],
+  "trained_at": "2026-11-09T20:59:29.660237+00:00",
+  "xgboost_metrics": {
+    "accuracy": 0.9355,
+    "precision": 1.0,
+    "recall": 0.75,
+    "f1": 0.8571,
+    "roc_auc": 0.9457,
+    "pr_auc": 0.9097,
+    "train_samples": 137,
+    "val_samples": 29,
+    "test_samples": 31,
+    "feature_importances": {
+      "amount": 0.1349,
+      "velocity_24h": 0.0586,
+      "velocity_7d": 0.0539,
+      "amount_velocity_24h": 0.0415,
+      "hour_of_day": 0.0608,
+      "day_of_week": 0.0551,
+      "is_weekend": 0.0,
+      "user_avg_amount_ratio": 0.0828,
+      "merchant_risk_historical": 0.0496,
+      "is_subscription": 0.0525,
+      "high_risk_mcc": 0.0591,
+      "duplicate_window_match": 0.3511
+    }
+  },
+  "isolation_forest_metrics": {
+    "total_test_samples": 31,
+    "anomalies_detected": 1,
+    "anomaly_rate": 0.0323,
+    "mean_score": 0.107,
+    "min_score": -0.0188,
+    "max_score": 0.186
+  }
+}

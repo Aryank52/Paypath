@@ -21,15 +21,27 @@ from app.api.routes import (
     audit_router,
     merchants_router,
     webhooks_router,
-    notifications_router
+    notifications_router,
+    system_router,
+    ml_router,
 )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing PayPath database tables...")
     await init_db()
+    
+    # Ensure storage upload directory exists
+    upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads"))
+    os.makedirs(upload_dir, exist_ok=True)
+
     async with AsyncSessionLocal() as session:
         await seed_demo_data(session)
+        # Hydrate RAG vector store from authoritative PostgreSQL 16 policy_chunks
+        from app.rag.vector_store import vector_store
+        await vector_store.load_from_db(session)
+        logger.info(f"Loaded {len(vector_store.chunks)} policy chunks from PostgreSQL into vector store.")
+    
     logger.info("PayPath backend startup sequence completed successfully.")
     yield
     logger.info("PayPath backend shutting down...")
@@ -113,6 +125,8 @@ app.include_router(audit_router, prefix=settings.API_V1_STR)
 app.include_router(merchants_router, prefix=settings.API_V1_STR)
 app.include_router(webhooks_router, prefix=settings.API_V1_STR)
 app.include_router(notifications_router, prefix=settings.API_V1_STR)
+app.include_router(system_router, prefix=settings.API_V1_STR)
+app.include_router(ml_router, prefix=settings.API_V1_STR)
 
 if __name__ == "__main__":
     import uvicorn

@@ -52,7 +52,7 @@ class PayCoreService:
             risk_level="LOW",
             ai_summary=f"Purchase initiated for {item_description} at {merchant_name}.",
             item_description=item_description,
-            meta_info={"user_intent_id": user_intent_id, "approve_url": approve_url}
+            meta_info={"source_type": "PAYPAL_SANDBOX", "user_intent_id": user_intent_id, "approve_url": approve_url}
         )
         self.db.add(transaction)
         await self.db.flush()
@@ -207,6 +207,29 @@ class PayCoreService:
         if currency != tx.currency:
             raise HTTPException(status_code=400, detail=f"Currency mismatch: transaction currency is {tx.currency}, requested {currency}.")
 
+        idem_key = idempotency_key or f"ref_{transaction_id}_{amount:.2f}"
+
+        # Idempotency check with payload hash validation (checked BEFORE balance deduction)
+        existing_action_stmt = select(PaymentAction).where(PaymentAction.idempotency_key == idem_key)
+        existing_action = (await self.db.execute(existing_action_stmt)).scalar_one_or_none()
+        if existing_action:
+            if round(float(existing_action.requested_amount), 2) != round(float(amount), 2) or existing_action.currency != currency:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Idempotency conflict: key '{idem_key}' was previously executed with amount {float(existing_action.requested_amount):.2f} {existing_action.currency}, cannot replay with altered amount {amount:.2f} {currency}."
+                )
+            if existing_action.state in ["VERIFIED", "EXECUTED"]:
+                logger.info(f"Idempotent refund hit: {idem_key}")
+                return {
+                    "refund_id": existing_action.paypal_reference_id,
+                    "capture_id": tx.paypal_capture_id,
+                    "status": "COMPLETED",
+                    "amount": float(existing_action.requested_amount),
+                    "currency": existing_action.currency,
+                    "verification_status": "VERIFIED",
+                    "is_verified": True
+                }
+
         # Financial Invariant: Remaining refundable balance check
         refunded_stmt = select(PaymentAction).where(
             PaymentAction.transaction_id == tx.id,
@@ -222,29 +245,6 @@ class PayCoreService:
                 status_code=400,
                 detail=f"Refund amount ${amount:.2f} exceeds remaining refundable balance ${remaining_balance:.2f}."
             )
-
-        idem_key = idempotency_key or f"ref_{transaction_id}_{amount:.2f}"
-
-        # Idempotency check with payload hash validation
-        existing_action_stmt = select(PaymentAction).where(PaymentAction.idempotency_key == idem_key)
-        existing_action = (await self.db.execute(existing_action_stmt)).scalar_one_or_none()
-        if existing_action:
-            if round(float(existing_action.requested_amount), 2) != round(float(amount), 2) or existing_action.currency != currency:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Idempotency conflict: key '{idem_key}' was previously executed with amount {float(existing_action.requested_amount):.2f} {existing_action.currency}, cannot replay with altered amount {amount:.2f} {currency}."
-                )
-            if existing_action.state == "VERIFIED":
-                logger.info(f"Idempotent refund hit: {idem_key}")
-                return {
-                    "refund_id": existing_action.paypal_reference_id,
-                    "capture_id": tx.paypal_capture_id,
-                    "status": "COMPLETED",
-                    "amount": float(existing_action.requested_amount),
-                    "currency": existing_action.currency,
-                    "verification_status": "VERIFIED",
-                    "is_verified": True
-                }
 
         # Execute refund mutation via PayPal with failure containment
         try:

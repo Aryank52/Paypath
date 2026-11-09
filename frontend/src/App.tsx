@@ -10,6 +10,7 @@ import { RecoveryIntelligence } from './components/RecoveryIntelligence';
 import { MerchantPortal } from './components/MerchantPortal';
 import { AgentTraceVisualizer } from './components/AgentTraceVisualizer';
 import { AuditLogView } from './components/AuditLogView';
+import { SystemIntelligenceView } from './components/SystemIntelligenceView';
 import { AICommandCenterModal } from './components/AICommandCenterModal';
 import { useStore } from './store/useStore';
 
@@ -37,6 +38,7 @@ export const App: React.FC = () => {
           {activeTab === 'merchants' && <MerchantPortal />}
           {activeTab === 'agents' && <AgentTraceVisualizer />}
           {activeTab === 'audit' && <AuditLogView />}
+          {activeTab === 'system' && <SystemIntelligenceView />}
         </main>
       </div>
 

@@ -19,6 +19,15 @@ class Transaction(TimeStampedModel):
     item_description = Column(Text, nullable=True)
     meta_info = Column(JSON, nullable=True)
 
+    @property
+    def source_type(self) -> str:
+        if self.meta_info and isinstance(self.meta_info, dict):
+            if "source_type" in self.meta_info:
+                return str(self.meta_info["source_type"])
+            if self.meta_info.get("is_synthetic") or (self.id and self.id.startswith("tx_")):
+                return "DEMO_SEED"
+        return "PAYPAL_SANDBOX"
+
 class TransactionEvent(TimeStampedModel):
     __tablename__ = "transaction_events"
 

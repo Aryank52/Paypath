@@ -63,8 +63,10 @@ async def get_transaction(
         "verification_status": tx.verification_status,
         "risk_score": float(tx.risk_score),
         "risk_level": tx.risk_level,
+        "source_type": tx.source_type,
         "ai_summary": tx.ai_summary,
         "item_description": tx.item_description,
+        "meta_info": tx.meta_info,
         "created_at": tx.created_at,
         "events": list(events)
     }

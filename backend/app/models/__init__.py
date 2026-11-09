@@ -8,6 +8,9 @@ from app.models.payment_action import PaymentAction, PaymentVerification
 from app.models.reclaim import ReclaimCase, Evidence
 from app.models.audit import AuditLog
 from app.models.notification import Notification
+from app.models.product import Product
+from app.models.ml import MLModelVersion, MLPrediction
+from app.models.agent import AgentRun, AgentToolCall
 
 __all__ = [
     "Base",
@@ -18,6 +21,7 @@ __all__ = [
     "MerchantPolicy",
     "PolicyChunk",
     "PurchaseIntent",
+    "Product",
     "Transaction",
     "TransactionEvent",
     "Subscription",
@@ -26,6 +30,10 @@ __all__ = [
     "ReclaimCase",
     "Evidence",
     "AuditLog",
-    "Notification"
+    "Notification",
+    "MLModelVersion",
+    "MLPrediction",
+    "AgentRun",
+    "AgentToolCall"
 ]
 

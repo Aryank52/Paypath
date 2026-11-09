@@ -196,6 +196,7 @@ async def approve_and_execute_refund(
     return {
         "case_id": case.id,
         "status": "RESOLVED",
+        "approval_status": case.approval_status,
         "resolution": case.proposed_resolution,
         "amount_refunded": float(case.recommended_amount),
         "paypal_refund_id": refund_result["refund_id"],

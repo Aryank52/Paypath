@@ -6,9 +6,10 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                             REACT FRONTEND (Vite)                           │
 │  - AG Grid Explorer    - RECLAIM Center       - Payment Guard Studio        │
-│  - AI Command Center   - Shopping Hub         - Audit & Agent Trace Stream  │
+│  - AI Command Center   - Shopping Hub         - System Architecture View    │
+│  - ML Simulator        - Audit & Agent Trace  - Merchant Intelligence       │
 └──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ HTTPS / WSS / JSON
+                                       │ HTTPS / JSON API
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           FASTAPI BACKEND CORE                              │
@@ -17,7 +18,8 @@
 │  └───────────────────────┘  └───────────────────────┘  └─────────────────┘  │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
 │  │                    API Route Controllers                              │  │
-│  │  /auth  /transactions  /intent  /shop  /policies  /reclaim  /approvals │  │
+│  │  /auth /transactions /paycore /intent /shop /guard /reclaim /policies │  │
+│  │  /ml /system /merchants /webhooks /notifications /audit               │  │
 │  └───────────────────────────────────┬───────────────────────────────────┘  │
 │                                      │                                      │
 │  ┌───────────────────────────────────┴───────────────────────────────────┐  │
@@ -25,20 +27,24 @@
 │  │  ┌────────────────────────┐             ┌──────────────────────────┐  │  │
 │  │  │   Agent Orchestrator   │◄───────────►│  Typed Agent Message Bus │  │  │
 │  │  │ (Intent, Shopping,     │             │ (Validated Pydantic MSGs)│  │  │
-│  │  │  Policy, Evidence,     │             └──────────────────────────┘  │  │
-│  │  │  Risk, Resolution,     │                                           │  │
-│  │  │  Verification, etc.)   │                                           │  │
+│  │  │  Guard, Evidence,      │             └──────────────────────────┘  │  │
+│  │  │  Resolution, Verifier) │                                           │  │
 │  │  └───────────┬────────────┘                                           │  │
 │  │              │                                                        │  │
 │  │              ▼                                                        │  │
 │  │  ┌────────────────────────┐             ┌──────────────────────────┐  │  │
-│  │  │    RAG Engine / Vector │             │ Deterministic Policy     │  │  │
-│  │  │    pgvector / metadata │             │ Engine (ALLOW/REVIEW/    │  │  │
-│  │  │    filtering & citation│             │ BLOCK/ESCALATE)          │  │  │
-│  │  └────────────────────────┘             └────────────┬─────────────┘  │  │
-│  └──────────────────────────────────────────────────────┼────────────────┘  │
-│                                                         │                   │
-│                                                         ▼                   │
+│  │  │   RAG Engine / Vector  │             │   ML Subsystem (12-Feat  │  │  │
+│  │  │  Tenant-isolated chunks│             │   XGBoost + Isol Forest) │  │  │
+│  │  │  & merchant policies   │             │   Non-authoritative      │  │  │
+│  │  └───────────┬────────────┘             └────────────┬─────────────┘  │  │
+│  │              │                                       │                │  │
+│  │              ▼                                       ▼                │  │
+│  │  ┌───────────────────────────────────────────────────────────────┐  │  │
+│  │  │       Deterministic Policy Engine (ALLOW/REVIEW/MFA/BLOCK)    │  │  │
+│  │  └───────────────────────────────┬───────────────────────────────┘  │  │
+│  └──────────────────────────────────┼──────────────────────────────────┘  │
+│                                     │                                       │
+│                                     ▼                                       │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
 │  │                         APPROVAL GATEWAY                              │  │
 │  │  Human-in-the-loop: AUTO_ALLOWED | USER_APPROVAL | DUAL_APPROVAL     │  │
@@ -57,8 +63,8 @@
                     ▼                                     ▼
         ┌───────────────────────┐             ┌───────────────────────┐
         │     POSTGRESQL 16     │             │   PAYPAL SANDBOX API  │
-        │ - Relational Tables   │             │ - Orders v2           │
-        │ - pgvector Embeddings │             │ - Payments v2         │
+        │ - 20 Relational Tables│             │ - Orders v2           │
+        │ - pgvector & ML Models│             │ - Payments v2         │
         │ - Immutable Audit Log │             │ - Webhooks v1         │
         └───────────────────────┘             └───────────────────────┘
 ```
@@ -68,15 +74,12 @@
 ## 2. Agent Ecosystem & Message Bus
 The agent framework uses decoupled, specialized agents communicating over a validated schema:
 1. **Intent Agent:** Extracts entities, constraints, budgets, and autonomy flags from free-form natural language.
-2. **Transaction Agent:** Ingests raw PayPal payloads, normalizes currency/timestamps, links customer history.
-3. **Shopping Agent:** Queries product catalog (Channel3/normalized provider), applies constraints, proposes purchases.
-4. **Policy Agent:** Searches indexed merchant & user policies via RAG, extracts relevant clauses with citations.
-5. **Evidence Agent:** Inspects uploaded media (photos, receipts, invoices), detects damage or discrepancies.
-6. **Risk Agent:** Computes anomaly scores, detects potential duplicate payments and abnormal merchant velocity.
-7. **Resolution Agent:** Combines transaction data, policy citations, and evidence to formulate an actionable resolution proposal (e.g. `PARTIAL_REFUND`, `REPLACEMENT`).
-8. **Verification Agent:** Queries PayPal directly post-mutation to independently confirm amount, currency, and final state.
-9. **Notification Agent:** Dispatches in-app and webhook alerts based on workflow progression.
-10. **Merchant Agent:** Manages merchant policy ingestion, chunking, and tenant-level configurations.
+2. **Shopping Agent:** Queries product catalog, applies constraints, recommends products.
+3. **Guard Agent:** Pre-transaction compliance gatekeeper checking user velocity, category restrictions, and ML anomaly scores.
+4. **Policy Agent:** Searches indexed merchant & user policies via RAG with tenant isolation.
+5. **Evidence Agent:** Inspects uploaded media with magic-byte validation and multi-modal damage diagnosis.
+6. **Resolution Agent:** Combines transaction data, policy citations, and evidence to formulate actionable settlement proposals.
+7. **Verification Agent:** Queries PayPal directly post-mutation to independently confirm amount, currency, and final state.
 
 ---
 
@@ -91,18 +94,20 @@ PROPOSED ➔ VALIDATING ➔ AWAITING_APPROVAL ➔ APPROVED ➔ EXECUTING ➔ EXE
 
 ---
 
-## 4. Database Schema Structure
-- **Core Entities:** `users`, `merchants`, `merchant_policies`, `policy_versions`, `policy_chunks`.
-- **Commerce & Intent:** `purchase_intents`, `shopping_sessions`, `products`, `orders`.
-- **Payments & Audit:** `transactions`, `transaction_events`, `payment_actions`, `payment_verifications`, `audit_logs`.
-- **Intelligence & Exceptions:** `risk_signals`, `duplicate_signals`, `subscriptions`, `evidence`, `evidence_analysis`.
-- **Resolutions & Approvals:** `decisions`, `approvals`, `resolutions`, `notifications`, `agent_runs`, `agent_messages`.
+## 4. Authoritative Database Schema (20 PostgreSQL 16 Tables)
+- **Identity & Access:** `users`, `audit_logs`.
+- **Merchant & Catalog:** `merchants`, `products`, `merchant_policies`, `policy_chunks`.
+- **Transactions & PayCore:** `transactions`, `transaction_events`, `purchase_intents`, `payment_actions`, `payment_verifications`, `subscriptions`.
+- **RECLAIM & Evidence:** `reclaim_cases`, `evidence`.
+- **Machine Learning & Registry:** `ml_model_versions`, `ml_predictions`.
+- **Multi-Agent Orchestration:** `agent_runs`, `agent_tool_calls`.
+- **Notifications & Telemetry:** `notifications`.
 
 ---
 
 ## 5. Security & Isolation Controls
-- **Data Isolation:** All queries filter by `tenant_id` / `merchant_id` and authenticated `user_id`.
-- **Credential Safety:** PayPal secrets, API keys, and JWT secrets reside exclusively in server-side environment variables.
-- **Idempotency Protection:** Every financial mutation uses an `Idempotency-Key` persisted in the database; duplicate submissions return cached results without re-executing.
-- **Input Sanitization:** Multi-layered defense against SQL injection, XSS, and LLM prompt injection (prompt framing & strict schema parsing).
-
+- **PostgreSQL 16 Authoritative:** Zero SQLite or in-memory fallback in production runtime.
+- **Data Isolation:** All queries filter by `merchant_id` and authenticated `user_id`.
+- **Idempotency Protection:** Every financial mutation uses an `idempotency_key` stored in `payment_actions`.
+- **Dual-Phase Verification:** Mutation status confirmed via direct API read-back from PayPal before declaring completion.
+- **Advisory ML Safety:** Machine learning models are non-authoritative. Output scores provide signals to deterministic policy systems.

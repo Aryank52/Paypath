@@ -12,6 +12,33 @@ class VectorStore:
         # In-memory index of chunks: list of dicts with embedding, content, metadata
         self._chunks: List[Dict[str, Any]] = []
 
+    @property
+    def chunks(self) -> List[Dict[str, Any]]:
+        return self._chunks
+
+    async def load_from_db(self, session) -> int:
+        """Hydrates vector store directly from authoritative PostgreSQL policy_chunks table."""
+        try:
+            from app.models.policy import PolicyChunk
+            from sqlalchemy import select
+            res = await session.execute(select(PolicyChunk))
+            db_chunks = res.scalars().all()
+            if db_chunks:
+                self._chunks.clear()
+                for c in db_chunks:
+                    self._chunks.append({
+                        "id": c.id,
+                        "policy_id": c.policy_id,
+                        "merchant_id": c.merchant_id,
+                        "section_title": c.section_title or "Policy Section",
+                        "content": c.content,
+                        "embedding": c.embedding if (c.embedding and len(c.embedding) == 128) else self.generate_embedding(c.content),
+                        "metadata": c.chunk_metadata or {},
+                    })
+            return len(self._chunks)
+        except Exception as e:
+            return len(self._chunks)
+
     def generate_embedding(self, text: str) -> List[float]:
         """Generates a deterministic 128-dimensional semantic hash vector."""
         words = re.findall(r'\w+', text.lower())

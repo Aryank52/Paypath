@@ -26,10 +26,12 @@ class TransactionResponse(BaseModel):
     verification_status: str
     risk_score: float
     risk_level: str
+    source_type: Optional[str] = "PAYPAL_SANDBOX"
     ai_summary: Optional[str] = None
     item_description: Optional[str] = None
     created_at: datetime
     events: Optional[List[TransactionEventResponse]] = None
+    meta_info: Optional[Dict[str, Any]] = None
 
     class Config:
         from_attributes = True

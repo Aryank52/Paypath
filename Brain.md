@@ -26,40 +26,29 @@ INDEPENDENT VERIFICATION ➔ AUDIT TRAIL ➔ RESOLUTION
 ---
 
 ## 3. Technology Stack Summary
-- **Backend:** Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0 (async), Alembic, PostgreSQL + pgvector, Redis (fallback memory/rate limiter).
-- **Core Payment Engine:** `app/paycore/` (PayPal REST API SDK/Client, OAuth2, Order creation, capture, refund, independent read-back verification, webhook signature verification, idempotency store).
-- **AI & RAG Engine:** Multi-provider LLM abstraction (Gemini / OpenAI / Anthropic / local mock fallback), pgvector semantic embeddings, deterministic structured JSON schemas.
-- **Agent Orchestrator:** Typed Agent-to-Agent message bus (Intent, Transaction, Shopping, Policy, Evidence, Risk, Resolution, Verification, Notification, Merchant Agents).
-- **Frontend:** React 19 / TypeScript, Vite, Tailwind CSS v4, AG Grid Enterprise/Community (Transaction Intelligence Explorer), TanStack Query v5, Lucide Icons, Zustand.
-- **Sponsor Integrations:** PayPal (Core), AG Grid (Data Grid & Intelligence Explorer), Render (Hosting/Background Workflows), Postman (API Suite), Channel3 (Product Catalog / Commerce), Elastic (Audit Observability & Hybrid Search), Bryntum (Timeline/Gantt Resolution), APIMatic (API Contracts).
+- **Backend:** Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2.0 (async), PostgreSQL 16 (`127.0.0.1:5432/paypath`), Alembic.
+- **Machine Learning Subsystem:** Scikit-Learn 1.9.1, XGBoost 3.4.1, Pandas 3.1.1. Deterministic 12-feature pipeline (`f12_v1`), Supervised XGBoost risk classifier, Unsupervised Isolation Forest anomaly detector, temporal 70/15/15 train/val/test split, explainability with top feature impact drivers, PostgreSQL registry (`ml_model_versions`, `ml_predictions`).
+- **Core Payment Engine:** `app/paycore/` (PayPal REST API SDK/Client, OAuth2, Order creation, capture, refund, independent read-back verification, idempotency store, webhook processing).
+- **AI & RAG Engine:** Multi-provider LLM abstraction, tenant-isolated vector store (`merchant_id` partitioning), cosine similarity matching, deterministic JSON schemas.
+- **Agent Orchestrator:** Typed Agent-to-Agent message bus (Intent, Transaction, Shopping, Guard, Evidence, Resolution, Verification Agents).
+- **Frontend:** React 19 / TypeScript, Vite 8.3, Tailwind CSS v4, AG Grid Enterprise/Community (Transaction Intelligence Explorer), Lucide Icons, Zustand store.
+- **Observability & Diagnostics:** Live multi-subsystem health aggregation (`/api/v1/system/health`), full database row-count inventory (`/api/v1/system/database`), System Architecture UI (`SystemIntelligenceView.tsx`).
 
 ---
 
 ## 4. Current Implementation Status
-- **Current Phase:** Phase 0 & Phase 1 — Project Initialization, Architecture Specifications, Foundation Setup.
-- **Repository State:** Clean workspace initialized on Windows (Python 3.12, Node 24, npm 11).
-- **Blockers:** None.
-- **Active Focus:** Establishing project memory, comprehensive documentation, base database models, PayCore PayPal engine, and interactive frontend.
+- **Current Phase:** Phase 15 — Full-System Integration, PostgreSQL Data Unification, AI/ML Intelligence, RAG, Agentic AI & Product Completion.
+- **Authoritative Database:** PostgreSQL 16.15 running on `127.0.0.1:5432/paypath`. All 20 tables active and verified.
+- **Backend Test Suite:** 39/39 passing tests (100% green pass rate across unit, adversarial, security, ML pipeline, system health, and end-to-end integration).
+- **Frontend State:** Production build verified (`npm run build` completed cleanly in 3.87s with 0 errors).
+- **Documentation:** Fully documented in `docs/` (`ML_PIPELINE.md`, `DATA_ARCHITECTURE.md`, `SYSTEM_INTEGRATION.md`, `SEED_DATA.md`, `PRD.md`, `TRD.md`, `FLOW.md`, `BACKEND_SCHEMA.md`, `API_SPEC.md`).
+- **Phase Status:** Complete.
 
 ---
 
 ## 5. Major Architectural Decisions (ADRs)
 1. **Separation of PayCore & AI:** All PayPal API calls are strictly encapsulated in `app/paycore/`. Agents cannot communicate with PayPal directly; they emit typed `ActionRequest` proposals that must pass the deterministic `PolicyEngine` and `ApprovalGateway`.
 2. **Dual-Phase Resolution Verification:** After issuing a refund or capture via PayPal, PayPath does not trust the mutation response alone. A secondary read-back query (`GET /v2/payments/captures/{id}` or `GET /v2/payments/refunds/{id}`) is executed to independently verify state, currency, and amount.
-3. **Deterministic Policy Precedence:** RAG-retrieved policies and LLM summaries are converted into deterministic parameters (e.g. `refund_window_days`, `max_auto_refund_amount`). The deterministic engine evaluates these boundaries; the LLM never has the final authorization authority.
-4. **Resilient Fallback Providers:** Every external service (PayPal Sandbox, LLM, Product Catalog, Redis, Elastic) implements an interface with an offline/demo fallback mode so the platform operates reliably in any demo environment.
-
----
-
-## 6. Demo Golden Path
-1. **User Intent:** Natural language shopping request (*"Find travel noise-cancelling headphones under $100"*).
-2. **Agentic Commerce:** Shopping Agent parses intent, queries catalog, validates price guardrail.
-3. **Payment Authorization (Guard):** Intent checked against budget limit ($100), policy evaluated, user approves.
-4. **PayPal Execution:** PayCore creates PayPal order, user completes sandbox checkout, payment captured.
-5. **Transaction Intelligence:** Transaction lands in AG Grid with AI lifecycle summary, metadata, and event timeline.
-6. **Exception & Resolution (RECLAIM):** User reports damaged delivery, uploads photo evidence.
-7. **RAG & Evidence Analysis:** Evidence Agent identifies physical damage; Policy Agent retrieves merchant refund policy.
-8. **Policy & Approval:** Resolution Agent proposes $65 partial refund; Policy Engine verifies eligibility; Human approves.
-9. **PayPal Action & Independent Verification:** PayCore executes refund on PayPal sandbox; Verification Agent re-reads PayPal API to confirm refunded status; status marked **Verified by PayPal**.
-10. **Audit Trail:** Immutable timeline updated with cryptographic hashes and step-by-step agent traces.
-
+3. **Deterministic Policy Precedence:** RAG-retrieved policies and LLM summaries are converted into deterministic parameters. The deterministic engine evaluates these boundaries; ML/AI outputs are strictly non-authoritative advisory signals.
+4. **PostgreSQL 16 Authoritative System of Record:** In-memory mocks and SQLite fallbacks were eliminated from the production runtime. All 20 entity tables are unified in PostgreSQL 16.
+5. **Deterministic 12-Feature Leakage-Free ML Pipeline:** ML features strictly exclude post-settlement and dispute outcome fields. Temporal splitting respects sequence order (70% train, 15% val, 15% test).

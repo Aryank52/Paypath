@@ -206,6 +206,54 @@ export const api = {
     const res = await fetch(`${API_BASE}/audit`);
     if (!res.ok) throw new Error('Failed to fetch audit logs');
     return res.json();
+  },
+
+  // System Diagnostics & Database
+  getSystemHealth: async () => {
+    const res = await fetch(`${API_BASE}/system/health`);
+    if (!res.ok) throw new Error('Failed to fetch system health');
+    return res.json();
+  },
+
+  getDatabaseInventory: async () => {
+    const res = await fetch(`${API_BASE}/system/database`);
+    if (!res.ok) throw new Error('Failed to fetch database inventory');
+    return res.json();
+  },
+
+  // Machine Learning
+  getMLModels: async () => {
+    const res = await fetch(`${API_BASE}/ml/models`);
+    if (!res.ok) throw new Error('Failed to fetch ML models');
+    return res.json();
+  },
+
+  getMLFeatures: async () => {
+    const res = await fetch(`${API_BASE}/ml/features`);
+    if (!res.ok) throw new Error('Failed to fetch ML features');
+    return res.json();
+  },
+
+  explainTransaction: async (id: string) => {
+    const res = await fetch(`${API_BASE}/ml/explain/${id}`);
+    if (!res.ok) throw new Error('Failed to explain transaction');
+    return res.json();
+  },
+
+  predictRisk: async (data: {
+    amount: number;
+    merchant_name: string;
+    item_description?: string;
+    user_id?: string;
+    is_subscription?: boolean;
+  }) => {
+    const res = await fetch(`${API_BASE}/ml/predict`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to run ML prediction');
+    return res.json();
   }
 };
 

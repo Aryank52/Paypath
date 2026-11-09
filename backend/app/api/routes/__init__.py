@@ -12,6 +12,8 @@ from app.api.routes.audit import router as audit_router
 from app.api.routes.merchants import router as merchants_router
 from app.api.routes.webhooks import router as webhooks_router
 from app.api.routes.notifications import router as notifications_router
+from app.api.routes.system import router as system_router
+from app.api.routes.ml import router as ml_router
 
 __all__ = [
     "auth_router",
@@ -27,5 +29,7 @@ __all__ = [
     "audit_router",
     "merchants_router",
     "webhooks_router",
-    "notifications_router"
+    "notifications_router",
+    "system_router",
+    "ml_router",
 ]

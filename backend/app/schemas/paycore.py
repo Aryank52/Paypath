@@ -20,6 +20,7 @@ class CaptureOrderRequest(BaseModel):
     order_id: str
 
 class CaptureOrderResponse(BaseModel):
+    transaction_id: Optional[str] = None
     capture_id: str
     order_id: str
     status: str

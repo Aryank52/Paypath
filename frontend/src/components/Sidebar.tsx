@@ -8,7 +8,8 @@ import {
   Repeat,
   Store,
   Cpu,
-  FileCheck2
+  FileCheck2,
+  Server
 } from 'lucide-react';
 import { useStore, ActiveTab } from '../store/useStore';
 
@@ -29,6 +30,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'merchants', label: 'Merchant Studio', icon: Store },
   { id: 'agents', label: 'Agent Traces', icon: Cpu },
   { id: 'audit', label: 'Audit Trail', icon: FileCheck2 },
+  { id: 'system', label: 'System Architecture', icon: Server, badge: 'Live' },
 ];
 
 export const Sidebar: React.FC = () => {

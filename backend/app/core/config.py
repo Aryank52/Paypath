@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     PAYPAL_CLIENT_ID: Optional[str] = None
     PAYPAL_CLIENT_SECRET: Optional[str] = None
     PAYPAL_BASE_URL: str = "https://api-m.sandbox.paypal.com"
+    PAYPAL_MODE: str = "sandbox"
     PAYPAL_WEBHOOK_ID: Optional[str] = None
     
     # AI Engine

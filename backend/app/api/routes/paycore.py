@@ -54,6 +54,7 @@ async def capture_order(
         user_id=current_user.id
     )
     return CaptureOrderResponse(
+        transaction_id=result.get("transaction_id"),
         capture_id=result["capture_id"],
         order_id=result["order_id"],
         status=result["status"],

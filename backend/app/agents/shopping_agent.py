@@ -52,10 +52,14 @@ class ShoppingAgent(BaseAgent):
         purpose: str = "travel"
     ) -> List[Dict[str, Any]]:
         recommendations = []
+        cat_lower = category.lower() if category else ""
         for item in SAMPLE_CATALOG:
-            # Category match
-            if category and item["category"] != category:
-                continue
+            item_cat = item["category"].lower()
+            # Category match (audio, headphones, sound)
+            if cat_lower:
+                match = (cat_lower == item_cat) or (cat_lower in ["audio", "sound"] and item_cat == "headphones")
+                if not match:
+                    continue
 
             # Budget match
             is_under_budget = budget is None or item["price"] <= budget

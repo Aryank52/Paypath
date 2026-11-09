@@ -134,3 +134,27 @@
 | T13.6 | Frontend UX Optimization & Intent Prefetching | P1 | T13.1 | DONE | AG Grid row hover prefetching, Persona switcher, typography tokens, zero build errors. |
 | T13.7 | Documentation Suite Expansion | P1 | None | DONE | All 17 newly required documents created and cross-linked under `docs/`. |
 | T13.8 | Comprehensive Pytest Suite Expansion | P0 | T13.4, T13.5 | DONE | 23 passed unit & integration tests covering all critical flows. |
+
+---
+
+## Phase 14: Adversarial Verification & Gap Remediation (P0)
+| ID | Task | Priority | Dependencies | Status | Acceptance Criteria |
+|---|---|---|---|---|---|
+| T14.1 | Adversarial Flaw Audit & Fixes | P0 | T13.8 | DONE | Discovered and fixed 5 security flaws: IDOR on dispute cases, RBAC merchant bypass, missing PolicyChunk DB persistence, idempotency check order before balance check, session token revocation. |
+| T14.2 | Adversarial Test Suite (`test_adversarial_deep.py`) | P0 | T14.1 | DONE | 6 comprehensive adversarial tests covering session revocation, TOTP MFA, replay defense, IDOR, RBAC, refund boundaries. |
+
+---
+
+## Phase 15: Full-System Integration, Data Unification & ML Pipeline (P0)
+| ID | Task | Priority | Dependencies | Status | Acceptance Criteria |
+|---|---|---|---|---|---|
+| T15.1 | Interrupted Task Recovery | P0 | None | DONE | Reconstructed and verified background tasks; restored clean non-reload Uvicorn and Vite daemons. |
+| T15.2 | Unified PostgreSQL 16 Data Architecture | P0 | T14.1 | DONE | All 20 tables fully unified in PostgreSQL 16. Authoritative row counts verified via seed service. |
+| T15.3 | High-Fidelity Database Seeder | P0 | T15.2 | DONE | Idempotent seed script (`scripts/seed.py`) populating 5 users, 5 merchants, 20 products, 5 policies, 19 chunks, 68 transactions, 4 disputes, 12 ML versions, 5 predictions. |
+| T15.4 | Deterministic 12-Feature Pipeline & Leakage Exclusion | P0 | T15.2 | DONE | Feature schema (`f12_v1`) extracting 12 features strictly without post-settlement or dispute outcome fields. |
+| T15.5 | Supervised XGBoost & Unsupervised Isolation Forest Models | P0 | T15.4 | DONE | XGBoost risk classifier (Accuracy >= 0.90, ROC-AUC >= 0.85) + Isolation Forest anomaly detector. Temporal 70/15/15 split. |
+| T15.6 | PostgreSQL ML Model Registry & Real-Time Inference | P0 | T15.5 | DONE | Persistent version control in `ml_model_versions` and audit logging in `ml_predictions`. Explainability with top feature impact drivers. |
+| T15.7 | System Diagnostics & Health Endpoints | P0 | T15.2 | DONE | `GET /api/v1/system/health` (multi-subsystem health) and `GET /api/v1/system/database` (20-table row count inventory). |
+| T15.8 | Frontend System Architecture & Intelligence Visualization | P1 | T15.7 | DONE | Added `SystemIntelligenceView.tsx` with Live Architecture Overview, Database Inventory, Active ML Models, Interactive Simulator, and Governance panels. |
+| T15.9 | End-to-End System Integration Tests | P0 | T15.6, T15.7 | DONE | 39/39 passing tests (100% green pass rate) including `test_ml_pipeline.py`, `test_system_health_and_database.py`, and `test_paypath_end_to_end_integration.py`. |
+| T15.10 | Technical Documentation Suite Completion | P1 | T15.9 | DONE | Produced `docs/ML_PIPELINE.md`, `docs/DATA_ARCHITECTURE.md`, `docs/SYSTEM_INTEGRATION.md`, and `docs/SEED_DATA.md`. |
