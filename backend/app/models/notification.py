@@ -11,3 +11,4 @@ class Notification(TimeStampedModel):
     is_read = Column(Boolean, default=False, nullable=False)
     action_url = Column(String(255), nullable=True)
     payload = Column(JSON, nullable=True)
+

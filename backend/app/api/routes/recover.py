@@ -35,3 +35,4 @@ async def get_subscriptions(
             "status": s.status
         } for s in subs
     ]
+

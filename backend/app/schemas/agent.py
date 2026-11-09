@@ -23,3 +23,4 @@ class AgentWorkflowResult(BaseModel):
     status: str
     steps: List[AgentTraceStep]
     final_output: Dict[str, Any]
+

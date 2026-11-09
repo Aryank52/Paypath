@@ -7,6 +7,7 @@ import { ShoppingCenter } from './components/ShoppingCenter';
 import { ReclaimResolutionCenter } from './components/ReclaimResolutionCenter';
 import { PaymentGuardStudio } from './components/PaymentGuardStudio';
 import { RecoveryIntelligence } from './components/RecoveryIntelligence';
+import { MerchantPortal } from './components/MerchantPortal';
 import { AgentTraceVisualizer } from './components/AgentTraceVisualizer';
 import { AuditLogView } from './components/AuditLogView';
 import { AICommandCenterModal } from './components/AICommandCenterModal';
@@ -33,12 +34,13 @@ export const App: React.FC = () => {
           {activeTab === 'reclaim' && <ReclaimResolutionCenter />}
           {activeTab === 'guard' && <PaymentGuardStudio />}
           {activeTab === 'recovery' && <RecoveryIntelligence />}
+          {activeTab === 'merchants' && <MerchantPortal />}
           {activeTab === 'agents' && <AgentTraceVisualizer />}
           {activeTab === 'audit' && <AuditLogView />}
         </main>
       </div>
 
-      {/* Global AI Command Modal */}
+      {/* Global AI Command Modal with Voice Recognition */}
       <AICommandCenterModal />
     </div>
   );

@@ -24,3 +24,4 @@ def rate_limit(max_requests: int = 60, window_seconds: int = 60):
         _request_records[client_ip].append(now)
         return True
     return dependency
+

@@ -18,7 +18,10 @@ from app.api.routes import (
     recover_router,
     policies_router,
     agents_router,
-    audit_router
+    audit_router,
+    merchants_router,
+    webhooks_router,
+    notifications_router
 )
 
 @asynccontextmanager
@@ -87,7 +90,11 @@ app.include_router(recover_router, prefix=settings.API_V1_STR)
 app.include_router(policies_router, prefix=settings.API_V1_STR)
 app.include_router(agents_router, prefix=settings.API_V1_STR)
 app.include_router(audit_router, prefix=settings.API_V1_STR)
+app.include_router(merchants_router, prefix=settings.API_V1_STR)
+app.include_router(webhooks_router, prefix=settings.API_V1_STR)
+app.include_router(notifications_router, prefix=settings.API_V1_STR)
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+

@@ -105,3 +105,4 @@ PROPOSED ➔ VALIDATING ➔ AWAITING_APPROVAL ➔ APPROVED ➔ EXECUTING ➔ EXE
 - **Credential Safety:** PayPal secrets, API keys, and JWT secrets reside exclusively in server-side environment variables.
 - **Idempotency Protection:** Every financial mutation uses an `Idempotency-Key` persisted in the database; duplicate submissions return cached results without re-executing.
 - **Input Sanitization:** Multi-layered defense against SQL injection, XSS, and LLM prompt injection (prompt framing & strict schema parsing).
+

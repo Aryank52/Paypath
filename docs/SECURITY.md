@@ -31,3 +31,4 @@
 ## 5. Webhook Security
 - PayPal webhooks are verified using PayPal's documented signature verification API (`/v1/notifications/verify-webhook-signature`) or cert chain validation.
 - Unverified webhook payloads are immediately rejected and logged.
+

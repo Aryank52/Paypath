@@ -27,3 +27,4 @@ PayPath is architected as a modular, decoupled full-stack platform consisting of
 - **PayPal Sandbox:** Mock adapter available for local offline testing while preserving identical API contracts and verification flows.
 - **LLM Engine:** Provider fallback chain (Gemini API ➔ OpenAI ➔ Structured Mock Engine).
 - **RAG & Search:** Vector search falls back gracefully to relational SQL full-text search if pgvector extension is unindexed.
+

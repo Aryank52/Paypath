@@ -51,3 +51,4 @@ Agents exchange structured JSON payloads validated by Pydantic:
 - `MAX_AGENT_TURNS`: 8 turns maximum per workflow.
 - `EXECUTION_TIMEOUT_SECONDS`: 25 seconds per orchestrator run.
 - Zero unrestricted tools: Tools receive only read-only database views or pass mutations through the `PolicyEngine`.
+

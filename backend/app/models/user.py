@@ -16,3 +16,4 @@ class User(TimeStampedModel):
     full_name = Column(String(255), nullable=True)
     role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+

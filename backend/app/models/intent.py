@@ -13,3 +13,4 @@ class PurchaseIntent(TimeStampedModel):
     approval_required = Column(Boolean, default=True, nullable=False)
     autonomy_level = Column(String(50), default="RESTRICTED", nullable=False) # RESTRICTED, SUPERVISED, AUTONOMOUS
     status = Column(String(50), default="ACTIVE", nullable=False) # ACTIVE, FULFILLED, EXPIRED, CANCELLED
+

@@ -43,3 +43,4 @@ class ReclaimCaseResponse(BaseModel):
 
     class Config:
         from_attributes = True
+

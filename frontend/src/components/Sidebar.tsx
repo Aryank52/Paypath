@@ -6,6 +6,7 @@ import {
   RotateCcw,
   ShieldAlert,
   Repeat,
+  Store,
   Cpu,
   FileCheck2
 } from 'lucide-react';
@@ -25,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'reclaim', label: 'RECLAIM Engine', icon: RotateCcw, badge: 'Hero' },
   { id: 'guard', label: 'Payment Guard', icon: ShieldAlert },
   { id: 'recovery', label: 'Recovery Intel', icon: Repeat },
+  { id: 'merchants', label: 'Merchant Studio', icon: Store },
   { id: 'agents', label: 'Agent Traces', icon: Cpu },
   { id: 'audit', label: 'Audit Trail', icon: FileCheck2 },
 ];

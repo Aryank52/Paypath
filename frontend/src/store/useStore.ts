@@ -8,6 +8,7 @@ export type ActiveTab =
   | 'reclaim'
   | 'guard'
   | 'recovery'
+  | 'merchants'
   | 'agents'
   | 'audit';
 

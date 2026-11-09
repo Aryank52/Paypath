@@ -25,3 +25,4 @@ class PaymentVerification(TimeStampedModel):
     actual_currency = Column(String(3), nullable=False)
     is_verified = Column(Boolean, nullable=False)
     verification_details = Column(JSON, nullable=True)
+

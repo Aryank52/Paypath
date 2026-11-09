@@ -347,3 +347,4 @@ export const ReclaimResolutionCenter: React.FC = () => {
     </div>
   );
 };
+

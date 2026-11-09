@@ -44,3 +44,4 @@ class RecoveryService:
         stmt = select(Subscription).where(Subscription.user_id == user_id)
         result = await self.db.execute(stmt)
         return list(result.scalars().all())
+

@@ -57,3 +57,4 @@ class VectorStore:
         return [item[1] for item in scored_results[:top_k]]
 
 vector_store = VectorStore()
+

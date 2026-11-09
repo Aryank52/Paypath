@@ -50,3 +50,4 @@
 ## 7. Bryntum (Visual Workflow Timeline)
 - **Role:** Visual Gantt/Timeline representation for complex, multi-party dispute resolutions.
 - **Implementation:** Timeline component mapping resolution stages (Issue Logged ➔ Evidence Submitted ➔ AI Evaluated ➔ Approval Granted ➔ Refund Settled).
+

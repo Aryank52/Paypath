@@ -25,3 +25,4 @@ class BaseAgent:
             "details": details or {},
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
+

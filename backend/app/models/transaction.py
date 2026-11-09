@@ -39,3 +39,4 @@ class Subscription(TimeStampedModel):
     last_payment_date = Column(String(50), nullable=True)
     next_expected_date = Column(String(50), nullable=True)
     status = Column(String(50), default="ACTIVE", nullable=False)
+

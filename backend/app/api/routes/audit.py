@@ -25,3 +25,4 @@ async def get_audit_logs(db: AsyncSession = Depends(get_db)):
             "created_at": l.created_at
         } for l in logs
     ]
+

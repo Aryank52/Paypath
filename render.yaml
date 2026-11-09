@@ -43,3 +43,4 @@ databases:
     databaseName: paypath
     user: paypath_user
     plan: free
+

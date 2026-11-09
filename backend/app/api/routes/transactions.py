@@ -79,3 +79,4 @@ async def get_transaction_events(
     stmt = select(TransactionEvent).where(TransactionEvent.transaction_id == transaction_id).order_by(TransactionEvent.created_at.asc())
     result = await db.execute(stmt)
     return list(result.scalars().all())
+

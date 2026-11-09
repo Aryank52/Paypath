@@ -52,3 +52,4 @@ class VerificationResultSchema(BaseModel):
     actual_currency: str
     paypal_status: str
     details: Dict[str, Any]
+

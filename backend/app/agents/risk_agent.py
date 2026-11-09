@@ -47,3 +47,4 @@ class RiskAgent(BaseAgent):
         }
 
 risk_agent = RiskAgent()
+

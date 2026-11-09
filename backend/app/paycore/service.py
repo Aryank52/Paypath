@@ -295,3 +295,4 @@ class PayCoreService:
             "verification_status": tx.verification_status,
             "is_verified": is_verified
         }
+

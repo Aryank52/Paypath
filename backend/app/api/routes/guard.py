@@ -30,3 +30,4 @@ async def get_active_guard_rules():
         "restricted_categories": policy_engine.spend_rules.restricted_categories,
         "flagged_merchants": policy_engine.spend_rules.flagged_merchants
     }
+

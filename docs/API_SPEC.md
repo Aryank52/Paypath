@@ -62,3 +62,4 @@
 ### Recovery Intelligence (`/recover`)
 - `GET /recover/duplicates` — Fetch suspected duplicate transactions.
 - `GET /recover/subscriptions` — Fetch detected recurring payments and upcoming renewals.
+

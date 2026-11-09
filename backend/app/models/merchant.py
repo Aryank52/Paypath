@@ -9,3 +9,4 @@ class Merchant(TimeStampedModel):
     paypal_merchant_id = Column(String(100), nullable=True)
     support_email = Column(String(255), nullable=True)
     is_verified = Column(Boolean, default=False, nullable=False)
+

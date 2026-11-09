@@ -14,3 +14,4 @@ class RefundPolicyRule(BaseModel):
     partial_refund_max_pct: float = 80.0
     max_auto_refund: float = 100.0
     human_approval_required: bool = True
+

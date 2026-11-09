@@ -21,3 +21,4 @@ class PolicyChunk(TimeStampedModel):
     content = Column(Text, nullable=False)
     chunk_metadata = Column(JSON, nullable=True)
     embedding = Column(JSON, nullable=True) # Vector representation or fallback JSON array
+

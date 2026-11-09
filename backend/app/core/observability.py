@@ -48,3 +48,4 @@ def log_audit_event(
     }
     logger.info(f"AUDIT: {action} on {resource_type}:{resource_id} by {actor_type}:{actor_id}", extra=event)
     return event
+

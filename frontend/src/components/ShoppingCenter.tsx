@@ -243,3 +243,4 @@ export const ShoppingCenter: React.FC = () => {
     </div>
   );
 };
+

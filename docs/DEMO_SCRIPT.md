@@ -37,3 +37,4 @@
 
 ## 4. Closing Statement (2:30 - 3:00)
 > *"PayPath solves the trust problem in agentic commerce: AI understands what you want, policy controls what is allowed, humans authorize financial moves, PayPal executes the transaction, and PayPath independently verifies what happened. Understand. Decide. Act. Verify."*
+

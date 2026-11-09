@@ -73,3 +73,4 @@ class ShoppingAgent(BaseAgent):
         return recommendations
 
 shopping_agent = ShoppingAgent()
+

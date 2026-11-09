@@ -52,3 +52,4 @@ PayPath is an enterprise-grade AI Transaction Intelligence, Agentic Commerce, an
 - **Reliability:** Idempotency keys on all financial mutations, independent dual-phase verification.
 - **Performance:** Sub-100ms API response times for cached transaction data, asynchronous RAG and agent orchestration.
 - **Compliance & Auditability:** Append-only tamper-resistant audit logs tracking every agent action, policy evaluation, and financial mutation.
+

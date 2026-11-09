@@ -73,3 +73,4 @@ Relevant Excerpt: "If goods arrive with cosmetic or structural damage, customers
 Effective Date: 2026-01-01
 Applicability: Applicable (Reported 14 days after purchase, physical damage confirmed)
 ```
+

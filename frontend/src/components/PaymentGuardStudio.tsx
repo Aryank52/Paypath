@@ -178,3 +178,4 @@ export const PaymentGuardStudio: React.FC = () => {
     </div>
   );
 };
+

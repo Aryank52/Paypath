@@ -62,3 +62,4 @@ INDEPENDENT VERIFICATION ➔ AUDIT TRAIL ➔ RESOLUTION
 8. **Policy & Approval:** Resolution Agent proposes $65 partial refund; Policy Engine verifies eligibility; Human approves.
 9. **PayPal Action & Independent Verification:** PayCore executes refund on PayPal sandbox; Verification Agent re-reads PayPal API to confirm refunded status; status marked **Verified by PayPal**.
 10. **Audit Trail:** Immutable timeline updated with cryptographic hashes and step-by-step agent traces.
+

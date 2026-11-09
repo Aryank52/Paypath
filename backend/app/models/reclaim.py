@@ -26,3 +26,4 @@ class Evidence(TimeStampedModel):
     evidence_type = Column(String(50), default="PHOTO_DAMAGE", nullable=False) # PHOTO_DAMAGE, INVOICE, CORRESPONDENCE
     analysis_summary = Column(Text, nullable=True)
     confidence_score = Column(Numeric(4, 2), nullable=True)
+

@@ -124,3 +124,4 @@ export const RecoveryIntelligence: React.FC = () => {
 function int(val: number): number {
   return Math.round(val);
 }
+

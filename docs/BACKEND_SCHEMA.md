@@ -155,3 +155,4 @@
 - `details` (JSONB)
 - `ip_address` (VARCHAR(50))
 - `created_at` (TIMESTAMPTZ, DEFAULT NOW())
+

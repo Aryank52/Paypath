@@ -64,3 +64,4 @@ async def test_complete_paycore_and_reclaim_lifecycle():
         tx = (await session.execute(stmt)).scalar_one()
         assert tx.status == "PARTIALLY_REFUNDED"
         assert tx.verification_status == "VERIFIED"
+

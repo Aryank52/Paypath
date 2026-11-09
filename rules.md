@@ -22,3 +22,4 @@
 15. **No Decorative Sponsor Tech:** Every sponsor integration (PayPal, AG Grid, Render, Postman, Channel3, Elastic, Bryntum, APIMatic) must serve a concrete, functional purpose within the platform.
 16. **No Breaking Regressions:** Do not break or remove existing functional capabilities when introducing new features.
 17. **Continuous Documentation Sync:** Whenever models, APIs, or architectural flows change, update the corresponding documentation files in `docs/` and `tasks.md`.
+

@@ -49,3 +49,4 @@ async def test_resolution_agent_proposal():
     assert proposal["recommended_amount"] == 65.00
     assert proposal["confidence_score"] >= 0.90
     assert proposal["requires_approval"] is True
+

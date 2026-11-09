@@ -37,3 +37,4 @@ PayPath is an AI transaction command platform for financial professionals and in
 ### 6. Merchant & Policy Center
 - Document uploader with real-time chunk preview and rule extraction editor.
 - Version history table and policy simulation workbench.
+

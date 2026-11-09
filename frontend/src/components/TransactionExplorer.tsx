@@ -205,3 +205,4 @@ export const TransactionExplorer: React.FC = () => {
     </div>
   );
 };
+

@@ -126,3 +126,4 @@ export const AgentTraceVisualizer: React.FC = () => {
     </div>
   );
 };
+

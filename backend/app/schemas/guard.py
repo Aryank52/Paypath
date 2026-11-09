@@ -17,3 +17,4 @@ class GuardEvaluationResponse(BaseModel):
     applied_rules: List[str]
     max_budget: Optional[float] = None
     requested_amount: float
+

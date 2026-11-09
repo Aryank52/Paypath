@@ -11,3 +11,4 @@ class AuditLog(TimeStampedModel):
     resource_id = Column(String(100), nullable=False, index=True)
     details = Column(JSON, nullable=True)
     ip_address = Column(String(50), nullable=True)
+

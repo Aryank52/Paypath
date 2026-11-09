@@ -58,3 +58,4 @@ async def test_agent_commerce_workflow_endpoint():
         assert "selected_product" in data
         assert "trace" in data
         assert len(data["trace"]) >= 2
+

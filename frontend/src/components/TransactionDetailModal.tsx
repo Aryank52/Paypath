@@ -141,3 +141,4 @@ export const TransactionDetailModal: React.FC<Props> = ({ transaction, onClose }
     </div>
   );
 };
+

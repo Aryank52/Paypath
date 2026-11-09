@@ -65,3 +65,4 @@ class IndependentPaymentVerifier:
             return False, {"error": str(e)}
 
 payment_verifier = IndependentPaymentVerifier()
+

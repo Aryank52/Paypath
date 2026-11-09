@@ -40,3 +40,4 @@ async def propose_purchase(
         "requires_human_approval": guard_eval["requires_approval"],
         "is_approved": guard_eval["decision"] == "ALLOW"
     }
+

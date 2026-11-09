@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Sparkles, ArrowRight, ShieldCheck, FileText, CornerDownLeft } from 'lucide-react';
+import { X, Search, Sparkles, ArrowRight, CornerDownLeft, Mic, MicOff } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { api } from '../services/api';
 
@@ -15,6 +15,14 @@ export const AICommandCenterModal: React.FC = () => {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState<any>(null);
   const [isThinking, setIsThinking] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+
+  useEffect(() => {
+    // Check Web Speech API support
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    setSpeechSupported(!!SpeechRecognition);
+  }, []);
 
   // Keyboard shortcut listener (Cmd/Ctrl + K and Escape)
   useEffect(() => {
@@ -30,6 +38,36 @@ export const AICommandCenterModal: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCommandCenterOpen, setIsCommandCenterOpen]);
+
+  const toggleVoiceListening = () => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech Recognition is not supported in this browser. Please use keyboard input.');
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setQuery(transcript);
+      handleExecutePrompt(transcript);
+    };
+
+    recognition.start();
+  };
 
   if (!isCommandCenterOpen) return null;
 
@@ -48,7 +86,7 @@ export const AICommandCenterModal: React.FC = () => {
           actionTab: 'reclaim'
         });
       } else if (lower.includes('headphone') || lower.includes('100') || lower.includes('travel')) {
-        const commerce = await api.runCommerceWorkflow(text);
+        await api.runCommerceWorkflow(text);
         setResponse({
           type: 'COMMERCE',
           answer: `IntentAgent parsed category 'headphones' for 'travel' under $100. ShoppingAgent found the NovaSound ANC Pro ($89.00) compliant with Payment Guard spending policies.`,
@@ -88,10 +126,24 @@ export const AICommandCenterModal: React.FC = () => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && query.trim() && handleExecutePrompt(query)}
-            placeholder="Ask PayPath AI about transactions, policies, or spending guards..."
-            className="flex-1 bg-transparent text-sm text-white placeholder-slate-500 focus:outline-none"
+            placeholder={isListening ? "Listening to your voice command..." : "Ask PayPath AI about transactions, policies, or spending guards..."}
+            className={`flex-1 bg-transparent text-sm placeholder-slate-500 focus:outline-none ${isListening ? 'text-emerald-400 animate-pulse' : 'text-white'}`}
             autoFocus
           />
+
+          {/* Voice Input Mic Button */}
+          <button
+            onClick={toggleVoiceListening}
+            className={`p-2 rounded-lg transition-colors border ${
+              isListening
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30 animate-pulse'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800 border-slate-800'
+            }`}
+            title={speechSupported ? "Speak voice command" : "Speech not supported in browser"}
+          >
+            {isListening ? <Mic className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+
           <button
             onClick={() => setIsCommandCenterOpen(false)}
             className="p-1 rounded text-slate-400 hover:text-white"
@@ -104,8 +156,9 @@ export const AICommandCenterModal: React.FC = () => {
         <div className="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
           {!response && !isThinking && (
             <div className="space-y-2">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Suggested Financial Queries
+              <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <span>Suggested Queries</span>
+                <span className="text-[10px] text-indigo-400 font-medium">Voice Commands Enabled</span>
               </div>
               <div className="space-y-1.5">
                 {QUICK_PROMPTS.map((p, idx) => (

@@ -78,3 +78,4 @@ sequenceDiagram
 4. **Vector Embedding:** Chunk vectors generated via embedding provider and stored in PostgreSQL with metadata.
 5. **Rule Extraction:** AI extracts candidate numerical rules (`refund_window_days: 30`, `max_auto_refund: 50.00`).
 6. **Merchant Publishing:** Merchant reviews and publishes; only published versions are queried by active transactions.
+

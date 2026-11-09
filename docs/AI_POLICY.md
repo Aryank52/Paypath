@@ -54,3 +54,4 @@ In PayPath, artificial intelligence operates strictly as an **analytical, interp
 1. **Confidence is Not Authority:** A 99% confidence score from the Resolution Agent does not waive the requirement for human approval if the policy threshold requires it.
 2. **Transparent Citations:** Every resolution proposal must link directly to the specific policy document, version, and section that justifies it.
 3. **No Hidden Chain-of-Thought:** User-facing responses must provide clear, concise rationale without dumping internal prompt mechanics or unformatted system traces.
+
