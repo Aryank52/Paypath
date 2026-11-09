@@ -76,6 +76,15 @@ async def get_transaction_events(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    # Verify transaction ownership to prevent IDOR information disclosure
+    tx_stmt = select(Transaction).where(
+        Transaction.id == transaction_id,
+        Transaction.user_id == current_user.id
+    )
+    tx = (await db.execute(tx_stmt)).scalar_one_or_none()
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found.")
+
     stmt = select(TransactionEvent).where(TransactionEvent.transaction_id == transaction_id).order_by(TransactionEvent.created_at.asc())
     result = await db.execute(stmt)
     return list(result.scalars().all())

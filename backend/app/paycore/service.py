@@ -199,32 +199,82 @@ class PayCoreService:
         if not tx.paypal_capture_id:
             raise HTTPException(status_code=400, detail="Cannot refund an uncaptured transaction.")
 
+        # Financial Invariant: Positive non-zero amount
+        if amount <= 0:
+            raise HTTPException(status_code=400, detail="Refund amount must be strictly greater than 0.")
+
+        # Financial Invariant: Currency match
+        if currency != tx.currency:
+            raise HTTPException(status_code=400, detail=f"Currency mismatch: transaction currency is {tx.currency}, requested {currency}.")
+
+        # Financial Invariant: Remaining refundable balance check
+        refunded_stmt = select(PaymentAction).where(
+            PaymentAction.transaction_id == tx.id,
+            PaymentAction.action_type == "REFUND",
+            PaymentAction.state.in_(["VERIFIED", "EXECUTED"])
+        )
+        prior_refunds = (await self.db.execute(refunded_stmt)).scalars().all()
+        already_refunded = sum(float(r.requested_amount) for r in prior_refunds)
+        remaining_balance = round(float(tx.amount) - already_refunded, 2)
+
+        if amount > remaining_balance:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Refund amount ${amount:.2f} exceeds remaining refundable balance ${remaining_balance:.2f}."
+            )
+
         idem_key = idempotency_key or f"ref_{transaction_id}_{amount:.2f}"
 
-        # Idempotency check
+        # Idempotency check with payload hash validation
         existing_action_stmt = select(PaymentAction).where(PaymentAction.idempotency_key == idem_key)
         existing_action = (await self.db.execute(existing_action_stmt)).scalar_one_or_none()
-        if existing_action and existing_action.state == "VERIFIED":
-            logger.info(f"Idempotent refund hit: {idem_key}")
-            return {
-                "refund_id": existing_action.paypal_reference_id,
-                "capture_id": tx.paypal_capture_id,
-                "status": "COMPLETED",
-                "amount": float(existing_action.requested_amount),
-                "currency": existing_action.currency,
-                "verification_status": "VERIFIED",
-                "is_verified": True
-            }
+        if existing_action:
+            if round(float(existing_action.requested_amount), 2) != round(float(amount), 2) or existing_action.currency != currency:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Idempotency conflict: key '{idem_key}' was previously executed with amount {float(existing_action.requested_amount):.2f} {existing_action.currency}, cannot replay with altered amount {amount:.2f} {currency}."
+                )
+            if existing_action.state == "VERIFIED":
+                logger.info(f"Idempotent refund hit: {idem_key}")
+                return {
+                    "refund_id": existing_action.paypal_reference_id,
+                    "capture_id": tx.paypal_capture_id,
+                    "status": "COMPLETED",
+                    "amount": float(existing_action.requested_amount),
+                    "currency": existing_action.currency,
+                    "verification_status": "VERIFIED",
+                    "is_verified": True
+                }
 
-        # Execute refund mutation via PayPal
-        refund_resp = await paypal_client.refund_capture(
-            capture_id=tx.paypal_capture_id,
-            amount=amount,
-            currency=currency,
-            note_to_payer=reason,
-            idempotency_key=idem_key
-        )
-        refund_id = refund_resp.get("id", f"REF-{uuid.uuid4().hex[:8].upper()}")
+        # Execute refund mutation via PayPal with failure containment
+        try:
+            refund_resp = await paypal_client.refund_capture(
+                capture_id=tx.paypal_capture_id,
+                amount=amount,
+                currency=currency,
+                note_to_payer=reason,
+                idempotency_key=idem_key
+            )
+            refund_id = refund_resp.get("id", f"REF-{uuid.uuid4().hex[:8].upper()}")
+        except Exception as exc:
+            logger.error(f"PayPal refund dispatch failed for tx {tx.id}: {exc}")
+            failed_action = PaymentAction(
+                transaction_id=tx.id,
+                action_type="REFUND",
+                requested_amount=amount,
+                currency=currency,
+                idempotency_key=idem_key,
+                state="FAILED",
+                paypal_reference_id=None,
+                meta_info={"error": str(exc)}
+            )
+            self.db.add(failed_action)
+            tx.verification_status = "FAILED"
+            await self.db.commit()
+            raise HTTPException(
+                status_code=502,
+                detail=f"PayPal refund execution failed: {str(exc)}"
+            )
 
         # Independent Read-Back Verification
         is_verified, verification_details = await payment_verifier.verify_refund(
@@ -236,7 +286,7 @@ class PayCoreService:
         # Update transaction status
         is_full = abs(amount - float(tx.amount)) < 0.01
         tx.status = "REFUNDED" if is_full else "PARTIALLY_REFUNDED"
-        tx.verification_status = "VERIFIED" if is_verified else "MISMATCH"
+        tx.verification_status = "VERIFIED" if is_verified else "RECONCILIATION_REQUIRED"
 
         # Record payment action
         action = PaymentAction(
@@ -245,7 +295,7 @@ class PayCoreService:
             requested_amount=amount,
             currency=currency,
             idempotency_key=idem_key,
-            state="VERIFIED" if is_verified else "EXECUTED",
+            state="VERIFIED" if is_verified else "RECONCILIATION_REQUIRED",
             paypal_reference_id=refund_id,
             meta_info=refund_resp
         )

@@ -13,6 +13,9 @@ class PayPalClient:
         self.client_secret = settings.PAYPAL_CLIENT_SECRET
         self._cached_token: Optional[str] = None
         self._token_expires_at: float = 0.0
+        self._mock_orders: Dict[str, Dict[str, Any]] = {}
+        self._mock_captures: Dict[str, Dict[str, Any]] = {}
+        self._mock_refunds: Dict[str, Dict[str, Any]] = {}
 
     @property
     def is_configured(self) -> bool:
@@ -60,7 +63,7 @@ class PayPalClient:
         """Creates a PayPal v2 order."""
         if not self.is_configured:
             mock_id = f"MOCK-ORDER-{uuid.uuid4().hex[:8].upper()}"
-            return {
+            mock_data = {
                 "id": mock_id,
                 "status": "CREATED",
                 "links": [
@@ -71,6 +74,8 @@ class PayPalClient:
                     "description": description
                 }]
             }
+            self._mock_orders[mock_id] = mock_data
+            return mock_data
 
         token = await self.get_access_token()
         headers = {
@@ -107,16 +112,21 @@ class PayPalClient:
         """Captures payment for an approved PayPal order."""
         if not self.is_configured or order_id.startswith("MOCK-"):
             mock_capture_id = f"MOCK-CAP-{uuid.uuid4().hex[:8].upper()}"
+            ord_data = self._mock_orders.get(order_id, {})
+            pus = ord_data.get("purchase_units", [{}])
+            amt_info = pus[0].get("amount", {"currency_code": "USD", "value": "89.00"}) if pus else {"currency_code": "USD", "value": "89.00"}
+            cap_data = {
+                "id": mock_capture_id,
+                "status": "COMPLETED",
+                "amount": amt_info
+            }
+            self._mock_captures[mock_capture_id] = cap_data
             return {
                 "id": order_id,
                 "status": "COMPLETED",
                 "purchase_units": [{
                     "payments": {
-                        "captures": [{
-                            "id": mock_capture_id,
-                            "status": "COMPLETED",
-                            "amount": {"currency_code": "USD", "value": "89.00"}
-                        }]
+                        "captures": [cap_data]
                     }
                 }]
             }
@@ -152,11 +162,11 @@ class PayPalClient:
     async def get_capture_details(self, capture_id: str) -> Dict[str, Any]:
         """Reads back capture resource from PayPal for independent verification."""
         if not self.is_configured or capture_id.startswith("MOCK-"):
-            return {
+            return self._mock_captures.get(capture_id, {
                 "id": capture_id,
                 "status": "COMPLETED",
                 "amount": {"currency_code": "USD", "value": "89.00"}
-            }
+            })
 
         token = await self.get_access_token()
         headers = {"Authorization": f"Bearer {token}"}
@@ -176,12 +186,14 @@ class PayPalClient:
         """Executes a refund mutation on a captured transaction."""
         if not self.is_configured or capture_id.startswith("MOCK-"):
             mock_refund_id = f"MOCK-REF-{uuid.uuid4().hex[:8].upper()}"
-            return {
+            mock_data = {
                 "id": mock_refund_id,
                 "status": "COMPLETED",
                 "amount": {"currency_code": currency, "value": f"{amount:.2f}"},
                 "note_to_payer": note_to_payer
             }
+            self._mock_refunds[mock_refund_id] = mock_data
+            return mock_data
 
         token = await self.get_access_token()
         headers = {
@@ -209,11 +221,11 @@ class PayPalClient:
     async def get_refund_details(self, refund_id: str) -> Dict[str, Any]:
         """Reads back refund resource from PayPal for independent verification."""
         if not self.is_configured or refund_id.startswith("MOCK-"):
-            return {
+            return self._mock_refunds.get(refund_id, {
                 "id": refund_id,
                 "status": "COMPLETED",
                 "amount": {"currency_code": "USD", "value": "65.00"}
-            }
+            })
 
         token = await self.get_access_token()
         headers = {"Authorization": f"Bearer {token}"}

@@ -16,18 +16,26 @@ async def get_current_user(
     """Returns the authenticated user or falls back to demo user if no token provided in dev mode."""
     if token:
         payload = verify_token(token)
-        if payload and "sub" in payload:
-            user_id = payload["sub"]
-            stmt = select(User).where(User.id == user_id)
-            result = await db.execute(stmt)
-            user = result.scalar_one_or_none()
-            if user:
-                if not user.is_active:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="User account is deactivated."
-                    )
-                return user
+        if not payload or "sub" not in payload:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid, expired, or revoked authentication token."
+            )
+        user_id = payload["sub"]
+        stmt = select(User).where(User.id == user_id)
+        result = await db.execute(stmt)
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found."
+            )
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is deactivated."
+            )
+        return user
 
     # Development fallback: Default to demo user for seamless local evaluation
     stmt = select(User).where(User.email.in_(["demo@paypath.ai", "demo@paypath.finance"]))

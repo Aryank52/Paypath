@@ -154,34 +154,40 @@ Status Updated to "Verified by PayPal" (Rendered in UI)
 ### Prerequisites
 - Python 3.12+
 - Node.js v20+ and npm
-- PostgreSQL 16 (optional; defaults seamlessly to async SQLite `sqlite+aiosqlite:///./paypath.db` for zero-setup local execution)
+- PostgreSQL 16 (Authoritative Database running on `localhost:5432`)
 
-### 1. Backend Setup
+### 1. Backend & Database Setup
 ```bash
 # From repository root
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# On Windows PowerShell:
+.venv\Scripts\activate
 
 # Install dependencies
 pip install -r backend/requirements.txt
 
+# Run database migrations to head
+alembic upgrade head
+
 # Run backend service
-python backend/run.py
+$env:PYTHONPATH="backend"
+.venv\Scripts\uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
-Backend will start on `http://127.0.0.1:8000`. Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/api/v1/docs`.
+Backend will start on `http://127.0.0.1:8000`. Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/api/v1/docs` and health check at `http://127.0.0.1:8000/api/v1/health`.
 
 ### 2. Frontend Setup
 ```bash
 # In a new terminal
 cd frontend
 npm install
-npm run dev
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
-Open `http://localhost:5173` in your browser.
+Open `http://localhost:5173` in your browser. Demo credentials: `demo@paypath.finance` / `paypath123!`.
 
-### 3. Run Test Suite
+### 3. Run Automated Adversarial Test Suite
 ```bash
-pytest
+# Run all 29 automated tests (including deep adversarial attack suites)
+.venv\Scripts\pytest backend/tests -v
 ```
 
 ---
@@ -192,20 +198,29 @@ pytest
 2. **Agentic Commerce:** Intent Agent extracts constraints; Shopping Agent returns the **NovaSound ANC Pro ($89.00)**.
 3. **Payment Guard:** Evaluates $89.00 against the $100.00 limit (`ALLOW - Requires Human Approval`).
 4. **PayPal Purchase:** Click "Authorize Payment" -> PayCore creates and captures the order in PayPal Sandbox.
-5. **AG Grid Explorer:** Transaction lands in the grid with an AI-generated health insight.
+5. **AG Grid Explorer:** Transaction lands in the grid with an AI-generated health insight and independent verification badge.
 6. **Dispute & RECLAIM:** 14 days later, package arrives damaged. Click "Open RECLAIM Claim" and upload damage photo.
-7. **RAG & Policy Evidence:** Evidence Agent identifies structural damage (94% confidence); Policy Agent retrieves Nova Electronics' 30-day transit defect policy.
+7. **RAG & Policy Evidence:** Evidence Agent identifies structural damage; Policy Agent retrieves Nova Electronics' 30-day transit defect policy.
 8. **Resolution Proposal:** Resolution Agent proposes **$65.00 Partial Refund**; Policy Engine deterministically validates the rule.
-9. **Human Approval & PayPal Settlement:** Click **"Approve $65.00 Refund"** -> PayCore executes PayPal Sandbox refund -> Verification Agent reads back PayPal resource -> Badge displayed: **"Verified by PayPal"**.
+9. **Human Approval & PayPal Settlement:** Click **"Approve $65.00 Refund"** -> PayCore executes PayPal Sandbox refund -> Verification Agent reads back PayPal resource -> Badge displayed: **"VERIFIED"**.
 
 ---
 
-## 9. Security & Governance
+## 9. Security, Governance & Verification
 
-- **Zero Secret Exposure:** PayPal client secrets and API keys reside exclusively in server-side environment variables.
-- **Idempotency Protection:** All mutation endpoints enforce `X-Idempotency-Key` to eliminate double charges or duplicate refunds.
-- **Strict Multi-Tenancy:** Multi-tenant boundaries (`merchant_id`, `user_id`) enforced at the database query layer.
-- **Defense-in-Depth AI:** User documents and policy text are isolated to prevent prompt injection.
+- **PostgreSQL 16 Authority:** 14 relational tables with foreign keys and clean Alembic migrations.
+- **Session Revocation:** JWT `jti` immediate invalidation on `/logout` and RFC 6238 TOTP MFA.
+- **Strict Multi-Tenancy & IDOR Defense:** All queries enforce `Transaction.user_id == current_user.id`.
+- **RBAC Enforcement:** Administrative merchant routes strictly protected with `@require_role(MERCHANT_ADMIN)`.
+- **Financial Invariants:** Zero-amount/negative rejection, balance overflow caps, and 409 conflict detection on altered idempotency keys.
+- **Magic-Byte Upload Validation:** Header signature inspection for JPEG, PNG, and PDF evidence files.
+- **Zero Secret Exposure:** `.env` is excluded from Git; `.env.example` provides complete configuration keys.
+
+For detailed audit reports and submission materials, see:
+- [Pre-Release Audit Report](docs/PRE_RELEASE_AUDIT.md)
+- [Critical Flaw Remediation Report](docs/CRITICAL_FLAWS.md)
+- [Gap Analysis & Completeness Report](docs/GAP_ANALYSIS.md)
+- [Hackathon Submission & Judge Guide](docs/HACKATHON_SUBMISSION.md)
 
 ---
 

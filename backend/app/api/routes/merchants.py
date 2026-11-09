@@ -50,8 +50,15 @@ async def list_merchants(db: AsyncSession = Depends(get_db)):
         } for m in merchants
     ]
 
+from app.models.user import User, UserRole
+from app.api.deps import get_current_user, require_role
+
 @router.post("")
-async def onboard_merchant(payload: CreateMerchantRequest, db: AsyncSession = Depends(get_db)):
+async def onboard_merchant(
+    payload: CreateMerchantRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.MERCHANT_ADMIN, UserRole.PLATFORM_ADMIN))
+):
     stmt = select(Merchant).where(Merchant.slug == payload.slug)
     existing = (await db.execute(stmt)).scalar_one_or_none()
     if existing:
@@ -106,7 +113,8 @@ async def get_merchant(merchant_id: str, db: AsyncSession = Depends(get_db)):
 async def upload_merchant_policy(
     merchant_id: str,
     payload: MerchantPolicyUploadRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.MERCHANT_ADMIN, UserRole.PLATFORM_ADMIN))
 ):
     stmt = select(Merchant).where(Merchant.id == merchant_id)
     m = (await db.execute(stmt)).scalar_one_or_none()
@@ -126,10 +134,21 @@ async def upload_merchant_policy(
     await db.commit()
     await db.refresh(policy)
 
-    # Chunk and index into isolated tenant vector space
+    from app.models.policy import PolicyChunk
+
+    # Chunk and index into isolated tenant vector space (both in-memory and PostgreSQL)
     chunks = policy_chunker.chunk_document(payload.content, merchant_id=m.id, title=payload.title)
     for c in chunks:
         vector_store.add_chunk(c)
+        chunk_obj = PolicyChunk(
+            policy_id=policy.id,
+            merchant_id=m.id,
+            section_title=c.get("title", payload.title),
+            content=c["content"],
+            embedding=vector_store.generate_embedding(c["content"])
+        )
+        db.add(chunk_obj)
+    await db.commit()
 
     return {
         "id": policy.id,
@@ -140,7 +159,12 @@ async def upload_merchant_policy(
     }
 
 @router.post("/{merchant_id}/policies/{policy_id}/publish")
-async def publish_policy(merchant_id: str, policy_id: str, db: AsyncSession = Depends(get_db)):
+async def publish_policy(
+    merchant_id: str,
+    policy_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.MERCHANT_ADMIN, UserRole.PLATFORM_ADMIN))
+):
     stmt = select(MerchantPolicy).where(
         MerchantPolicy.id == policy_id,
         MerchantPolicy.merchant_id == merchant_id
