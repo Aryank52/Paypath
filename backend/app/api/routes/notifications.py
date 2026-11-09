@@ -88,3 +88,4 @@ async def mark_as_read(
     n.is_read = True
     await db.commit()
     return {"id": n.id, "is_read": True}
+

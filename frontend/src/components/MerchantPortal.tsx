@@ -224,3 +224,4 @@ export const MerchantPortal: React.FC = () => {
     </div>
   );
 };
+

@@ -43,3 +43,4 @@ class CompositeNotificationService:
         }
 
 notification_service = CompositeNotificationService()
+

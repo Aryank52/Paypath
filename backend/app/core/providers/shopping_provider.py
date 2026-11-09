@@ -76,3 +76,4 @@ def get_shopping_provider() -> BaseShoppingProvider:
     return DemoCatalogShoppingProvider()
 
 shopping_provider = get_shopping_provider()
+
