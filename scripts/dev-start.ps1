@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " PAYPATH — LOCAL ENVIRONMENT INITIALIZATION" -ForegroundColor Cyan
+Write-Host " PAYPATH - LOCAL ENVIRONMENT INITIALIZATION" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # 1. Verify PostgreSQL 16 Service / Port 5432
@@ -16,7 +16,7 @@ if (-not $pgConn) {
     $pgBin = "E:\postsql database\bin\postgres.exe"
     $pgData = "E:\postsql database\data"
     if (Test-Path $pgBin) {
-        Start-Process -FilePath $pgBin -ArgumentList "-D `"$pgData`"" -WindowStyle Hidden
+        Start-Process -FilePath $pgBin -ArgumentList @("-D", $pgData) -WindowStyle Hidden
         Start-Sleep -Seconds 5
     } else {
         Write-Warning "PostgreSQL binary not found at $pgBin. Please start PostgreSQL manually."
@@ -33,7 +33,7 @@ if (-not (Test-Path $pyExe)) {
 
 try {
     & $pyExe -m backend.scripts.verify_seed | Out-Null
-    Write-Host "  Database connection & seed validation: PASS" -ForegroundColor Green
+    Write-Host "  Database connection and seed validation: PASS" -ForegroundColor Green
 } catch {
     Write-Warning "  Database connection check failed: $_"
 }
@@ -42,8 +42,8 @@ try {
 Write-Host "[3/5] Starting FastAPI backend on http://127.0.0.1:8000..." -ForegroundColor Yellow
 $backendExisting = Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue
 if (-not $backendExisting) {
-    $backendDir = Join-Path $projectRoot "backend"
-    Start-Process -FilePath $pyExe -ArgumentList "-m uvicorn app.main:app --host 127.0.0.1 --port 8000" -WorkingDirectory $backendDir -WindowStyle Hidden
+    $serverScript = Join-Path $projectRoot "backend\run_server.py"
+    Start-Process -FilePath $pyExe -ArgumentList @($serverScript) -WorkingDirectory $projectRoot -WindowStyle Hidden
 }
 
 # 4. Wait for Backend Health
@@ -73,7 +73,7 @@ Write-Host "[5/5] Starting Vite frontend on http://127.0.0.1:5173..." -Foregroun
 $frontendExisting = Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue
 if (-not $frontendExisting) {
     $frontendDir = Join-Path $projectRoot "frontend"
-    Start-Process -FilePath "npm.cmd" -ArgumentList "run dev -- --host 127.0.0.1 --port 5173" -WorkingDirectory $frontendDir -WindowStyle Hidden
+    Start-Process -FilePath "npm.cmd" -ArgumentList @("run", "dev", "--", "--host", "127.0.0.1", "--port", "5173") -WorkingDirectory $frontendDir -WindowStyle Hidden
     Start-Sleep -Seconds 3
 }
 Write-Host "  Frontend development server running." -ForegroundColor Green

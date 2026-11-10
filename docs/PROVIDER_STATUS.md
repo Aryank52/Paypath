@@ -1,6 +1,6 @@
 # PayPath — External Provider Status & Integration Matrix
 
-**Document Version:** 2.0 (Phase 17 Certification)  
+**Document Version:** 2.1 (Phase 19 Certification)  
 **Date:** November 2026  
 **Status:** Certified Runtime Matrix  
 **System Motto:** *Understand. Decide. Act. Verify.*  
@@ -13,7 +13,7 @@ This matrix provides the exact, audited status of every external provider, datab
 
 | Provider | Environment Variable(s) | Configured | Connected | Runtime State | Fallback Mechanism | Audit Verdict |
 | :--- | :--- | :---: | :---: | :---: | :--- | :--- |
-| **PostgreSQL 16** | `DATABASE_URL` | **YES** | **YES** | **CONNECTED** | None (PostgreSQL 16 is single authoritative system of record: 20 tables, 304 records) | **FULLY CONNECTED & AUTHORITATIVE** |
+| **PostgreSQL 16** | `DATABASE_URL` | **YES** | **YES** | **CONNECTED** | None (PostgreSQL 16 is single authoritative system of record: 20 tables, 303 records) | **FULLY CONNECTED & AUTHORITATIVE** |
 | **PayPal Sandbox** | `PAYPAL_CLIENT_ID`<br>`PAYPAL_CLIENT_SECRET`<br>`PAYPAL_BASE_URL` | **PENDING** | **READY** | **NOT_CONFIGURED** | Deterministic mock gateway with full order/capture/refund simulation & read-back verifier | **INTEGRATED (READY FOR SANDBOX KEYS)** |
 | **LLM Engine (Gemini)** | `GEMINI_API_KEY`<br>`LLM_PROVIDER`<br>`LLM_MODEL` | **PENDING** | **READY** | **MOCK** | Deterministic structured intent/resolution extractor (`MockLLMProvider`) + safe failure handling | **INTEGRATED (READY FOR GEMINI KEY)** |
 | **RAG Vector Store** | PostgreSQL `policy_chunks` | **YES** | **YES** | **ACTIVE** | In-memory hydrated 128-dim normalized cosine index with `merchant_id` tenant isolation | **FULLY CONNECTED & ZERO-LEAK ISOLATED** |

@@ -4,7 +4,7 @@
 $ErrorActionPreference = "SilentlyContinue"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " PAYPATH — STOPPING LOCAL PROJECT PROCESSES" -ForegroundColor Cyan
+Write-Host " PAYPATH - STOPPING LOCAL PROJECT PROCESSES" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
 # Stop Backend (Port 8000)

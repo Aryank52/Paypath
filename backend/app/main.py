@@ -70,6 +70,12 @@ app = FastAPI(
     redoc_url=f"{settings.API_V1_STR}/redoc"
 )
 
+from fastapi.responses import RedirectResponse
+
+@app.get("/docs", include_in_schema=False)
+async def docs_redirect():
+    return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
+
 # CORS configuration locked down to trusted development and production origins
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -100,6 +106,18 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://www.paypal.com https://*.paypalobjects.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "img-src 'self' data: https: blob:; "
+        "connect-src 'self' http://localhost:* http://127.0.0.1:* https://api-m.sandbox.paypal.com https://api-m.paypal.com https://generativelanguage.googleapis.com; "
+        "frame-src 'self' https://www.sandbox.paypal.com https://www.paypal.com; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
+    )
     if settings.APP_ENV == "production" or request.url.scheme == "https":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response

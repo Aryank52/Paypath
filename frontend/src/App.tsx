@@ -13,6 +13,7 @@ import { AuditLogView } from './components/AuditLogView';
 import { SystemIntelligenceView } from './components/SystemIntelligenceView';
 import { AICommandCenterModal } from './components/AICommandCenterModal';
 import { LegalModal } from './components/LegalModal';
+import { CookieBanner } from './components/CookieBanner';
 import { useStore } from './store/useStore';
 
 export const App: React.FC = () => {
@@ -48,6 +49,9 @@ export const App: React.FC = () => {
 
       {/* Legal & Privacy Policy Modal */}
       <LegalModal />
+
+      {/* Essential Storage & Privacy Notice Banner */}
+      <CookieBanner />
     </div>
   );
 };
