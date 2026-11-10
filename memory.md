@@ -21,14 +21,22 @@
   - `test_policy_engine.py` (6 tests): Spend caps, user intent budgets, restricted categories, return windows, damage coverage, and refund limits.
   - `test_security_and_edge_cases.py` (4 tests): Prompt injection defense, refund boundary checks, idempotent refund replay, webhook deduplication.
   - `test_system_health_and_database.py` (3 tests): Multi-subsystem health aggregation endpoint, database table inventory inspection, seed idempotency across repeated runs.
-- **Frontend Production Build:** Vite build succeeded with 0 errors in 3.87s (`dist/assets/index-*.js`, `dist/assets/index-*.css`).
+- **Frontend Production Build:** React 19.3.1 + Vite 8.3.6. Vite build succeeded with 0 errors in 5.03s (`dist/assets/index-*.js`, `dist/assets/index-*.css`). Live Provider Status Matrix and ML Benchmark validation disclosures integrated into `SystemIntelligenceView.tsx`.
 - **Live Localhost Connectivity Verified:**
-  - FastAPI ASGI Uvicorn server: Running on `http://127.0.0.1:8000` (PID 29172). Health endpoint reports `{"status": "HEALTHY", "database": "PostgreSQL 16", "database_status": "CONNECTED"}`.
+  - FastAPI ASGI Uvicorn server: Running on `http://127.0.0.1:8000`. Health endpoint reports multi-subsystem states (`postgresql: healthy`, `paypal: not_configured`, `llm: mock`, `rag: healthy`, `ml: validated`, `agents: healthy`, `frontend: healthy`, `redis: not_configured`, `storage: healthy`, `notifications: healthy`).
   - Vite Dev server: Running on `http://127.0.0.1:5173`.
   - Reverse Proxy: Tested and verified `http://127.0.0.1:5173/api/v1/transactions` successfully returns seeded PostgreSQL transactions.
-- **Comprehensive PostgreSQL Seed:**
-  - 5 users, 5 merchants, 20 products, 5 structured policies with RAG chunks and vector embeddings, 68 transactions, 66 timeline events, 4 RECLAIM cases, 1 evidence record, 4 subscriptions, 8 notifications, 12 ML model versions, 5 ML predictions, 1 agent run, 3 tool calls.
-- **Documentation Suite:** Complete specifications in `docs/` (`ML_PIPELINE.md`, `DATA_ARCHITECTURE.md`, `SYSTEM_INTEGRATION.md`, `SEED_DATA.md`, `PRD.md`, `TRD.md`, `FLOW.md`, `BACKEND_SCHEMA.md`, `API_SPEC.md`).
+- **PostgreSQL 16 Authoritative State:**
+  - Exact 20 tables in public schema, 238 baseline records populated via idempotent seeder, 304 total live records verified in PostgreSQL post-certification (including 7 agent runs and 30 agent tool calls).
+- **Provider Multi-State Lifecycle Telemetry:**
+  - `llm_provider.py` and `client.py` report truth states (`NOT_CONFIGURED`, `MOCK`, `CONFIGURED`, `CONNECTED`, `ERROR`) instead of collapsed booleans.
+- **Verified Financial Safety & Invariant Replay:**
+  - `backend/scripts/test_paypal_invariants.py`: Verified order creation, capture, partial refund, exact replay idempotency, 409 Conflict on altered replay amounts, and 400 rejection on exceeding balance.
+- **Verified RAG Isolation & Grounded Citation:**
+  - `backend/scripts/test_rag_isolation.py`: Cosine similarity retrieval with 0 cross-merchant clause leaks across isolated tenants.
+- **Agent Trace Persistence:**
+  - `orchestrator.py` persists execution traces directly to PostgreSQL `agent_runs` and `agent_tool_calls` tables for both commerce and dispute recovery workflows.
+- **Documentation Suite:** Fully reconciled across `docs/FINAL_STATE_RECONCILIATION.md`, `docs/PROVIDER_STATUS.md`, `docs/RELEASE.md`, `docs/AGENT_SPEC.md`, `docs/DATA_ARCHITECTURE.md`, `docs/PRE_RELEASE_AUDIT.md`, `docs/GAP_ANALYSIS.md`, and `architecture.md`.
 
 ## 3. Key Design Conventions
 - **Dual-Phase Read-Back Verification:** Mutating actions (`capture_order`, `execute_refund`) query PayPal directly post-mutation to compare actual vs. expected amount, currency, and completion status.

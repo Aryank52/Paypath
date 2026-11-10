@@ -16,24 +16,26 @@ from app.services.seed_service import seed_demo_data
 def setup_test_env():
     settings.APP_ENV = "test"
     settings.DATABASE_URL = f"sqlite+aiosqlite:///{TEST_DB_FILE.as_posix()}"
-    yield
-    # Cleanup test db after test suite
     if TEST_DB_FILE.exists():
         try:
             TEST_DB_FILE.unlink()
         except Exception:
             pass
 
-@pytest.fixture(autouse=True)
-async def initialize_test_database():
-    """Initializes tables and seeds demo data for each test run."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    async with AsyncSessionLocal() as session:
-        await seed_demo_data(session)
+    async def _init():
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        async with AsyncSessionLocal() as session:
+            await seed_demo_data(session)
+        await engine.dispose()
+
+    asyncio.run(_init())
 
     yield
 
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # Cleanup test db after test suite
+    if TEST_DB_FILE.exists():
+        try:
+            TEST_DB_FILE.unlink()
+        except Exception:
+            pass

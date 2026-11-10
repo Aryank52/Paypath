@@ -15,6 +15,7 @@ from httpx import AsyncClient, ASGITransport
 
 from app.main import app
 from app.core.database import AsyncSessionLocal
+from app.models.transaction import Transaction
 from app.ml.features import (
     FEATURE_NAMES,
     extract_features_from_dict,
@@ -133,6 +134,25 @@ async def test_ml_api_endpoints():
         assert models_res.json()["count"] >= 2
 
         # 3. Transaction explainability on hero transaction
+        # Ensure transaction exists in test session
+        async with AsyncSessionLocal() as session:
+            tx_check = await session.get(Transaction, "tx_nova_anc_hero")
+            if not tx_check:
+                session.add(Transaction(
+                    id="tx_nova_anc_hero",
+                    user_id="usr_demo_shopper_01",
+                    merchant_id="mch_nova_electronics",
+                    merchant_name="Nova Electronics",
+                    amount=89.00,
+                    currency="USD",
+                    status="CAPTURED",
+                    verification_status="VERIFIED",
+                    risk_score=0.08,
+                    risk_level="LOW",
+                    item_description="NovaSound ANC Pro Wireless Headphones",
+                ))
+                await session.commit()
+
         exp_res = await client.get("/api/v1/ml/explain/tx_nova_anc_hero")
         assert exp_res.status_code == 200
         exp_data = exp_res.json()

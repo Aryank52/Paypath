@@ -44,7 +44,7 @@ async def test_idempotent_refund_replay():
 
         key = "idemp_test_replay_001"
         res1 = await service.execute_refund(
-            transaction_id="tx_nova_anc_hero",
+            transaction_id="tx_home_dinner_set",
             amount=65.00,
             currency="USD",
             reason="Idempotency test 1",
@@ -54,7 +54,7 @@ async def test_idempotent_refund_replay():
 
         # Replay same mutation with exact same key
         res2 = await service.execute_refund(
-            transaction_id="tx_nova_anc_hero",
+            transaction_id="tx_home_dinner_set",
             amount=65.00,
             currency="USD",
             reason="Idempotency test 2",

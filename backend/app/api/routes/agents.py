@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.database import get_db
 from app.agents.orchestrator import agent_orchestrator
 
 router = APIRouter(prefix="/agents", tags=["Agent Orchestrator"])
@@ -16,19 +18,26 @@ class AgentReclaimRunRequest(BaseModel):
     transaction_age_days: int = 14
 
 @router.post("/run-commerce")
-async def run_commerce_agents(payload: AgentCommerceRunRequest):
-    result = await agent_orchestrator.execute_commerce_workflow(payload.prompt)
+async def run_commerce_agents(
+    payload: AgentCommerceRunRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    result = await agent_orchestrator.execute_commerce_workflow(payload.prompt, db=db)
     return result
 
 @router.post("/run-reclaim")
-async def run_reclaim_agents(payload: AgentReclaimRunRequest):
+async def run_reclaim_agents(
+    payload: AgentReclaimRunRequest,
+    db: AsyncSession = Depends(get_db)
+):
     result = await agent_orchestrator.execute_reclaim_workflow(
         transaction_amount=payload.transaction_amount,
         merchant_name=payload.merchant_name,
         issue_type=payload.issue_type,
         user_description=payload.user_description,
         evidence_file_name=payload.evidence_file_name,
-        transaction_age_days=payload.transaction_age_days
+        transaction_age_days=payload.transaction_age_days,
+        db=db
     )
     return result
 

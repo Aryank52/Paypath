@@ -125,13 +125,15 @@ async def evaluate_reclaim_case(
     if not tx:
         raise HTTPException(status_code=404, detail="Associated transaction not found.")
 
-    # Run multi-agent RECLAIM workflow
+    # Run multi-agent RECLAIM workflow with trace persistence
     workflow = await agent_orchestrator.execute_reclaim_workflow(
         transaction_amount=float(tx.amount),
         merchant_name=tx.merchant_name,
         issue_type=case.issue_type,
         user_description=case.description,
-        evidence_file_name="headband_damage.jpg"
+        evidence_file_name="headband_damage.jpg",
+        db=db,
+        user_id=current_user.id
     )
 
     res = workflow["resolution"]

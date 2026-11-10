@@ -38,6 +38,7 @@ class MLInferenceService:
         self.xgb_model = None
         self.iso_model = None
         self.metadata = {}
+        self.feature_importances: Optional[List[float]] = None
         self.model_version = VERSION_TAG
         self._load_models()
 
@@ -54,6 +55,9 @@ class MLInferenceService:
                 if meta_path.exists():
                     with open(meta_path, "r", encoding="utf-8") as f:
                         self.metadata = json.load(f)
+                        self.feature_importances = self.metadata.get("feature_importances", None)
+                if not self.feature_importances:
+                    self.feature_importances = getattr(self.xgb_model, "cached_feature_importances_", None)
             except Exception as e:
                 # Log and prepare lazy initialization
                 self.xgb_model = None
@@ -73,6 +77,7 @@ class MLInferenceService:
             X_train, y_train, X_val, y_val, X_test, y_test = build_temporal_split(bootstrap)
             self.xgb_model, _ = train_xgboost_risk_model(X_train, y_train, X_val, y_val, X_test, y_test)
             self.iso_model, _ = train_isolation_forest_anomaly_model(X_train, X_test)
+            self.feature_importances = getattr(self.xgb_model, "cached_feature_importances_", None)
 
     def predict(
         self,
@@ -103,22 +108,23 @@ class MLInferenceService:
         
         # 4. Feature Contributions / Explainability
         # Combine model global feature importance with feature values
-        feature_importances = getattr(self.xgb_model, "feature_importances_", None)
-        contributions: List[Dict[str, Any]] = []
+        feature_importances = self.feature_importances or getattr(self.xgb_model, "cached_feature_importances_", None)
+        if feature_importances is None:
+            feature_importances = [1.0 / len(FEATURE_NAMES)] * len(FEATURE_NAMES)
         
-        if feature_importances is not None:
-            for feat_name, imp in zip(FEATURE_NAMES, feature_importances):
-                val = float(features.get(feat_name, 0.0))
-                # Heuristic impact: importance * scaled feature value
-                impact = round(float(imp * min(val, 5.0)), 4)
-                contributions.append({
-                    "feature": feat_name,
-                    "value": val,
-                    "global_importance": round(float(imp), 4),
-                    "impact": impact,
-                })
-            # Sort top drivers
-            contributions.sort(key=lambda x: x["impact"], reverse=True)
+        contributions: List[Dict[str, Any]] = []
+        for feat_name, imp in zip(FEATURE_NAMES, feature_importances):
+            val = float(features.get(feat_name, 0.0))
+            # Heuristic impact: importance * scaled feature value
+            impact = round(float(imp * min(val, 5.0)), 4)
+            contributions.append({
+                "feature": feat_name,
+                "value": val,
+                "global_importance": round(float(imp), 4),
+                "impact": impact,
+            })
+        # Sort top drivers
+        contributions.sort(key=lambda x: x["impact"], reverse=True)
         
         # 5. Determine Risk Level & Label
         if risk_score >= 0.85 or anomaly_score >= 0.85:

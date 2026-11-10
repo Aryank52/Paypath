@@ -21,6 +21,41 @@ class PayPalClient:
     def is_configured(self) -> bool:
         return bool(self.client_id and self.client_secret)
 
+    async def check_health(self) -> Dict[str, Any]:
+        """Performs non-destructive connectivity check against PayPal Sandbox."""
+        mode = getattr(settings, "PAYPAL_MODE", "sandbox")
+        if not self.is_configured:
+            return {
+                "status": "NOT_CONFIGURED",
+                "configured": False,
+                "connected": False,
+                "mode": mode,
+            }
+        
+        try:
+            token = await self.get_access_token()
+            if token and token != "mock-sandbox-access-token":
+                return {
+                    "status": "CONNECTED",
+                    "configured": True,
+                    "connected": True,
+                    "mode": mode,
+                }
+            return {
+                "status": "CONFIGURED",
+                "configured": True,
+                "connected": False,
+                "mode": mode,
+            }
+        except Exception as e:
+            return {
+                "status": "ERROR",
+                "configured": True,
+                "connected": False,
+                "error": str(e),
+                "mode": mode,
+            }
+
     async def get_access_token(self) -> str:
         """Retrieves and caches PayPal OAuth2 Bearer token."""
         if not self.is_configured:

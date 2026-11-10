@@ -7,18 +7,20 @@ Rather than relying on a monolithic prompt, PayPath decomposes commerce and paym
 
 ## 2. Agent Catalog & Responsibilities
 
-| Agent Name | Primary Responsibility | Input Schema | Output Schema | Permitted Tools |
-|---|---|---|---|---|
-| **IntentAgent** | Parse user natural language into structured purchasing/guard intent | `IntentParseRequest` | `StructuredIntent` | None |
-| **TransactionAgent** | Ingest & normalize PayPal records, build event timelines | `RawTransactionPayload` | `NormalizedTransaction` | `query_transactions`, `lookup_paypal` |
-| **ShoppingAgent** | Search & recommend products adhering to budget constraints | `ProductSearchRequest` | `ProductRecommendation` | `search_catalog`, `compare_items` |
-| **PolicyAgent** | Retrieve relevant merchant policy clauses with citations | `PolicyQueryRequest` | `PolicyCitations` | `search_policy_chunks` |
-| **EvidenceAgent** | Analyze uploaded images/receipts for damage classification | `EvidencePayload` | `EvidenceAnalysisResult` | `vision_classify_damage` |
-| **RiskAgent** | Detect anomalies, duplicate charges, and velocity spikes | `RiskEvaluationRequest`| `RiskScoreResult` | `scan_historical_transactions`|
-| **ResolutionAgent** | Formulate resolution proposal (Refund, Partial, Replace) | `ResolutionRequest` | `ResolutionProposal` | None (pure reasoning over context) |
-| **VerificationAgent**| Query PayPal post-action to independently confirm mutation | `VerificationRequest` | `VerificationResult` | `read_paypal_resource` |
-| **NotificationAgent**| Dispatch in-app alerts and notifications on milestones | `NotificationRequest` | `NotificationReceipt` | `emit_notification` |
-| **MerchantAgent** | Ingest, chunk, and maintain merchant rules and profiles | `MerchantOnboardRequest`| `MerchantProfile` | `index_policy_document` |
+The codebase implements **7 Specialized Micro-Agents** coordinated by the **AgentOrchestrator** (`backend/app/agents/`):
+
+| Agent Name | Source File | Primary Responsibility | Input Schema | Output Schema | Permitted Tools |
+|---|---|---|---|---|---|
+| **IntentAgent** | `intent_agent.py` | Parse natural language into structured purchasing/guard intent | `IntentParseRequest` | `StructuredIntent` | None |
+| **ShoppingAgent** | `shopping_agent.py` | Search & recommend products adhering to budget constraints | `ProductSearchRequest` | `ProductRecommendation` | `search_catalog`, `compare_items` |
+| **PolicyAgent** | `policy_agent.py` | Retrieve relevant merchant policy clauses with citations | `PolicyQueryRequest` | `PolicyCitations` | `search_policy_chunks` |
+| **EvidenceAgent** | `evidence_agent.py` | Analyze uploaded images/receipts for damage classification | `EvidencePayload` | `EvidenceAnalysisResult` | `vision_classify_damage` |
+| **RiskAgent** | `risk_agent.py` | Detect anomalies, duplicate charges, and velocity spikes | `RiskEvaluationRequest`| `RiskScoreResult` | `scan_historical_transactions`|
+| **ResolutionAgent** | `resolution_agent.py` | Formulate resolution proposal (Refund, Partial, Replace) | `ResolutionRequest` | `ResolutionProposal` | None (pure reasoning over context) |
+| **VerificationAgent**| `verification_agent.py`| Query PayPal post-action to independently confirm mutation | `VerificationRequest` | `VerificationResult` | `read_paypal_resource` |
+| **AgentOrchestrator**| `orchestrator.py` | Coordinates multi-agent commerce and RECLAIM workflows | `WorkflowRequest` | `WorkflowResult` | Agent dispatch & consensus |
+
+*(Note: Transaction persistence, notification dispatch, and merchant onboarding are performed by domain service layers `TransactionService`, `NotificationService`, and `MerchantService`.)*
 
 ---
 

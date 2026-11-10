@@ -17,8 +17,14 @@ async def test_mfa_lifecycle():
 @pytest.mark.asyncio
 async def test_password_reset_flow():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # Register dedicated user for password reset testing
+        await client.post("/api/v1/auth/register", json={
+            "email": "reset_flow_user@paypath.finance",
+            "password": "OriginalPassword123!",
+            "full_name": "Reset Flow User"
+        })
         # Request password reset
-        resp = await client.post("/api/v1/auth/password-reset/request", json={"email": "demo@paypath.finance"})
+        resp = await client.post("/api/v1/auth/password-reset/request", json={"email": "reset_flow_user@paypath.finance"})
         assert resp.status_code == 200
         data = resp.json()
         assert "dev_reset_token" in data
@@ -33,7 +39,7 @@ async def test_password_reset_flow():
 
         # Login with new password
         login_resp = await client.post("/api/v1/auth/login", json={
-            "email": "demo@paypath.finance",
+            "email": "reset_flow_user@paypath.finance",
             "password": "NewPayPath2026!Secure"
         })
         assert login_resp.status_code == 200

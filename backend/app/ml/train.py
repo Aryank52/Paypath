@@ -29,6 +29,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.models.base import Base
 from app.ml.datasets import build_temporal_split, generate_bootstrap_transactions
 from app.ml.features import FEATURE_NAMES
 from app.models.ml import MLModelVersion
@@ -89,6 +90,12 @@ def train_xgboost_risk_model(
     except Exception:
         pr_auc = 0.90
     
+    try:
+        importances = [float(x) for x in model.feature_importances_]
+    except Exception:
+        importances = [1.0 / len(FEATURE_NAMES)] * len(FEATURE_NAMES)
+    model.cached_feature_importances_ = importances
+
     metrics = {
         "accuracy": round(float(accuracy_score(y_test, preds)), 4),
         "precision": round(float(precision_score(y_test, preds, zero_division=0)), 4),
@@ -101,7 +108,7 @@ def train_xgboost_risk_model(
         "test_samples": int(len(X_test)),
         "feature_importances": {
             feat: round(float(imp), 4)
-            for feat, imp in zip(FEATURE_NAMES, model.feature_importances_)
+            for feat, imp in zip(FEATURE_NAMES, importances)
         },
     }
     
@@ -184,6 +191,7 @@ async def train_and_register_models(
             "version": VERSION_TAG,
             "feature_version": FEATURE_VERSION,
             "feature_names": FEATURE_NAMES,
+            "feature_importances": getattr(xgb_model, "cached_feature_importances_", None),
             "trained_at": datetime.now(timezone.utc).isoformat(),
             "xgboost_metrics": xgb_metrics,
             "isolation_forest_metrics": iso_metrics,
@@ -191,6 +199,8 @@ async def train_and_register_models(
     
     # 5. Persist to PostgreSQL if session is active
     if session:
+        conn = await session.connection()
+        await conn.run_sync(Base.metadata.create_all)
         # Deactivate existing active versions
         await session.execute(
             update(MLModelVersion)

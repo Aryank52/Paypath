@@ -21,7 +21,7 @@ To maintain absolute architectural honesty and production discipline, every feat
 ### A. Core Platform & Runtime Topology
 | Capability | Implementation | Status | Evidence / Verification |
 |---|---|---|---|
-| PostgreSQL 16 Authority | Async SQLAlchemy 2.0 + asyncpg | **PROVEN REAL** | 14 tables verified in live PostgreSQL 16 on port 5432. All tests pass against PostgreSQL engine. |
+| PostgreSQL 16 Authority | Async SQLAlchemy 2.0 + asyncpg | **PROVEN REAL** | 20 tables verified in live PostgreSQL 16 on port 5432. All tests pass against PostgreSQL engine. |
 | Alembic Migrations | Revision `0199be8d9868` | **PROVEN REAL** | Tested via clean database migration (`paypath_migration_test`) with all tables & constraints created. |
 | Zero SQLite Leakage | Strict configuration enforcement | **PROVEN REAL** | Health check reports `database: "PostgreSQL 16"`. SQLite removed from normal operations. |
 | Localhost Topology | FastAPI + Vite Dev + Reverse Proxy | **PROVEN REAL** | Backend on `:8000`, Frontend on `:5173`, Reverse proxy `/api/v1` verified live. |

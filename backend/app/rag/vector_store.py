@@ -84,7 +84,12 @@ class VectorStore:
 
         # Sort descending by similarity
         scored_results.sort(key=lambda x: x[0], reverse=True)
-        return [item[1] for item in scored_results[:top_k]]
+        top_items = []
+        for score, chunk in scored_results[:top_k]:
+            c_copy = dict(chunk)
+            c_copy["similarity_score"] = round(float(score), 4)
+            top_items.append(c_copy)
+        return top_items
 
 vector_store = VectorStore()
 

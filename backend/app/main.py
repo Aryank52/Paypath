@@ -29,23 +29,36 @@ from app.api.routes import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Initializing PayPath database tables...")
-    await init_db()
-    
-    # Ensure storage upload directory exists
-    upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads"))
-    os.makedirs(upload_dir, exist_ok=True)
+    # In test mode, table creation and seeding are managed by conftest fixtures to prevent concurrent race conditions
+    if settings.APP_ENV != "test":
+        logger.info("Initializing PayPath database tables...")
+        await init_db()
+        
+        # Ensure storage upload directory exists
+        upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads"))
+        os.makedirs(upload_dir, exist_ok=True)
 
-    async with AsyncSessionLocal() as session:
-        await seed_demo_data(session)
-        # Hydrate RAG vector store from authoritative PostgreSQL 16 policy_chunks
-        from app.rag.vector_store import vector_store
-        await vector_store.load_from_db(session)
-        logger.info(f"Loaded {len(vector_store.chunks)} policy chunks from PostgreSQL into vector store.")
-    
-    logger.info("PayPath backend startup sequence completed successfully.")
-    yield
-    logger.info("PayPath backend shutting down...")
+        async with AsyncSessionLocal() as session:
+            await seed_demo_data(session)
+            # Hydrate RAG vector store from authoritative PostgreSQL 16 policy_chunks
+            from app.rag.vector_store import vector_store
+            await vector_store.load_from_db(session)
+            logger.info(f"Loaded {len(vector_store.chunks)} policy chunks from PostgreSQL into vector store.")
+        
+        logger.info("PayPath backend startup sequence completed successfully.")
+        yield
+        logger.info("PayPath backend shutting down...")
+    else:
+        # In test mode, ensure upload dir and vector store are ready without competing with fixtures
+        upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads"))
+        os.makedirs(upload_dir, exist_ok=True)
+        try:
+            from app.rag.vector_store import vector_store
+            async with AsyncSessionLocal() as session:
+                await vector_store.load_from_db(session)
+        except Exception:
+            pass
+        yield
 
 app = FastAPI(
     title=settings.APP_NAME,

@@ -19,7 +19,7 @@ Supports safe idempotent re-runs, targeted verification, and forced reset.
 from datetime import datetime, timezone, timedelta
 import random
 from typing import Any, Dict, List, Optional
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, delete, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash
@@ -106,7 +106,11 @@ async def seed_demo_data(db: AsyncSession, force_reset: bool = False) -> Dict[st
         await reset_demo_data(db)
 
     # Check if primary demo user already exists
-    existing = await db.scalar(select(func.count(User.id)).where(User.id == USER_ALEX_ID))
+    existing = await db.scalar(
+        select(func.count(User.id)).where(
+            or_(User.id == USER_ALEX_ID, User.email == "demo@paypath.finance")
+        )
+    )
     if existing and not force_reset:
         logger.info("Demo data already seeded. Checking supplementary entities...")
         actions_count = await db.scalar(select(func.count(PaymentAction.id)))

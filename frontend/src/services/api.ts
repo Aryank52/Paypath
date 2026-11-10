@@ -221,6 +221,18 @@ export const api = {
     return res.json();
   },
 
+  getLineageTransactions: async () => {
+    const res = await fetch(`${API_BASE}/system/lineage-transactions`);
+    if (!res.ok) throw new Error('Failed to fetch lineage transactions');
+    return res.json();
+  },
+
+  getTransactionLineage: async (id: string) => {
+    const res = await fetch(`${API_BASE}/system/lineage/${id}`);
+    if (!res.ok) throw new Error('Failed to fetch transaction lineage');
+    return res.json();
+  },
+
   // Machine Learning
   getMLModels: async () => {
     const res = await fetch(`${API_BASE}/ml/models`);

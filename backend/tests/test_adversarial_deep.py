@@ -109,8 +109,14 @@ async def test_mfa_adversarial_flow():
 async def test_password_reset_replay_defense():
     """Verify that password reset tokens cannot be replayed after use."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # Register dedicated user for password reset testing to avoid mutating demo user
+        await client.post("/api/v1/auth/register", json={
+            "email": "replay_user@paypath.ai",
+            "password": "OriginalPassword123!",
+            "full_name": "Replay User"
+        })
         # Request reset
-        req = await client.post("/api/v1/auth/password-reset/request", json={"email": "demo@paypath.finance"})
+        req = await client.post("/api/v1/auth/password-reset/request", json={"email": "replay_user@paypath.ai"})
         assert req.status_code == 200
         token = req.json()["dev_reset_token"]
 
@@ -160,12 +166,8 @@ async def test_rbac_merchant_operations_denial():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         # Login as standard USER
         login_res = await client.post("/api/v1/auth/login", json={
-            "email": "demo@paypath.finance", "password": "NewStrongPassword123!"
+            "email": "demo@paypath.finance", "password": "paypath123!"
         })
-        if login_res.status_code != 200:
-            login_res = await client.post("/api/v1/auth/login", json={
-                "email": "demo@paypath.finance", "password": "paypath123!"
-            })
         user_token = login_res.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
 
@@ -185,7 +187,7 @@ async def test_rbac_merchant_operations_denial():
 async def test_financial_invariants_and_refund_boundaries():
     """Verify mathematical boundaries: negative refund, overflow refund, and idempotency conflicts."""
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        tx_id = "tx_nova_anc_hero" # $89.00 captured transaction
+        tx_id = "tx_travel_expired" # $385.00 captured transaction
 
         # 1. Zero or negative refund
         neg_res = await client.post("/api/v1/paycore/refunds", json={

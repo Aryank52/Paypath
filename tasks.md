@@ -158,3 +158,32 @@
 | T15.8 | Frontend System Architecture & Intelligence Visualization | P1 | T15.7 | DONE | Added `SystemIntelligenceView.tsx` with Live Architecture Overview, Database Inventory, Active ML Models, Interactive Simulator, and Governance panels. |
 | T15.9 | End-to-End System Integration Tests | P0 | T15.6, T15.7 | DONE | 39/39 passing tests (100% green pass rate) including `test_ml_pipeline.py`, `test_system_health_and_database.py`, and `test_paypath_end_to_end_integration.py`. |
 | T15.10 | Technical Documentation Suite Completion | P1 | T15.9 | DONE | Produced `docs/ML_PIPELINE.md`, `docs/DATA_ARCHITECTURE.md`, `docs/SYSTEM_INTEGRATION.md`, and `docs/SEED_DATA.md`. |
+
+---
+
+## Phase 16: Provider Activation, Runtime Reconciliation & Final Integration Certification (P0)
+| ID | Task | Priority | Dependencies | Status | Acceptance Criteria |
+|---|---|---|---|---|---|
+| T16.1 | Truth Baseline Reconciliation | P0 | T15.10 | DONE | Authoritative audit of database (20 tables, 238 records seeded, 263 total records persisted), frontend (React 19.3.1, Vite 8.3.6), backend (Python 3.12.10, FastAPI 0.115.8), agents (7 specialized + 1 orchestrator), RAG storage (PostgreSQL policy_chunks + in-memory hydrated vector store). Created `docs/FINAL_STATE_RECONCILIATION.md`. |
+| T16.2 | Truth-Based External Provider Status | P0 | T16.1 | DONE | Implemented fine-grained provider lifecycle states (`NOT_CONFIGURED`, `MOCK`, `CONFIGURED`, `CONNECTED`, `ERROR`) in `llm_provider.py`, `client.py`, and `system.py` without collapsing into boolean `true/false`. Created `docs/PROVIDER_STATUS.md`. |
+| T16.3 | LLM Structured Extraction Verification | P0 | T16.2 | DONE | Tested extraction for `"I bought headphones for $89 yesterday and they arrived damaged."` returning strict typed JSON (`intent`, `product`, `amount`, `currency`, `issue`). |
+| T16.4 | PayCore Invariants, Idempotency & Financial Safety Tests | P0 | T16.2 | DONE | Scripted and verified order creation, capture, partial refund, idempotent replay, 409 Conflict on altered replay amounts, and 400 rejection on exceeding balance in `test_paypal_invariants.py`. |
+| T16.5 | RAG Multi-Tenant Isolation Verification | P0 | T16.1 | DONE | Verified cosine similarity scoring on query for Nova Electronics headphones and confirmed 0 cross-merchant clause leaks across UrbanFit and MediaNest in `test_rag_isolation.py`. |
+| T16.6 | Cross-Documentation Reconciliation | P1 | T16.1 | DONE | Reconciled outdated metrics in `docs/AGENT_SPEC.md`, `docs/DATA_ARCHITECTURE.md`, `docs/PRE_RELEASE_AUDIT.md`, `docs/GAP_ANALYSIS.md`, and `architecture.md`. |
+| T16.7 | Frontend System Intelligence Lineage Explorer | P1 | T16.1 | DONE | Integrated 7-stage interactive Lineage Flow Explorer and updated table counts in `SystemIntelligenceView.tsx`. Clean build verified. |
+| T16.8 | Regression Verification & Certification Report | P0 | T16.4, T16.5 | DONE | 39/39 passing pytest suite, live health and database endpoints verified, certified as `INTEGRATED WITH REMAINING PROVIDER CONFIGURATION`. |
+
+---
+
+## Phase 17: Real Provider Activation, Live LLM/RAG Verification & PayPal Sandbox Certification (P0)
+| ID | Task | Priority | Dependencies | Status | Acceptance Criteria |
+|---|---|---|---|---|---|
+| T17.1 | Configuration & Secret Safety Audit | P0 | T16.8 | DONE | Verified `.env` is strictly untracked in Git (`git ls-files \| Select-String "\.env"` -> `.env.example`). No secrets printed in logs or documentation. |
+| T17.2 | Provider Multi-State Health Telemetry | P0 | T17.1 | DONE | Enhanced `system.py` to report granular subsystem states (`postgresql: healthy`, `paypal: not_configured`, `llm: mock`, `rag: healthy`, `ml: validated`, `agents: healthy`, `frontend: healthy`) and added `agents` component with `last_successful_check` timestamps. |
+| T17.3 | LLM Structured Extraction & Error Simulation | P0 | T17.2 | DONE | Tested extraction for `"I bought headphones for $89 yesterday and they arrived damaged."` returning strict schema. Simulated provider failure in strict mode and verified `LLMProviderError` halts execution with 0 downstream financial actions. |
+| T17.4 | Multi-Agent Workflow & PostgreSQL Trace Persistence | P0 | T17.2 | DONE | Added database trace persistence to `orchestrator.py` (`agent_runs` and `agent_tool_calls` recorded on every commerce and reclaim execution, growing to 7 runs and 30 tool calls). |
+| T17.5 | RAG Grounded Policy Citation & Boundary Enforcement | P0 | T17.2 | DONE | Verified policy retrieval for damaged goods (`Nova Electronics` transit damage clause up to 75% reimbursement) and verified passing through deterministic `PolicyEngine`. |
+| T17.6 | System Intelligence Live Provider Status & ML Disclosures | P1 | T17.2 | DONE | Updated `SystemIntelligenceView.tsx` with Live Provider Status Matrix (6 component cards) and added explicit ML benchmark validation disclosures (`paypath_temporal_split_v1`, 70/15/15 split, advisory risk signals). Clean build verified. |
+| T17.7 | Phase 17 Integration Certification Suite | P0 | T17.3, T17.4 | DONE | Executed `test_phase17_verification.py` (all 7 steps passed), 39/39 passing pytest tests, verified clean production build in 5.03s, certified as `INTEGRATED WITH REMAINING PROVIDER CONFIGURATION`. |
+
+

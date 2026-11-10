@@ -4,7 +4,7 @@
 **Date:** November 2026  
 **Core Motto:** *Understand. Decide. Act. Verify.*  
 **Authoritative Database:** PostgreSQL 16.15 on `127.0.0.1:5432/paypath`  
-**Test Suite:** 29 Automated Tests (100% Passing)  
+**Test Suite:** 39 Automated Tests (100% Passing)  
 
 ---
 
@@ -34,7 +34,7 @@
 - **STATUS:** VERIFIED & AUTHORITATIVE
 - **EVIDENCE:** 
   - PostgreSQL 16 is the single authoritative system of record.
-  - All 14 business tables (`users`, `merchants`, `merchant_policies`, `policy_chunks`, `transactions`, `transaction_events`, `payment_actions`, `reclaim_cases`, `reclaim_messages`, `reclaim_evidence`, `subscriptions`, `subscription_events`, `notifications`, `audit_logs`) verified in PostgreSQL schema.
+  - All 20 tables (`users`, `merchants`, `products`, `merchant_policies`, `policy_chunks`, `transactions`, `transaction_events`, `reclaim_cases`, `evidence`, `subscriptions`, `notifications`, `ml_model_versions`, `ml_predictions`, `agent_runs`, `agent_tool_calls`, `purchase_intents`, `payment_actions`, `payment_verifications`, `audit_logs`, `alembic_version`) verified in PostgreSQL 16 schema.
 - **TEST:** Direct query via PostgreSQL 16 binaries confirming foreign keys and table counts.
 - **RESULT:** Fully operational; zero reliance on SQLite during normal production runtime.
 - **REMAINING RISK:** None. Database credentials managed securely via environment settings.

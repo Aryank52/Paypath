@@ -17,9 +17,6 @@ from app.ml.train import train_and_register_models
 @pytest.mark.asyncio
 async def test_system_health_endpoint():
     """Verify system health aggregation endpoint returns connected components."""
-    async with AsyncSessionLocal() as session:
-        await train_and_register_models(session)
-
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         res = await client.get("/api/v1/system/health")
         assert res.status_code == 200

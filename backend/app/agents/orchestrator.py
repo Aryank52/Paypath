@@ -1,6 +1,7 @@
 import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.agents.intent_agent import intent_agent
 from app.agents.shopping_agent import shopping_agent
 from app.agents.policy_agent import policy_agent
@@ -15,9 +16,15 @@ class AgentOrchestrator:
     """
     Coordinates specialized agents using a typed execution trace.
     Guarantees deterministic policy boundary checks between agent recommendations and actions.
+    Persists audit traces to PostgreSQL agent_runs and agent_tool_calls.
     """
 
-    async def execute_commerce_workflow(self, user_prompt: str) -> Dict[str, Any]:
+    async def execute_commerce_workflow(
+        self,
+        user_prompt: str,
+        db: Optional[AsyncSession] = None,
+        user_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Runs Intent Agent -> Shopping Agent -> Risk Agent -> Policy Guard."""
         workflow_id = f"wf_comm_{uuid.uuid4().hex[:8]}"
         trace: List[Dict[str, Any]] = []
@@ -43,7 +50,21 @@ class AgentOrchestrator:
             details={"candidate_count": len(products), "top_pick": selected_product}
         ))
 
-        # 3. Policy Guard Pre-Check
+        # 3. Transaction Risk Assessment
+        if selected_product:
+            risk_eval = await risk_agent.evaluate_risk(
+                amount=selected_product["price"],
+                merchant_name=selected_product["merchant_name"]
+            )
+            trace.append(risk_agent.create_trace_step(
+                action="EVALUATE_TRANSACTION_RISK",
+                summary=f"Risk Agent evaluated proposal: {risk_eval['risk_level']} (score: {risk_eval['risk_score']:.2f}). Signals: {', '.join(risk_eval['signals'])}.",
+                details=risk_eval
+            ))
+        else:
+            risk_eval = None
+
+        # 4. Policy Guard Pre-Check
         if selected_product:
             guard_result = policy_engine.evaluate_purchase(
                 amount=selected_product["price"],
@@ -64,11 +85,39 @@ class AgentOrchestrator:
         else:
             guard_result = None
 
+        # Persist AgentRun and AgentToolCall records if database session is provided
+        if db:
+            try:
+                from app.models.agent import AgentRun, AgentToolCall
+                run_rec = AgentRun(
+                    id=workflow_id,
+                    agent_name="AgentOrchestrator",
+                    user_id=user_id,
+                    status="COMPLETED",
+                    decision_summary=f"Commerce workflow completed. Top pick: {selected_product['title'] if selected_product else 'None'}. Policy: {guard_result['decision'] if guard_result else 'N/A'}",
+                    meta_info={"workflow_type": "COMMERCE", "step_count": len(trace)}
+                )
+                db.add(run_rec)
+                for step in trace:
+                    db.add(AgentToolCall(
+                        run_id=workflow_id,
+                        agent_name=step.get("agent_name", "Orchestrator"),
+                        tool_name=step.get("action", "ACTION"),
+                        input_payload=step.get("details", {}) if isinstance(step.get("details"), dict) else {},
+                        output_payload={"summary": step.get("summary", "")},
+                        status=step.get("status", "SUCCESS"),
+                        is_approved="AUTO_ALLOWED"
+                    ))
+                await db.commit()
+            except Exception as e:
+                logger.error(f"Failed to persist commerce agent trace to DB: {e}")
+
         return {
             "workflow_id": workflow_id,
             "intent": intent_result,
             "products": products,
             "selected_product": selected_product,
+            "risk": risk_eval,
             "guard": guard_result,
             "trace": trace
         }
@@ -80,11 +129,13 @@ class AgentOrchestrator:
         issue_type: str,
         user_description: str,
         evidence_file_name: str,
-        transaction_age_days: int = 14
+        transaction_age_days: int = 14,
+        db: Optional[AsyncSession] = None,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Runs the RECLAIM Resolution Flow:
-        Evidence Agent -> Policy Agent (RAG) -> Resolution Agent -> Policy Engine Check.
+        Evidence Agent -> Policy Agent (RAG) -> Risk Agent -> Resolution Agent -> Policy Engine Check.
         """
         workflow_id = f"wf_reclaim_{uuid.uuid4().hex[:8]}"
         trace: List[Dict[str, Any]] = []
@@ -113,7 +164,18 @@ class AgentOrchestrator:
             details=policy_citation
         ))
 
-        # 3. AI Resolution Proposal
+        # 3. Dispute Risk Assessment
+        risk_eval = await risk_agent.evaluate_risk(
+            amount=transaction_amount,
+            merchant_name=merchant_name
+        )
+        trace.append(risk_agent.create_trace_step(
+            action="EVALUATE_DISPUTE_RISK",
+            summary=f"Risk Agent evaluated dispute claim: {risk_eval['risk_level']} (score: {risk_eval['risk_score']:.2f}).",
+            details=risk_eval
+        ))
+
+        # 4. AI Resolution Proposal
         resolution_proposal = await resolution_agent.propose_resolution(
             transaction_amount=transaction_amount,
             issue_type=issue_type,
@@ -126,7 +188,7 @@ class AgentOrchestrator:
             details=resolution_proposal
         ))
 
-        # 4. Deterministic Policy Verification
+        # 5. Deterministic Policy Verification
         policy_check = policy_engine.evaluate_refund(
             proposed_amount=resolution_proposal["recommended_amount"],
             transaction_amount=transaction_amount,
@@ -145,10 +207,38 @@ class AgentOrchestrator:
             "timestamp": datetime.now(timezone.utc).isoformat()
         })
 
+        # Persist AgentRun and AgentToolCall records if database session is provided
+        if db:
+            try:
+                from app.models.agent import AgentRun, AgentToolCall
+                run_rec = AgentRun(
+                    id=workflow_id,
+                    agent_name="AgentOrchestrator",
+                    user_id=user_id,
+                    status="COMPLETED",
+                    decision_summary=f"RECLAIM workflow completed. Resolution: {resolution_proposal.get('proposed_resolution')} for ${resolution_proposal.get('recommended_amount', 0):.2f}. Decision: {policy_check.get('decision')}",
+                    meta_info={"workflow_type": "RECLAIM", "issue_type": issue_type, "merchant": merchant_name, "step_count": len(trace)}
+                )
+                db.add(run_rec)
+                for step in trace:
+                    db.add(AgentToolCall(
+                        run_id=workflow_id,
+                        agent_name=step.get("agent_name", "Orchestrator"),
+                        tool_name=step.get("action", "ACTION"),
+                        input_payload=step.get("details", {}) if isinstance(step.get("details"), dict) else {},
+                        output_payload={"summary": step.get("summary", "")},
+                        status=step.get("status", "SUCCESS"),
+                        is_approved="AUTO_ALLOWED"
+                    ))
+                await db.commit()
+            except Exception as e:
+                logger.error(f"Failed to persist reclaim agent trace to DB: {e}")
+
         return {
             "workflow_id": workflow_id,
             "evidence": evidence_result,
             "policy": policy_citation,
+            "risk": risk_eval,
             "resolution": resolution_proposal,
             "policy_check": policy_check,
             "trace": trace
