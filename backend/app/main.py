@@ -76,6 +76,16 @@ from fastapi.responses import RedirectResponse
 async def docs_redirect():
     return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
 
+@app.get("/", include_in_schema=False)
+async def root_index():
+    return {
+        "service": settings.APP_NAME,
+        "status": "ONLINE",
+        "docs": f"{settings.API_V1_STR}/docs",
+        "health": f"{settings.API_V1_STR}/system/health",
+        "version": "1.0.0"
+    }
+
 # CORS configuration locked down to trusted development and production origins
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
