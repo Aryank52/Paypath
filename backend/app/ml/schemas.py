@@ -5,7 +5,7 @@ Strongly-typed contracts for training, feature extraction, evaluation, model reg
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class FeatureDriver(BaseModel):
     feature: str
@@ -45,8 +45,7 @@ class MLModelVersionResponse(BaseModel):
     status: str
     artifact_path: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class MLFeatureMetadata(BaseModel):
     name: str

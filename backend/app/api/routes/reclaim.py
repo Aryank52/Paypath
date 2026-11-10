@@ -16,6 +16,7 @@ from app.schemas.reclaim import (
 from app.agents.orchestrator import agent_orchestrator
 from app.paycore.service import PayCoreService
 from app.api.deps import get_current_user
+from app.core.rate_limiter import rate_limit
 
 router = APIRouter(prefix="/reclaim", tags=["RECLAIM Resolution Engine"])
 
@@ -61,7 +62,8 @@ async def upload_evidence(
     case_id: str,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    _limiter: bool = Depends(rate_limit(max_requests=15, window_seconds=60))
 ):
     stmt = select(ReclaimCase).where(
         ReclaimCase.id == case_id,
@@ -206,6 +208,15 @@ async def approve_and_execute_refund(
         "verification_status": refund_result["verification_status"],
         "badge": "Verified by PayPal"
     }
+
+@router.get("/cases", response_model=List[ReclaimCaseResponse])
+async def list_cases(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    stmt = select(ReclaimCase).where(ReclaimCase.user_id == current_user.id).order_by(ReclaimCase.created_at.desc())
+    cases = (await db.execute(stmt)).scalars().all()
+    return cases
 
 @router.get("/cases/{case_id}", response_model=ReclaimCaseResponse)
 async def get_case(

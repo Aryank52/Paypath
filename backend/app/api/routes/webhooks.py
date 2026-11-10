@@ -6,6 +6,7 @@ from sqlalchemy import select
 from app.core.database import get_db
 from app.models.transaction import Transaction, TransactionEvent
 from app.core.observability import logger, log_audit_event
+from app.core.rate_limiter import rate_limit
 
 router = APIRouter(prefix="/paycore/webhooks", tags=["PayPal Webhooks Ingestion"])
 
@@ -20,7 +21,8 @@ async def handle_paypal_webhook(
     paypal_cert_url: str = Header(None, alias="PAYPAL-CERT-URL"),
     paypal_transmission_sig: str = Header(None, alias="PAYPAL-TRANSMISSION-SIG"),
     paypal_transmission_time: str = Header(None, alias="PAYPAL-TRANSMISSION-TIME"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _limiter: bool = Depends(rate_limit(max_requests=60, window_seconds=60))
 ):
     """
     Idempotent, verified PayPal Webhook receiver:

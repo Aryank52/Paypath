@@ -1,6 +1,6 @@
 import React from 'react';
-import { ShieldCheck, Command, Bell, Search, UserCheck, Store } from 'lucide-react';
-import { useStore } from '../store/useStore';
+import { ShieldCheck, Command, Bell, Search, UserCheck, Store, Server } from 'lucide-react';
+import { useStore, UserPersona } from '../store/useStore';
 
 export const Navbar: React.FC = () => {
   const isCommandCenterOpen = useStore((state) => state.isCommandCenterOpen);
@@ -10,10 +10,12 @@ export const Navbar: React.FC = () => {
   const setPersona = useStore((state) => state.setPersona);
   const setActiveTab = useStore((state) => state.setActiveTab);
 
-  const togglePersona = (newPersona: 'SHOPPER' | 'MERCHANT_ADMIN') => {
+  const togglePersona = (newPersona: UserPersona) => {
     setPersona(newPersona);
     if (newPersona === 'MERCHANT_ADMIN') {
       setActiveTab('merchants');
+    } else if (newPersona === 'PLATFORM_ADMIN') {
+      setActiveTab('system');
     } else {
       setActiveTab('overview');
     }
@@ -79,6 +81,17 @@ export const Navbar: React.FC = () => {
           >
             <Store className="w-3 h-3" />
             <span>Merchant Admin</span>
+          </button>
+          <button
+            onClick={() => togglePersona('PLATFORM_ADMIN')}
+            className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+              persona === 'PLATFORM_ADMIN'
+                ? 'bg-purple-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Server className="w-3 h-3" />
+            <span>Platform Admin</span>
           </button>
         </div>
 

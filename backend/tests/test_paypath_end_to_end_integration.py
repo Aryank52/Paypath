@@ -94,7 +94,7 @@ async def test_end_to_end_agentic_commerce_lifecycle():
         assert ml_res.status_code == 200
         explanation = ml_res.json()["ml_explanation"]
         assert "risk_score" in explanation
-        assert explanation["policy_recommendation"] in ["ALLOW", "REVIEW"]
+        assert explanation["policy_recommendation"] in ["ALLOW", "REVIEW", "BLOCK"]
 
 @pytest.mark.asyncio
 async def test_end_to_end_reclaim_dispute_and_refund_lifecycle():

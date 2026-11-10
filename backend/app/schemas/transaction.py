@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class TransactionEventResponse(BaseModel):
     id: str
@@ -10,8 +10,7 @@ class TransactionEventResponse(BaseModel):
     payload: Optional[Dict[str, Any]] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TransactionResponse(BaseModel):
     id: str
@@ -33,8 +32,7 @@ class TransactionResponse(BaseModel):
     events: Optional[List[TransactionEventResponse]] = None
     meta_info: Optional[Dict[str, Any]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class SubscriptionResponse(BaseModel):
     id: str
@@ -46,6 +44,5 @@ class SubscriptionResponse(BaseModel):
     next_expected_date: Optional[str] = None
     status: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 

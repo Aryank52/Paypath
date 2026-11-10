@@ -15,6 +15,7 @@ from app.schemas.paycore import (
     VerificationResultSchema
 )
 from app.api.deps import get_current_user
+from app.core.rate_limiter import rate_limit
 
 router = APIRouter(prefix="/paycore", tags=["PayCore"])
 
@@ -22,7 +23,8 @@ router = APIRouter(prefix="/paycore", tags=["PayCore"])
 async def create_order(
     payload: CreateOrderRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    _limiter: bool = Depends(rate_limit(max_requests=30, window_seconds=60))
 ):
     service = PayCoreService(db)
     result = await service.create_order(
@@ -46,7 +48,8 @@ async def create_order(
 async def capture_order(
     payload: CaptureOrderRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    _limiter: bool = Depends(rate_limit(max_requests=30, window_seconds=60))
 ):
     service = PayCoreService(db)
     result = await service.capture_order(
@@ -68,7 +71,8 @@ async def refund_payment(
     payload: RefundRequest,
     x_idempotency_key: Optional[str] = Header(None),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    _limiter: bool = Depends(rate_limit(max_requests=20, window_seconds=60))
 ):
     service = PayCoreService(db)
     result = await service.execute_refund(

@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class PolicyUploadRequest(BaseModel):
     merchant_id: str
@@ -33,6 +33,5 @@ class PolicyResponse(BaseModel):
     rules_json: Optional[Dict[str, Any]] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 

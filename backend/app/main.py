@@ -70,14 +70,39 @@ app = FastAPI(
     redoc_url=f"{settings.API_V1_STR}/redoc"
 )
 
-# CORS middleware for React / Vite
+# CORS configuration locked down to trusted development and production origins
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+if getattr(settings, "ALLOWED_ORIGINS", None):
+    extra_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
+    ALLOWED_ORIGINS.extend(extra_origins)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Production-grade Security Headers Middleware
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    if settings.APP_ENV == "production" or request.url.scheme == "https":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 # Global Structured Error Handler
 @app.exception_handler(Exception)

@@ -43,6 +43,14 @@ def verify_token(token: str) -> Optional[dict]:
     except Exception:
         return None
 
+def is_token_revoked(token: str) -> bool:
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        jti = payload.get("jti")
+        return bool(jti and jti in _REVOKED_TOKENS)
+    except Exception:
+        return False
+
 def revoke_token(token: str) -> bool:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])

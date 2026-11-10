@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from app.models.user import UserRole
 
 class UserRegisterRequest(BaseModel):
@@ -45,5 +45,4 @@ class UserResponse(BaseModel):
     is_active: bool
     mfa_enabled: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

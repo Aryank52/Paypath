@@ -14,12 +14,17 @@ from app.schemas.auth import (
     MFASetupResponse, MFAVerifyRequest, PasswordResetRequest, PasswordResetConfirm
 )
 from app.api.deps import get_current_user
+from app.core.rate_limiter import rate_limit
 from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/register", response_model=UserResponse)
-async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_db)):
+async def register(
+    payload: UserRegisterRequest,
+    db: AsyncSession = Depends(get_db),
+    _limiter: bool = Depends(rate_limit(max_requests=10, window_seconds=60))
+):
     stmt = select(User).where(User.email == payload.email)
     existing = (await db.execute(stmt)).scalar_one_or_none()
     if existing:
@@ -38,7 +43,11 @@ async def register(payload: UserRegisterRequest, db: AsyncSession = Depends(get_
     return user
 
 @router.post("/login", response_model=TokenResponse)
-async def login(payload: UserLoginRequest, db: AsyncSession = Depends(get_db)):
+async def login(
+    payload: UserLoginRequest,
+    db: AsyncSession = Depends(get_db),
+    _limiter: bool = Depends(rate_limit(max_requests=15, window_seconds=60))
+):
     stmt = select(User).where(User.email == payload.email)
     user = (await db.execute(stmt)).scalar_one_or_none()
     if not user or not verify_password(payload.password, user.hashed_password):
@@ -142,7 +151,8 @@ async def disable_mfa(
 @router.post("/password-reset/request")
 async def request_password_reset(
     payload: PasswordResetRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _limiter: bool = Depends(rate_limit(max_requests=5, window_seconds=60))
 ):
     """Generate secure password reset token."""
     stmt = select(User).where(User.email == payload.email)
@@ -164,7 +174,8 @@ async def request_password_reset(
 @router.post("/password-reset/confirm")
 async def confirm_password_reset(
     payload: PasswordResetConfirm,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    _limiter: bool = Depends(rate_limit(max_requests=10, window_seconds=60))
 ):
     """Verify reset token and update password."""
     hashed_token = hash_reset_token(payload.token)

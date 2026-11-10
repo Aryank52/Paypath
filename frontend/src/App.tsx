@@ -12,6 +12,7 @@ import { AgentTraceVisualizer } from './components/AgentTraceVisualizer';
 import { AuditLogView } from './components/AuditLogView';
 import { SystemIntelligenceView } from './components/SystemIntelligenceView';
 import { AICommandCenterModal } from './components/AICommandCenterModal';
+import { LegalModal } from './components/LegalModal';
 import { useStore } from './store/useStore';
 
 export const App: React.FC = () => {
@@ -44,6 +45,9 @@ export const App: React.FC = () => {
 
       {/* Global AI Command Modal with Voice Recognition */}
       <AICommandCenterModal />
+
+      {/* Legal & Privacy Policy Modal */}
+      <LegalModal />
     </div>
   );
 };

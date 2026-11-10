@@ -126,22 +126,37 @@ export const TransactionExplorer: React.FC = () => {
     {
       field: 'ai_summary',
       headerName: 'AI Intelligence Insight',
-      minWidth: 260,
+      minWidth: 240,
       flex: 2,
       cellRenderer: (params: any) => (
-        <span className="text-slate-400 text-xs italic line-clamp-1">{params.value}</span>
+        <span className="text-slate-400 text-xs italic line-clamp-1">{params.value || 'Normal pattern'}</span>
       )
     },
     {
-      headerName: 'Action',
+      field: 'source_type',
+      headerName: 'Source',
       width: 130,
+      cellRenderer: (params: any) => {
+        const isSynthetic = params.value === 'DEMO_SEED' || (params.data?.id && params.data.id.startsWith('tx_'));
+        return (
+          <span className={`text-[9px] uppercase px-2 py-0.5 rounded-full font-mono font-medium ${
+            isSynthetic ? 'bg-slate-800 text-slate-400 border border-slate-700' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+          }`}>
+            {isSynthetic ? 'DEMO_SEED' : 'PAYPAL_SANDBOX'}
+          </span>
+        );
+      }
+    },
+    {
+      headerName: 'Action',
+      width: 150,
       cellRenderer: (params: any) => (
         <button
           onClick={() => setSelectedTransaction(params.data)}
-          className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs border border-slate-700 transition-colors"
+          className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs border border-slate-700 transition-colors cursor-pointer"
         >
           <Eye className="w-3 h-3 text-indigo-400" />
-          <span>Lifecycle</span>
+          <span>View Intelligence</span>
         </button>
       )
     }

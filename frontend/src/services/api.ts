@@ -5,7 +5,6 @@ import {
   EvidenceItem,
   Product,
   GuardEvaluation,
-  AgentTraceStep,
   SubscriptionItem,
   DuplicateSignal
 } from '../types';
@@ -158,6 +157,12 @@ export const api = {
       method: 'POST'
     });
     if (!res.ok) throw new Error('Failed to approve and execute refund');
+    return res.json();
+  },
+
+  getReclaimCases: async (): Promise<ReclaimCase[]> => {
+    const res = await fetch(`${API_BASE}/reclaim/cases`);
+    if (!res.ok) throw new Error('Failed to fetch reclaim cases');
     return res.json();
   },
 

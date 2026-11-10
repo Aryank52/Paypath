@@ -16,13 +16,13 @@ from app.core.observability import logger
 router = APIRouter(prefix="/merchants", tags=["Multi-Merchant Portal & Policy Simulation"])
 
 class CreateMerchantRequest(BaseModel):
-    name: str = Field(..., example="EcoTech Living")
-    slug: str = Field(..., example="ecotech-living")
+    name: str = Field(..., examples=["EcoTech Living"])
+    slug: str = Field(..., examples=["ecotech-living"])
     support_email: Optional[str] = "support@ecotech.demo"
     paypal_merchant_id: Optional[str] = "MCH-ECOTECH-SANDBOX"
 
 class MerchantPolicyUploadRequest(BaseModel):
-    title: str = Field(..., example="EcoTech 45-Day Warranty & Defect Policy")
+    title: str = Field(..., examples=["EcoTech 45-Day Warranty & Defect Policy"])
     policy_type: str = Field(default="REFUND")
     content: str = Field(..., description="Markdown or text policy clauses")
     rules: Optional[Dict[str, Any]] = None

@@ -1,6 +1,6 @@
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 class CreateReclaimCaseRequest(BaseModel):
     transaction_id: str
@@ -41,6 +41,5 @@ class ReclaimCaseResponse(BaseModel):
     created_at: datetime
     evidence_items: Optional[List[EvidenceAnalysisResult]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
