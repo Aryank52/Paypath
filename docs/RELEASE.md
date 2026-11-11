@@ -9,7 +9,7 @@
 ## 1. Release Executive Summary
 
 **PayPath 1.1.0** represents the definitive, production-hardened release of the AI Transaction Intelligence, Agentic Commerce & Payment Action Platform. This release unifies:
-* **Real PostgreSQL 16.15 Persistence**: 20 normalized relational tables, 303 active records, Alembic stamped at `head`.
+* **Real PostgreSQL 16.15 Persistence**: 21 normalized relational tables (20 application domain tables + 1 alembic migration metadata table), 303 active records, Alembic stamped at `head`.
 * **PayCore Payment Gateway**: Direct integration with PayPal REST API v2 (`Orders v2`, `Payments v2`, `Captures v2`) with secondary independent read-back verification and financial invariants.
 * **Deterministic Policy Engine**: Four-state policy gate (`ALLOW`, `REVIEW`, `BLOCK`, `ESCALATE`) strictly constraining all AI/ML advisory proposals.
 * **Tenant-Isolated RAG Vector Store**: 19 policy clauses indexed in `pgvector` with 0 cross-merchant telemetry leakage.

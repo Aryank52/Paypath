@@ -35,6 +35,12 @@ services:
         sync: false
       - key: SUPABASE_STORAGE_BUCKET
         value: paypath-evidence
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
 
   # PayPath React Frontend
   - type: web

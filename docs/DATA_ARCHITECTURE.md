@@ -38,7 +38,7 @@ erDiagram
 
 ---
 
-## 3. Database Table Catalog (20 Core Tables)
+## 3. Database Table Catalog (20 Application Domain Tables + 1 Alembic Metadata Table = 21 Authoritative Tables)
 
 ### 3.1 Identity & Access Management
 1. **`users`**
@@ -110,6 +110,15 @@ erDiagram
 19. **`notifications`**
     - High-priority transaction alerts, policy violations, and approval requests.
     - Fields: `id`, `user_id`, `type`, `title`, `message`, `is_read`, `action_url`, `created_at`.
+
+### 3.8 Gateway Ingestion & Schema Migrations
+20. **`webhook_events`**
+    - Immutable event deduplication store for asynchronous gateway signals (e.g. PayPal Webhooks).
+    - Prevents replay attacks via unique constraint on `paypal_event_id` and raw SHA-256 payload hashing.
+    - Fields: `id`, `paypal_event_id`, `transmission_id`, `event_type`, `received_at`, `processed_at`, `status`, `payload_hash`, `processing_error`.
+21. **`alembic_version`**
+    - Authoritative database schema migration version tracking table.
+    - Fields: `version_num`.
 
 ---
 

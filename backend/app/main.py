@@ -87,17 +87,34 @@ async def root_index():
     }
 
 # CORS configuration locked down to trusted development and production origins
-ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
-if getattr(settings, "ALLOWED_ORIGINS", None):
-    extra_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
-    ALLOWED_ORIGINS.extend(extra_origins)
+if settings.APP_ENV == "production":
+    # In production: strictly enforce trusted HTTPS domains; eliminate all localhost and development origins
+    ALLOWED_ORIGINS = [
+        "https://paypath.finance",
+        "https://www.paypath.finance",
+    ]
+    if getattr(settings, "ALLOWED_ORIGINS", None):
+        extra_origins = [
+            o.strip() for o in settings.ALLOWED_ORIGINS.split(",") 
+            if o.strip() and o.strip().startswith("https://") and "localhost" not in o and "127.0.0.1" not in o
+        ]
+        ALLOWED_ORIGINS.extend(extra_origins)
+else:
+    # In development/test: allow local development servers
+    ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+    if getattr(settings, "ALLOWED_ORIGINS", None):
+        extra_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
+        ALLOWED_ORIGINS.extend(extra_origins)
+
+# Ensure no wildcard origins are ever present
+ALLOWED_ORIGINS = [o for o in set(ALLOWED_ORIGINS) if o != "*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -116,13 +133,20 @@ async def security_headers_middleware(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["X-XSS-Protection"] = "1; mode=block"
+
+    connect_sources = (
+        "'self' https://api-m.sandbox.paypal.com https://api-m.paypal.com https://generativelanguage.googleapis.com"
+    )
+    if settings.APP_ENV != "production":
+        connect_sources += " http://localhost:* http://127.0.0.1:*"
+
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' https://www.paypal.com https://*.paypalobjects.com; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com data:; "
         "img-src 'self' data: https: blob:; "
-        "connect-src 'self' http://localhost:* http://127.0.0.1:* https://api-m.sandbox.paypal.com https://api-m.paypal.com https://generativelanguage.googleapis.com; "
+        f"connect-src {connect_sources}; "
         "frame-src 'self' https://www.sandbox.paypal.com https://www.paypal.com; "
         "object-src 'none'; "
         "base-uri 'self'; "

@@ -18,11 +18,11 @@ This document reconciles all documentation, specifications, and previous audit r
 | Dimension | Previous Stale References | Authoritative Verified Runtime Truth |
 | :--- | :--- | :--- |
 | **Engine** | PostgreSQL 16 (or SQLite in older phases) | **PostgreSQL 16.15** running on `127.0.0.1:5432`, Database: `paypath`. SQLite is strictly isolated to unit tests (`APP_ENV=test`). |
-| **Table Count** | 14, 15, or 19 tables in early drafts | **Exactly 20 Relational Tables** verified directly via `psql` and `/api/v1/system/database`. |
+| **Table Count** | 14, 15, 19, or 20 tables in earlier drafts | **Exactly 21 Relational Tables** (20 Application Domain Tables + 1 Alembic Metadata Table `alembic_version`) verified directly via `psql` and `/api/v1/system/database`. |
 | **Record Count** | 200, 226, or 246 records in early drafts | **238 Baseline Seed Records / 304 Total Live Persisted Records** verified directly in PostgreSQL 16 (including 7 agent runs and 30 tool calls). |
 | **Seed Idempotency** | Partial | **100% Idempotent**: `python -m backend.scripts.seed` verifies primary keys and supplementary records, resulting in 0 duplicate rows upon re-execution. |
 
-### Complete 20-Table Inventory Breakdown:
+### Complete 21-Table Inventory Breakdown:
 1. `users` (5 rows) — Shoppers, Merchant Admin, Platform Admin
 2. `merchants` (5 rows) — Electronics, Fitness, Travel, Home, Media
 3. `products` (20 rows) — Catalog items mapped across all 5 merchants
@@ -30,19 +30,20 @@ This document reconciles all documentation, specifications, and previous audit r
 5. `policy_chunks` (19 rows) — Granular policy clauses with 128-dimensional vectors
 6. `transactions` (68 rows) — 5 hero transactions + 63 synthetic transactions
 7. `transaction_events` (66 rows) — Event timeline entries
-8. `reclaim_cases` (4 rows) — Dispute cases (hero damage, duplicate, expired, missing)
-9. `evidence` (1 rows) — Damage proof for hero case
-10. `subscriptions` (4 rows) — Active recurring subscriptions
-11. `notifications` (8 rows) — User and administrative notifications
-12. `ml_model_versions` (14 rows) — Model registry versions (XGBoost + Isolation Forest)
-13. `ml_predictions` (5 rows) — Pre-computed risk & anomaly predictions
-14. `agent_runs` (1 rows) — Multi-agent execution spans
-15. `agent_tool_calls` (3 rows) — Granular tool calls (Vision, RAG, Policy Guard)
-16. `purchase_intents` (2 rows) — User shopping & streaming intents
-17. `payment_actions` (5 rows) — Idempotent order, capture, and refund records
-18. `payment_verifications` (5 rows) — Dual-phase read-back verification records
+8. `purchase_intents` (2 rows) — User shopping & streaming intents
+9. `payment_actions` (5 rows) — Idempotent order, capture, and refund records
+10. `payment_verifications` (5 rows) — Dual-phase read-back verification records
+11. `reclaim_cases` (4 rows) — Dispute cases (hero damage, duplicate, expired, missing)
+12. `evidence` (1 rows) — Damage proof for hero case
+13. `subscriptions` (4 rows) — Active recurring subscriptions
+14. `notifications` (8 rows) — User and administrative notifications
+15. `ml_model_versions` (14 rows) — Model registry versions (XGBoost + Isolation Forest)
+16. `ml_predictions` (5 rows) — Pre-computed risk & anomaly predictions
+17. `agent_runs` (1 rows) — Multi-agent execution spans
+18. `agent_tool_calls` (3 rows) — Granular tool calls (Vision, RAG, Policy Guard)
 19. `audit_logs` (6 rows) — Immutable compliance and security logs
-20. `alembic_version` (1 row) — Schema migration stamp
+20. `webhook_events` (0+ rows) — Cryptographic webhook idempotency and deduplication log
+21. `alembic_version` (1 row) — Schema migration stamp
 
 ---
 

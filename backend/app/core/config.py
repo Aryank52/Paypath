@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     SUPABASE_KEY: Optional[str] = None
     SUPABASE_STORAGE_BUCKET: str = "paypath-evidence"
     
+    # CORS Configuration
+    ALLOWED_ORIGINS: Optional[str] = None
+    
     # PayPal Sandbox
     PAYPAL_CLIENT_ID: Optional[str] = None
     PAYPAL_CLIENT_SECRET: Optional[str] = None

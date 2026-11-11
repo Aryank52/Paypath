@@ -20,7 +20,7 @@ from app.models import (
     Transaction, TransactionEvent, ReclaimCase, Evidence,
     Subscription, Notification, MLModelVersion, MLPrediction,
     AgentRun, AgentToolCall, PurchaseIntent, PaymentAction,
-    PaymentVerification, AuditLog
+    PaymentVerification, AuditLog, WebhookEvent
 )
 from app.rag.vector_store import vector_store
 from app.ml.inference import get_ml_service
@@ -216,6 +216,7 @@ async def get_database_inventory(db: AsyncSession = Depends(get_db)) -> Dict[str
         ("payment_actions", PaymentAction),
         ("payment_verifications", PaymentVerification),
         ("audit_logs", AuditLog),
+        ("webhook_events", WebhookEvent),
     ]
 
     inventory: List[Dict[str, Any]] = []
@@ -238,10 +239,25 @@ async def get_database_inventory(db: AsyncSession = Depends(get_db)) -> Dict[str
                 "status": f"ERROR: {str(e)}",
             })
 
+    # Include alembic_version migration metadata table
+    try:
+        alembic_res = await db.execute(text("SELECT version_num FROM alembic_version"))
+        alembic_ver = alembic_res.scalar()
+        if alembic_ver is not None:
+            inventory.append({
+                "table_name": "alembic_version",
+                "row_count": 1,
+                "status": f"HEALTHY ({alembic_ver})",
+            })
+            total_records += 1
+    except Exception:
+        pass
+
     return {
         "database": "paypath",
         "engine": "PostgreSQL 16",
-        "total_tables": len(table_models),
+        "application_tables": len(table_models),
+        "total_tables": len(inventory),
         "total_records": total_records,
         "tables": inventory,
         "timestamp": datetime.now(timezone.utc).isoformat(),
