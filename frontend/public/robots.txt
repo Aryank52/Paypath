@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
-Disallow: /api/
+Disallow: /dashboard/
 Disallow: /admin/
 Disallow: /system/
-Sitemap: https://paypath.app/sitemap.xml
+Disallow: /api/
+
+Sitemap: https://paypath.finance/sitemap.xml

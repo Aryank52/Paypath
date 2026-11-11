@@ -6,6 +6,7 @@ class UserRegisterRequest(BaseModel):
     email: EmailStr
     password: str
     full_name: Optional[str] = None
+    mobile_number: Optional[str] = None
     role: Optional[UserRole] = UserRole.USER
 
 class UserLoginRequest(BaseModel):
@@ -37,12 +38,30 @@ class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str
 
+class EmailVerificationRequest(BaseModel):
+    token: str
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
+
+class UserProfileUpdateRequest(BaseModel):
+    full_name: Optional[str] = None
+    mobile_number: Optional[str] = None
+    preferred_currency: Optional[str] = None
+
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
 class UserResponse(BaseModel):
     id: str
     email: str
     full_name: Optional[str] = None
+    mobile_number: Optional[str] = None
+    preferred_currency: str = "USD"
     role: str
     is_active: bool
+    email_verified: bool = False
     mfa_enabled: bool = False
 
     model_config = ConfigDict(from_attributes=True)

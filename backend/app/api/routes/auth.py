@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -11,10 +11,13 @@ from app.core.security import (
 from app.models.user import User, UserRole
 from app.schemas.auth import (
     UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse,
-    MFASetupResponse, MFAVerifyRequest, PasswordResetRequest, PasswordResetConfirm
+    MFASetupResponse, MFAVerifyRequest, PasswordResetRequest, PasswordResetConfirm,
+    EmailVerificationRequest, ResendVerificationRequest, UserProfileUpdateRequest,
+    PasswordChangeRequest
 )
 from app.api.deps import get_current_user
 from app.core.rate_limiter import rate_limit
+from app.core.providers.notification_provider import notification_service
 from typing import Optional
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -30,16 +33,23 @@ async def register(
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered.")
 
+    raw_vtoken, hashed_vtoken, _ = generate_password_reset_token()
     user = User(
         email=payload.email,
         full_name=payload.full_name,
+        mobile_number=payload.mobile_number,
         hashed_password=get_password_hash(payload.password),
         role=payload.role or UserRole.USER,
-        mfa_enabled=False
+        mfa_enabled=False,
+        email_verified=False,
+        email_verification_token=hashed_vtoken,
+        email_verification_expires=datetime.now(timezone.utc) + timedelta(hours=24)
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
+
+    await notification_service.send_verification_email(user.email, user.full_name, raw_vtoken)
     return user
 
 @router.post("/login", response_model=TokenResponse)
@@ -206,3 +216,84 @@ async def logout(authorization: Optional[str] = Header(None)):
         token = authorization.split(" ")[1]
         revoke_token(token)
     return {"message": "Successfully logged out."}
+
+@router.post("/verify-email")
+async def verify_email(
+    payload: EmailVerificationRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Verifies user email using the single-use verification token."""
+    hashed = hash_reset_token(payload.token)
+    stmt = select(User).where(User.email_verification_token == hashed)
+    user = (await db.execute(stmt)).scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token.")
+    
+    if user.email_verification_expires:
+        exp = user.email_verification_expires
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp < datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Verification token has expired.")
+
+    user.email_verified = True
+    user.email_verification_token = None
+    user.email_verification_expires = None
+    await db.commit()
+    return {"message": "Email successfully verified. You now have full access to PayPath.", "email_verified": True}
+
+@router.post("/verify-email/resend")
+async def resend_verification_email(
+    payload: ResendVerificationRequest,
+    db: AsyncSession = Depends(get_db),
+    _limiter: bool = Depends(rate_limit(max_requests=3, window_seconds=60))
+):
+    """Resends a fresh email verification token to the registered address."""
+    stmt = select(User).where(User.email == payload.email)
+    user = (await db.execute(stmt)).scalar_one_or_none()
+    if not user or user.email_verified:
+        return {"message": "If this email is unverified, a fresh link has been dispatched."}
+
+    raw_token, hashed_token, _ = generate_password_reset_token()
+    user.email_verification_token = hashed_token
+    user.email_verification_expires = datetime.now(timezone.utc) + timedelta(hours=24)
+    await db.commit()
+
+    await notification_service.send_verification_email(user.email, user.full_name, raw_token)
+    return {"message": "If this email is unverified, a fresh link has been dispatched."}
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    payload: UserProfileUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Updates user profile information (name, mobile number, preferred currency)."""
+    if payload.full_name is not None:
+        current_user.full_name = payload.full_name.strip()
+    if payload.mobile_number is not None:
+        current_user.mobile_number = payload.mobile_number.strip()
+    if payload.preferred_currency is not None:
+        current_user.preferred_currency = payload.preferred_currency.upper().strip()
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+@router.post("/password/change")
+async def change_password(
+    payload: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    _limiter: bool = Depends(rate_limit(max_requests=5, window_seconds=60))
+):
+    """Updates account password after verifying the current password."""
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password incorrect.")
+
+    current_user.hashed_password = get_password_hash(payload.new_password)
+    await db.commit()
+    await notification_service.send_security_alert(
+        current_user.email,
+        "Your PayPath account password was changed successfully."
+    )
+    return {"message": "Password changed successfully."}

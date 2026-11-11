@@ -19,6 +19,11 @@ if backend_dir not in sys.path:
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
+# Auto-bind virtual environment site-packages if launched via ambient python
+venv_site = os.path.join(root_dir, ".venv", "Lib", "site-packages")
+if os.path.exists(venv_site) and venv_site not in sys.path:
+    sys.path.insert(0, venv_site)
+
 from sqlalchemy import text, select, func
 from app.core.config import settings
 from app.core.database import AsyncSessionLocal

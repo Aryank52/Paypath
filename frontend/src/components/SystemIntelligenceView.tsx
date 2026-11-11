@@ -127,7 +127,7 @@ export const SystemIntelligenceView: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                System Architecture & Intelligence
+                Control Center — System Operations & Intelligence
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                   Live Unified System
                 </span>

@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     # Redis
     REDIS_URL: Optional[str] = None
     
+    # Supabase Storage (Evidence & File Persistence)
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_KEY: Optional[str] = None
+    SUPABASE_STORAGE_BUCKET: str = "paypath-evidence"
+    
     # PayPal Sandbox
     PAYPAL_CLIENT_ID: Optional[str] = None
     PAYPAL_CLIENT_SECRET: Optional[str] = None

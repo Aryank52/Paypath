@@ -120,3 +120,16 @@ export interface DuplicateSignal {
   recommended_action: string;
 }
 
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name?: string;
+  mobile_number?: string;
+  preferred_currency: string;
+  role: 'USER' | 'MERCHANT_USER' | 'MERCHANT_ADMIN' | 'PLATFORM_ADMIN';
+  is_active: boolean;
+  email_verified: boolean;
+  mfa_enabled: boolean;
+}
+
+

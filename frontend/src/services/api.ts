@@ -6,12 +6,171 @@ import {
   Product,
   GuardEvaluation,
   SubscriptionItem,
-  DuplicateSignal
+  DuplicateSignal,
+  UserProfile
 } from '../types';
 
 const API_BASE = '/api/v1';
 
+const getAuthHeaders = (): HeadersInit => {
+  const token = localStorage.getItem('paypath_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+};
+
 export const api = {
+  // Authentication & User Profile
+  login: async (data: { email: string; password: string; mfa_code?: string }) => {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Authentication failed');
+    }
+    return res.json();
+  },
+
+  register: async (data: {
+    email: string;
+    password: string;
+    full_name?: string;
+    mobile_number?: string;
+  }) => {
+    const res = await fetch(`${API_BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Registration failed');
+    }
+    return res.json();
+  },
+
+  getMe: async (): Promise<UserProfile> => {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to retrieve user profile');
+    return res.json();
+  },
+
+  updateProfile: async (data: {
+    full_name?: string;
+    mobile_number?: string;
+    preferred_currency?: string;
+  }): Promise<UserProfile> => {
+    const res = await fetch(`${API_BASE}/auth/profile`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to update profile');
+    }
+    return res.json();
+  },
+
+  changePassword: async (data: { current_password: string; new_password: string }) => {
+    const res = await fetch(`${API_BASE}/auth/password/change`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to change password');
+    }
+    return res.json();
+  },
+
+  setupMFA: async () => {
+    const res = await fetch(`${API_BASE}/auth/mfa/setup`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to initiate MFA setup');
+    return res.json();
+  },
+
+  enableMFA: async (code: string) => {
+    const res = await fetch(`${API_BASE}/auth/mfa/enable`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ code })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Invalid MFA code');
+    }
+    return res.json();
+  },
+
+  disableMFA: async (code: string) => {
+    const res = await fetch(`${API_BASE}/auth/mfa/disable`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ code })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Invalid MFA code');
+    }
+    return res.json();
+  },
+
+  requestPasswordReset: async (email: string) => {
+    const res = await fetch(`${API_BASE}/auth/password-reset/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    if (!res.ok) throw new Error('Failed to request password reset');
+    return res.json();
+  },
+
+  confirmPasswordReset: async (token: string, new_password: string) => {
+    const res = await fetch(`${API_BASE}/auth/password-reset/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, new_password })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to reset password');
+    }
+    return res.json();
+  },
+
+  verifyEmail: async (token: string) => {
+    const res = await fetch(`${API_BASE}/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Email verification failed');
+    }
+    return res.json();
+  },
+
+  resendVerificationEmail: async (email: string) => {
+    const res = await fetch(`${API_BASE}/auth/verify-email/resend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    if (!res.ok) throw new Error('Failed to dispatch verification email');
+    return res.json();
+  },
   // Transactions
   getTransactions: async (params?: { status?: string; risk_level?: string; merchant_name?: string }): Promise<Transaction[]> => {
     const query = new URLSearchParams();

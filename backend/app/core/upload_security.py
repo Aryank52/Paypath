@@ -83,6 +83,19 @@ async def validate_and_save_upload(file: UploadFile, subfolder: str = "evidence"
 
     # 5. Save with a secure random UUID prefix
     unique_file_name = f"{uuid.uuid4().hex}_{safe_name}"
+    full_bytes = header + remainder
+
+    # Check for Supabase Storage in production
+    from app.core.config import settings
+    if getattr(settings, "SUPABASE_URL", None) and getattr(settings, "SUPABASE_KEY", None):
+        try:
+            from app.services.storage_service import storage_service
+            res = await storage_service.upload_file(full_bytes, unique_file_name, matched_type, subfolder)
+            return unique_file_name, res["url"], total_size, matched_type
+        except Exception as e:
+            from app.core.observability import logger
+            logger.warning(f"Supabase upload failed, falling back to local: {e}")
+
     target_dir = os.path.join(UPLOAD_DIR, subfolder)
     os.makedirs(target_dir, exist_ok=True)
     target_path = os.path.join(target_dir, unique_file_name)
@@ -95,8 +108,7 @@ async def validate_and_save_upload(file: UploadFile, subfolder: str = "evidence"
         )
 
     with open(target_path, "wb") as f:
-        f.write(header)
-        f.write(remainder)
+        f.write(full_bytes)
 
     file_url = f"/uploads/{subfolder}/{unique_file_name}"
     return unique_file_name, file_url, total_size, matched_type

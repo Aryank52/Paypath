@@ -9,7 +9,9 @@ import {
   Store,
   Cpu,
   FileCheck2,
-  Server
+  SlidersHorizontal,
+  User,
+  Lock
 } from 'lucide-react';
 import { useStore, ActiveTab } from '../store/useStore';
 
@@ -29,9 +31,11 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'recovery', label: 'Recovery Intel', icon: Repeat, allowedPersonas: ['SHOPPER', 'PLATFORM_ADMIN'] },
   { id: 'reclaim', label: 'RECLAIM Engine', icon: RotateCcw, badge: 'Hero', allowedPersonas: ['SHOPPER', 'MERCHANT_ADMIN', 'PLATFORM_ADMIN'] },
   { id: 'merchants', label: 'Merchant Studio', icon: Store, allowedPersonas: ['MERCHANT_ADMIN', 'PLATFORM_ADMIN'] },
+  { id: 'profile', label: 'User Profile', icon: User, allowedPersonas: ['SHOPPER', 'MERCHANT_ADMIN', 'PLATFORM_ADMIN'] },
+  { id: 'security', label: 'Security Center', icon: Lock, allowedPersonas: ['SHOPPER', 'MERCHANT_ADMIN', 'PLATFORM_ADMIN'] },
+  { id: 'system', label: 'Control Center', icon: SlidersHorizontal, badge: 'Admin', allowedPersonas: ['PLATFORM_ADMIN'] },
   { id: 'agents', label: 'Agent Traces', icon: Cpu, badge: 'Admin', allowedPersonas: ['PLATFORM_ADMIN'] },
   { id: 'audit', label: 'Audit Trail', icon: FileCheck2, badge: 'Admin', allowedPersonas: ['PLATFORM_ADMIN'] },
-  { id: 'system', label: 'System Architecture', icon: Server, badge: 'Live', allowedPersonas: ['PLATFORM_ADMIN'] },
 ];
 
 export const Sidebar: React.FC = () => {
