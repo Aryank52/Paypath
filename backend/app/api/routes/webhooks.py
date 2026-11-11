@@ -4,7 +4,7 @@ import time
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
-from fastapi import APIRouter, Request, Header, HTTPException, status, Depends
+from fastapi import APIRouter, Request, Header, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -68,29 +68,42 @@ async def handle_paypal_webhook(
         raise HTTPException(status_code=400, detail="Empty request body.")
     payload_hash = hashlib.sha256(raw_body).hexdigest()
 
+    auth_algo = paypal_auth_algo
+    cert_url = paypal_cert_url
+    transmission_id = paypal_transmission_id
+    transmission_sig = paypal_transmission_sig
+    transmission_time = paypal_transmission_time
+
     # 2. Validate required headers
     try:
         PayPalWebhookVerifier.validate_headers(
-            auth_algo=paypal_auth_algo,
-            cert_url=paypal_cert_url,
-            transmission_id=paypal_transmission_id,
-            transmission_sig=paypal_transmission_sig,
-            transmission_time=paypal_transmission_time,
+            auth_algo=auth_algo,
+            cert_url=cert_url,
+            transmission_id=transmission_id,
+            transmission_sig=transmission_sig,
+            transmission_time=transmission_time,
         )
     except PayPalWebhookVerificationError as e:
         logger.warning(f"PayPal webhook rejected: {e.message}")
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
+    # After validate_headers succeeds, all 5 headers are guaranteed non-empty strings
+    assert auth_algo is not None
+    assert cert_url is not None
+    assert transmission_id is not None
+    assert transmission_sig is not None
+    assert transmission_time is not None
+
     # 3. Validate cert URL to neutralize SSRF
     try:
-        PayPalWebhookVerifier.validate_cert_url(paypal_cert_url)
+        PayPalWebhookVerifier.validate_cert_url(cert_url)
     except PayPalWebhookVerificationError as e:
         logger.warning(f"PayPal webhook cert URL rejected: {e.message}")
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
     # 4. Validate transmission timestamp for replay protection
     try:
-        PayPalWebhookVerifier.validate_timestamp(paypal_transmission_time)
+        PayPalWebhookVerifier.validate_timestamp(transmission_time)
     except PayPalWebhookVerificationError as e:
         logger.warning(f"PayPal webhook timestamp rejected: {e.message}")
         raise HTTPException(status_code=e.status_code, detail=e.message)
@@ -99,11 +112,11 @@ async def handle_paypal_webhook(
     try:
         await PayPalWebhookVerifier.verify_signature(
             raw_body=raw_body,
-            auth_algo=paypal_auth_algo,
-            cert_url=paypal_cert_url,
-            transmission_id=paypal_transmission_id,
-            transmission_sig=paypal_transmission_sig,
-            transmission_time=paypal_transmission_time,
+            auth_algo=auth_algo,
+            cert_url=cert_url,
+            transmission_id=transmission_id,
+            transmission_sig=transmission_sig,
+            transmission_time=transmission_time,
         )
     except PayPalWebhookVerificationError as e:
         # Fallback to PayPal API verification if configured
@@ -113,11 +126,11 @@ async def handle_paypal_webhook(
             raise HTTPException(status_code=400, detail="Malformed JSON in webhook body.")
 
         api_verified = await PayPalWebhookVerifier.verify_via_api(
-            auth_algo=paypal_auth_algo,
-            cert_url=paypal_cert_url,
-            transmission_id=paypal_transmission_id,
-            transmission_sig=paypal_transmission_sig,
-            transmission_time=paypal_transmission_time,
+            auth_algo=auth_algo,
+            cert_url=cert_url,
+            transmission_id=transmission_id,
+            transmission_sig=transmission_sig,
+            transmission_time=transmission_time,
             body_json=body_json_tmp
         )
         if not api_verified:
@@ -197,7 +210,7 @@ async def handle_paypal_webhook(
                 (Transaction.paypal_capture_id == capture_id) | (Transaction.paypal_order_id == order_id)
             )
             tx = (await db.execute(stmt)).scalar_one_or_none()
-            if tx:
+            if tx and capture_id:
                 webhook_record.transaction_id = tx.id
                 tx.verification_status = "RECONCILIATION_REQUIRED"
                 await db.flush()
@@ -220,14 +233,23 @@ async def handle_paypal_webhook(
                     tx.verification_status = "RECONCILIATION_REQUIRED"
                     verification_outcome = "RECONCILIATION_REQUIRED"
                     processing_error = f"Capture read-back mismatch: {capture_details}"
-                    event_desc = f"PayPal webhook capture reconciliation required: amount/currency mismatch."
+                    event_desc = (
+                        f"PayPal webhook capture reconciliation required: amount/currency mismatch "
+                        f"(claimed: {amount_val} {currency_code}, expected: {tx.amount} {tx.currency})."
+                    )
 
                 event = TransactionEvent(
                     transaction_id=tx.id,
                     event_type="WEBHOOK_CAPTURE_CONFIRMED" if is_verified else "WEBHOOK_RECONCILIATION_REQUIRED",
                     actor="PAYPAL_WEBHOOK",
                     description=event_desc,
-                    payload={"capture_id": capture_id, "is_verified": is_verified, "details": capture_details}
+                    payload={
+                        "capture_id": capture_id,
+                        "is_verified": is_verified,
+                        "claimed_amount": amount_val,
+                        "claimed_currency": currency_code,
+                        "details": capture_details,
+                    }
                 )
                 db.add(event)
 
@@ -246,7 +268,7 @@ async def handle_paypal_webhook(
 
             stmt = select(Transaction).where(Transaction.paypal_capture_id == capture_id)
             tx = (await db.execute(stmt)).scalar_one_or_none()
-            if tx:
+            if tx and refund_id:
                 webhook_record.transaction_id = tx.id
                 tx.verification_status = "RECONCILIATION_REQUIRED"
                 await db.flush()

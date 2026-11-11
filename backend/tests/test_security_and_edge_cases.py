@@ -39,9 +39,7 @@ async def test_refund_amount_tampering_boundaries():
 @pytest.mark.asyncio
 async def test_idempotent_refund_replay():
     """Ensure duplicate refund request with same idempotency key returns cached result."""
-    await init_db()
     async with AsyncSessionLocal() as session:
-        await seed_demo_data(session)
         service = PayCoreService(session)
 
         key = "idemp_test_replay_001"

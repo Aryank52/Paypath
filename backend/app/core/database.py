@@ -16,7 +16,14 @@ engine_kwargs = {
     "future": True,
 }
 
-if "sqlite" in settings.DATABASE_URL:
+# Ensure asyncpg dialect is enforced for PostgreSQL
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+if "sqlite" in db_url:
     if settings.APP_ENV not in ("test", "testing"):
         logger.warning(
             "WARNING: Running on SQLite in '%s' mode. "
@@ -39,7 +46,7 @@ else:
         })
 
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     connect_args=connect_args,
     **engine_kwargs
 )

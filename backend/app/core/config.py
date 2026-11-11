@@ -1,6 +1,6 @@
 from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, field_validator
 import os
 
 class Settings(BaseSettings):
@@ -15,6 +15,16 @@ class Settings(BaseSettings):
         default="postgresql+asyncpg://postgres:postgres@localhost:5432/paypath",
         description="Async SQLAlchemy database URL. PostgreSQL is the authoritative system of record."
     )
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: Optional[str]) -> str:
+        if isinstance(v, str):
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+            elif v.startswith("postgresql://") and not v.startswith("postgresql+asyncpg://"):
+                return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v or "postgresql+asyncpg://postgres:postgres@localhost:5432/paypath"
     
     # Redis
     REDIS_URL: Optional[str] = None

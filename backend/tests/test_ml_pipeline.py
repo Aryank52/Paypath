@@ -153,7 +153,11 @@ async def test_ml_api_endpoints():
                 ))
                 await session.commit()
 
-        exp_res = await client.get("/api/v1/ml/explain/tx_nova_anc_hero")
+        from app.core.security import create_access_token
+        alex_token = create_access_token("usr_demo_shopper_01", role="customer")
+        auth_headers = {"Authorization": f"Bearer {alex_token}"}
+
+        exp_res = await client.get("/api/v1/ml/explain/tx_nova_anc_hero", headers=auth_headers)
         assert exp_res.status_code == 200
         exp_data = exp_res.json()
         assert exp_data["transaction_id"] == "tx_nova_anc_hero"

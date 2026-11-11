@@ -90,7 +90,7 @@ async def test_end_to_end_agentic_commerce_lifecycle():
         assert tx["amount"] == float(product["price"])
 
         # Step 7: Explainability check on new transaction
-        ml_res = await client.get(f"/api/v1/ml/explain/{tx_id}")
+        ml_res = await client.get(f"/api/v1/ml/explain/{tx_id}", headers=headers)
         assert ml_res.status_code == 200
         explanation = ml_res.json()["ml_explanation"]
         assert "risk_score" in explanation

@@ -1,6 +1,6 @@
 import pytest
-from app.core.database import AsyncSessionLocal, init_db
-from app.services.seed_service import seed_demo_data, DEMO_USER_ID, NOVA_MERCHANT_ID
+from app.core.database import AsyncSessionLocal
+from app.services.seed_service import DEMO_USER_ID, NOVA_MERCHANT_ID
 from app.paycore.service import PayCoreService
 from app.agents.orchestrator import agent_orchestrator
 from app.models.transaction import Transaction
@@ -8,11 +8,6 @@ from sqlalchemy import select
 
 @pytest.mark.asyncio
 async def test_complete_paycore_and_reclaim_lifecycle():
-    # 1. Initialize tables and seed
-    await init_db()
-    async with AsyncSessionLocal() as session:
-        await seed_demo_data(session)
-
     async with AsyncSessionLocal() as session:
         service = PayCoreService(session)
 
