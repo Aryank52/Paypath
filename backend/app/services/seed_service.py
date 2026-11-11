@@ -36,6 +36,7 @@ from app.models.agent import AgentRun, AgentToolCall
 from app.models.payment_action import PaymentAction, PaymentVerification
 from app.models.intent import PurchaseIntent
 from app.models.audit import AuditLog
+from app.models.webhook import WebhookEvent
 from app.rag.chunker import policy_chunker
 from app.rag.vector_store import vector_store
 from app.ml.inference import get_ml_service
@@ -1382,6 +1383,7 @@ async def verify_demo_data(db: AsyncSession) -> Dict[str, Any]:
         "payment_actions": await db.scalar(select(func.count(PaymentAction.id))),
         "payment_verifications": await db.scalar(select(func.count(PaymentVerification.id))),
         "audit_logs": await db.scalar(select(func.count(AuditLog.id))),
+        "webhook_events": await db.scalar(select(func.count(WebhookEvent.id))),
     }
     logger.info("Seed verification complete: %s", stats)
     return stats

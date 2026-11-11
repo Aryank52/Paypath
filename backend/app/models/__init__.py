@@ -11,6 +11,7 @@ from app.models.notification import Notification
 from app.models.product import Product
 from app.models.ml import MLModelVersion, MLPrediction
 from app.models.agent import AgentRun, AgentToolCall
+from app.models.webhook import WebhookEvent
 
 __all__ = [
     "Base",
@@ -34,6 +35,7 @@ __all__ = [
     "MLModelVersion",
     "MLPrediction",
     "AgentRun",
-    "AgentToolCall"
+    "AgentToolCall",
+    "WebhookEvent"
 ]
 

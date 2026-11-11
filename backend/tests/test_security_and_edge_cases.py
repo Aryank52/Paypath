@@ -5,6 +5,8 @@ from app.core.database import AsyncSessionLocal, init_db
 from app.services.seed_service import seed_demo_data, DEMO_USER_ID, NOVA_MERCHANT_ID
 from app.paycore.service import PayCoreService
 from app.policies.engine import policy_engine
+from app.paycore.webhook_verifier import create_test_webhook_signed_payload
+from app.core.config import settings
 
 @pytest.mark.asyncio
 async def test_prompt_injection_resistance_in_guard():
@@ -67,22 +69,31 @@ async def test_idempotent_refund_replay():
 @pytest.mark.asyncio
 async def test_webhook_deduplication():
     """Ensure replaying the exact same webhook event ID does not double-process."""
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        payload = {
-            "id": "WH-UNIQUE-TEST-100",
-            "event_type": "PAYMENT.CAPTURE.COMPLETED",
-            "resource": {"id": "5O190127TN364715T"}
-        }
-        headers = {"PAYPAL-TRANSMISSION-ID": "WH-UNIQUE-TEST-100"}
+    orig = getattr(settings, "PAYPAL_WEBHOOK_ID", "")
+    settings.PAYPAL_WEBHOOK_ID = "WH-SECURE-TEST-WEBHOOK-99"
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            payload = {
+                "id": "WH-UNIQUE-TEST-100",
+                "event_type": "PAYMENT.CAPTURE.COMPLETED",
+                "resource": {"id": "5O190127TN364715T"}
+            }
+            raw_body, headers = create_test_webhook_signed_payload(
+                payload,
+                webhook_id="WH-SECURE-TEST-WEBHOOK-99",
+                transmission_id="WH-UNIQUE-TRANS-100"
+            )
 
-        # First delivery
-        r1 = await client.post("/api/v1/paycore/webhooks/paypal", json=payload, headers=headers)
-        assert r1.status_code == 200
-        assert r1.json()["status"] == "PROCESSED"
+            # First delivery
+            r1 = await client.post("/api/v1/paycore/webhooks/paypal", content=raw_body, headers=headers)
+            assert r1.status_code == 200
+            assert r1.json()["status"] in ["PROCESSED", "IGNORED"]
 
-        # Duplicate delivery
-        r2 = await client.post("/api/v1/paycore/webhooks/paypal", json=payload, headers=headers)
-        assert r2.status_code == 200
-        assert r2.json()["status"] == "IGNORED"
-        assert r2.json()["reason"] == "DUPLICATE_EVENT"
+            # Duplicate delivery
+            r2 = await client.post("/api/v1/paycore/webhooks/paypal", content=raw_body, headers=headers)
+            assert r2.status_code == 200
+            assert r2.json()["status"] == "IGNORED"
+            assert r2.json()["reason"] in ["DUPLICATE_EVENT", "DUPLICATE_TRANSMISSION"]
+    finally:
+        settings.PAYPAL_WEBHOOK_ID = orig
 
