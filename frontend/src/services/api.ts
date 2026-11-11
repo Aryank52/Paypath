@@ -12,12 +12,16 @@ import {
 
 const API_BASE = '/api/v1';
 
-const getAuthHeaders = (): HeadersInit => {
+export const getAuthHeaders = (isJson = true): HeadersInit => {
   const token = localStorage.getItem('paypath_token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-  };
+  const headers: Record<string, string> = {};
+  if (isJson) {
+    headers['Content-Type'] = 'application/json';
+  }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
 };
 
 export const api = {
@@ -171,25 +175,32 @@ export const api = {
     if (!res.ok) throw new Error('Failed to dispatch verification email');
     return res.json();
   },
+
   // Transactions
   getTransactions: async (params?: { status?: string; risk_level?: string; merchant_name?: string }): Promise<Transaction[]> => {
     const query = new URLSearchParams();
     if (params?.status) query.append('status', params.status);
     if (params?.risk_level) query.append('risk_level', params.risk_level);
     if (params?.merchant_name) query.append('merchant_name', params.merchant_name);
-    const res = await fetch(`${API_BASE}/transactions?${query.toString()}`);
+    const res = await fetch(`${API_BASE}/transactions?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch transactions');
     return res.json();
   },
 
   getTransaction: async (id: string): Promise<Transaction> => {
-    const res = await fetch(`${API_BASE}/transactions/${id}`);
+    const res = await fetch(`${API_BASE}/transactions/${id}`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch transaction details');
     return res.json();
   },
 
   getTransactionEvents: async (id: string): Promise<TransactionEvent[]> => {
-    const res = await fetch(`${API_BASE}/transactions/${id}/events`);
+    const res = await fetch(`${API_BASE}/transactions/${id}/events`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch transaction events');
     return res.json();
   },
@@ -204,35 +215,46 @@ export const api = {
   }) => {
     const res = await fetch(`${API_BASE}/paycore/orders/create`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Failed to create order');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to create order');
+    }
     return res.json();
   },
 
   captureOrder: async (orderId: string) => {
     const res = await fetch(`${API_BASE}/paycore/orders/capture`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ order_id: orderId })
     });
-    if (!res.ok) throw new Error('Failed to capture order');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to capture order');
+    }
     return res.json();
   },
 
   refundPayment: async (data: { transaction_id: string; amount: number; reason?: string }) => {
     const res = await fetch(`${API_BASE}/paycore/refunds`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Failed to execute refund');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to execute refund');
+    }
     return res.json();
   },
 
   verifyResource: async (resourceId: string, actionType: 'CAPTURE' | 'REFUND' = 'CAPTURE', expectedAmount = 89.0) => {
-    const res = await fetch(`${API_BASE}/paycore/verify/${resourceId}?action_type=${actionType}&expected_amount=${expectedAmount}`);
+    const res = await fetch(`${API_BASE}/paycore/verify/${resourceId}?action_type=${actionType}&expected_amount=${expectedAmount}`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to verify resource');
     return res.json();
   },
@@ -241,15 +263,20 @@ export const api = {
   parseIntent: async (prompt: string) => {
     const res = await fetch(`${API_BASE}/intent/parse`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ prompt })
     });
-    if (!res.ok) throw new Error('Failed to parse intent');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to parse intent');
+    }
     return res.json();
   },
 
   searchProducts: async (category = 'headphones', budget = 100.0, purpose = 'travel'): Promise<Product[]> => {
-    const res = await fetch(`${API_BASE}/shop/search?category=${encodeURIComponent(category)}&budget=${budget}&purpose=${encodeURIComponent(purpose)}`);
+    const res = await fetch(`${API_BASE}/shop/search?category=${encodeURIComponent(category)}&budget=${budget}&purpose=${encodeURIComponent(purpose)}`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to search products');
     return res.json();
   },
@@ -263,10 +290,13 @@ export const api = {
   }) => {
     const res = await fetch(`${API_BASE}/shop/propose-purchase`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Failed to evaluate purchase proposal');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to evaluate purchase proposal');
+    }
     return res.json();
   },
 
@@ -274,10 +304,13 @@ export const api = {
   evaluateGuard: async (data: { amount: number; merchant_name: string; category?: string }): Promise<GuardEvaluation> => {
     const res = await fetch(`${API_BASE}/guard/evaluate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Failed to evaluate guard');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to evaluate guard');
+    }
     return res.json();
   },
 
@@ -285,10 +318,13 @@ export const api = {
   createReclaimCase: async (data: { transaction_id: string; issue_type: string; description: string }): Promise<ReclaimCase> => {
     const res = await fetch(`${API_BASE}/reclaim/cases`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Failed to create dispute case');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to create dispute case');
+    }
     return res.json();
   },
 
@@ -297,49 +333,69 @@ export const api = {
     formData.append('file', file);
     const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}/evidence`, {
       method: 'POST',
+      headers: getAuthHeaders(false),
       body: formData
     });
-    if (!res.ok) throw new Error('Failed to upload evidence');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to upload evidence');
+    }
     return res.json();
   },
 
   evaluateCase: async (caseId: string) => {
     const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}/evaluate`, {
-      method: 'POST'
+      method: 'POST',
+      headers: getAuthHeaders()
     });
-    if (!res.ok) throw new Error('Failed to evaluate dispute case');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to evaluate dispute case');
+    }
     return res.json();
   },
 
   approveRefund: async (caseId: string) => {
     const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}/approve`, {
-      method: 'POST'
+      method: 'POST',
+      headers: getAuthHeaders()
     });
-    if (!res.ok) throw new Error('Failed to approve and execute refund');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to approve and execute refund');
+    }
     return res.json();
   },
 
   getReclaimCases: async (): Promise<ReclaimCase[]> => {
-    const res = await fetch(`${API_BASE}/reclaim/cases`);
+    const res = await fetch(`${API_BASE}/reclaim/cases`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch reclaim cases');
     return res.json();
   },
 
   getCase: async (caseId: string): Promise<ReclaimCase> => {
-    const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}`);
+    const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to get dispute case');
     return res.json();
   },
 
   // Recovery Intelligence
   getDuplicates: async (): Promise<DuplicateSignal[]> => {
-    const res = await fetch(`${API_BASE}/recover/duplicates`);
+    const res = await fetch(`${API_BASE}/recover/duplicates`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch duplicate signals');
     return res.json();
   },
 
   getSubscriptions: async (): Promise<SubscriptionItem[]> => {
-    const res = await fetch(`${API_BASE}/recover/subscriptions`);
+    const res = await fetch(`${API_BASE}/recover/subscriptions`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch subscriptions');
     return res.json();
   },
@@ -348,26 +404,34 @@ export const api = {
   runCommerceWorkflow: async (prompt: string) => {
     const res = await fetch(`${API_BASE}/agents/run-commerce`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ prompt })
     });
-    if (!res.ok) throw new Error('Failed to run commerce workflow');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to run commerce workflow');
+    }
     return res.json();
   },
 
   runReclaimWorkflow: async (data: any) => {
     const res = await fetch(`${API_BASE}/agents/run-reclaim`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Failed to run reclaim workflow');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to run reclaim workflow');
+    }
     return res.json();
   },
 
   // Audit
   getAuditLogs: async () => {
-    const res = await fetch(`${API_BASE}/audit`);
+    const res = await fetch(`${API_BASE}/audit`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch audit logs');
     return res.json();
   },
@@ -380,39 +444,54 @@ export const api = {
   },
 
   getDatabaseInventory: async () => {
-    const res = await fetch(`${API_BASE}/system/database`);
+    const res = await fetch(`${API_BASE}/system/database`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch database inventory');
     return res.json();
   },
 
   getLineageTransactions: async () => {
-    const res = await fetch(`${API_BASE}/system/lineage-transactions`);
+    const res = await fetch(`${API_BASE}/system/lineage-transactions`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch lineage transactions');
     return res.json();
   },
 
   getTransactionLineage: async (id: string) => {
-    const res = await fetch(`${API_BASE}/system/lineage/${id}`);
+    const res = await fetch(`${API_BASE}/system/lineage/${id}`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch transaction lineage');
     return res.json();
   },
 
   // Machine Learning
   getMLModels: async () => {
-    const res = await fetch(`${API_BASE}/ml/models`);
+    const res = await fetch(`${API_BASE}/ml/models`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch ML models');
     return res.json();
   },
 
   getMLFeatures: async () => {
-    const res = await fetch(`${API_BASE}/ml/features`);
+    const res = await fetch(`${API_BASE}/ml/features`, {
+      headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error('Failed to fetch ML features');
     return res.json();
   },
 
   explainTransaction: async (id: string) => {
-    const res = await fetch(`${API_BASE}/ml/explain/${id}`);
-    if (!res.ok) throw new Error('Failed to explain transaction');
+    const res = await fetch(`${API_BASE}/ml/explain/${id}`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to explain transaction');
+    }
     return res.json();
   },
 
@@ -425,11 +504,85 @@ export const api = {
   }) => {
     const res = await fetch(`${API_BASE}/ml/predict`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error('Failed to run ML prediction');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to run ML prediction');
+    }
+    return res.json();
+  },
+
+  // Multi-Merchant Portal
+  listMerchants: async () => {
+    const res = await fetch(`${API_BASE}/merchants`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to fetch merchants');
+    return res.json();
+  },
+
+  getMerchant: async (merchantId: string) => {
+    const res = await fetch(`${API_BASE}/merchants/${merchantId}`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to fetch merchant details');
+    return res.json();
+  },
+
+  uploadMerchantPolicy: async (merchantId: string, data: {
+    title: string;
+    policy_type?: string;
+    content: string;
+    rules?: Record<string, any>;
+  }) => {
+    const res = await fetch(`${API_BASE}/merchants/${merchantId}/policies`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to upload policy');
+    }
+    return res.json();
+  },
+
+  simulatePolicy: async (merchantId: string, data: {
+    transaction_amount: number;
+    issue_type: string;
+    transaction_age_days: number;
+    evidence_provided: boolean;
+    custom_rules?: Record<string, any>;
+  }) => {
+    const res = await fetch(`${API_BASE}/merchants/${merchantId}/simulate-policy`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to simulate policy');
+    }
+    return res.json();
+  },
+
+  // Notifications
+  getNotifications: async () => {
+    const res = await fetch(`${API_BASE}/notifications`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to fetch notifications');
+    return res.json();
+  },
+
+  markNotificationAsRead: async (id: string) => {
+    const res = await fetch(`${API_BASE}/notifications/${id}/read`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Failed to mark notification as read');
     return res.json();
   }
 };
-

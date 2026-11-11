@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
+from app.api.deps import require_role
+from app.models.user import User, UserRole
 from app.models.policy import MerchantPolicy
 from app.schemas.policy import PolicyUploadRequest, PolicyQueryRequest, PolicyResponse
 from app.rag.chunker import policy_chunker
@@ -25,7 +27,8 @@ async def list_policies(
 @router.post("/upload", response_model=PolicyResponse)
 async def upload_policy(
     payload: PolicyUploadRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.MERCHANT_ADMIN, UserRole.PLATFORM_ADMIN))
 ):
     policy = MerchantPolicy(
         merchant_id=payload.merchant_id,

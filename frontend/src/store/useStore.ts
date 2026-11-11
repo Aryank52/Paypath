@@ -55,8 +55,8 @@ interface AppState {
   setNotificationCount: (count: number) => void;
   prefetchedTxId: string | null;
   setPrefetchedTxId: (id: string | null) => void;
-  legalModal: 'privacy' | 'terms' | null;
-  setLegalModal: (modal: 'privacy' | 'terms' | null) => void;
+  legalModal: 'privacy' | 'terms' | 'dpdp' | 'refund' | 'security' | null;
+  setLegalModal: (modal: 'privacy' | 'terms' | 'dpdp' | 'refund' | 'security' | null) => void;
 }
 
 const getInitialAuth = () => {

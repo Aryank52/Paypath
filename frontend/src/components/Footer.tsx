@@ -89,6 +89,30 @@ export const Footer: React.FC = () => {
             </button>
           </div>
           <div>
+            <button
+              onClick={() => setLegalModal('dpdp')}
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              India DPDP Rights & Grievance
+            </button>
+          </div>
+          <div>
+            <button
+              onClick={() => setLegalModal('refund')}
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              RECLAIM Refund Policy
+            </button>
+          </div>
+          <div>
+            <button
+              onClick={() => setLegalModal('security')}
+              className="hover:text-white transition-colors cursor-pointer"
+            >
+              Security Architecture
+            </button>
+          </div>
+          <div>
             <a
               href="/api/v1/system/health"
               target="_blank"
@@ -112,6 +136,8 @@ export const Footer: React.FC = () => {
         <div className="flex items-center gap-6">
           <button onClick={() => setLegalModal('privacy')} className="hover:text-slate-300 transition-colors cursor-pointer">Privacy</button>
           <button onClick={() => setLegalModal('terms')} className="hover:text-slate-300 transition-colors cursor-pointer">Terms</button>
+          <button onClick={() => setLegalModal('dpdp')} className="hover:text-slate-300 transition-colors cursor-pointer">DPDP</button>
+          <button onClick={() => setLegalModal('security')} className="hover:text-slate-300 transition-colors cursor-pointer">Security</button>
           <a href="/robots.txt" className="hover:text-slate-300 transition-colors">Robots</a>
           <a href="/sitemap.xml" className="hover:text-slate-300 transition-colors">Sitemap</a>
         </div>

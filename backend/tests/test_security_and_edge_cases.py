@@ -97,3 +97,110 @@ async def test_webhook_deduplication():
     finally:
         settings.PAYPAL_WEBHOOK_ID = orig
 
+@pytest.mark.asyncio
+async def test_ml_explain_idor_protection():
+    """Verify that a user cannot access another user's ML explanation (IDOR prevention)."""
+    from app.core.security import create_access_token
+    from app.services.seed_service import USER_ALEX_ID, USER_ELENA_ID, USER_MARCUS_ID
+
+    alex_token = create_access_token(USER_ALEX_ID, role="customer")
+    elena_token = create_access_token(USER_ELENA_ID, role="customer")
+    admin_token = create_access_token(USER_MARCUS_ID, role="platform_admin")
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # Alex owns 'tx_nova_anc_hero'
+        r_owner = await client.get(
+            "/api/v1/ml/explain/tx_nova_anc_hero",
+            headers={"Authorization": f"Bearer {alex_token}"}
+        )
+        assert r_owner.status_code == 200
+        assert "ml_explanation" in r_owner.json()
+
+        # Elena (non-owner) must be rejected with 404
+        r_non_owner = await client.get(
+            "/api/v1/ml/explain/tx_nova_anc_hero",
+            headers={"Authorization": f"Bearer {elena_token}"}
+        )
+        assert r_non_owner.status_code == 404
+
+        # Platform Admin can inspect any transaction for audit
+        r_admin = await client.get(
+            "/api/v1/ml/explain/tx_nova_anc_hero",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert r_admin.status_code == 200
+
+@pytest.mark.asyncio
+async def test_rbac_administrative_endpoints():
+    """Verify that sensitive endpoints /audit and /system/database enforce PLATFORM_ADMIN role."""
+    from app.core.security import create_access_token
+    from app.services.seed_service import USER_ALEX_ID, USER_MARCUS_ID
+
+    customer_token = create_access_token(USER_ALEX_ID, role="customer")
+    admin_token = create_access_token(USER_MARCUS_ID, role="platform_admin")
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # Customer access to /audit must be denied
+        r_audit_denied = await client.get(
+            "/api/v1/audit",
+            headers={"Authorization": f"Bearer {customer_token}"}
+        )
+        assert r_audit_denied.status_code == 403
+
+        # Admin access to /audit must succeed
+        r_audit_ok = await client.get(
+            "/api/v1/audit",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert r_audit_ok.status_code == 200
+
+        # Customer access to /system/database must be denied
+        r_db_denied = await client.get(
+            "/api/v1/system/database",
+            headers={"Authorization": f"Bearer {customer_token}"}
+        )
+        assert r_db_denied.status_code == 403
+
+        # Admin access to /system/database must succeed
+        r_db_ok = await client.get(
+            "/api/v1/system/database",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
+        assert r_db_ok.status_code == 200
+
+@pytest.mark.asyncio
+async def test_policies_upload_rbac_protection():
+    """Verify that /policies/upload requires MERCHANT_ADMIN or PLATFORM_ADMIN role."""
+    from app.core.security import create_access_token
+    from app.services.seed_service import USER_ALEX_ID, USER_SARAH_ID, NOVA_MERCHANT_ID
+
+    customer_token = create_access_token(USER_ALEX_ID, role="customer")
+    merchant_token = create_access_token(USER_SARAH_ID, role="merchant_admin")
+
+    policy_payload = {
+        "merchant_id": NOVA_MERCHANT_ID,
+        "title": "Nova Security Test Policy",
+        "policy_type": "REFUND",
+        "content": "Full refunds permitted within 30 days of hardware delivery with receipt.",
+        "rules": {"return_window_days": 30}
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        # Customer cannot upload policy
+        r_denied = await client.post(
+            "/api/v1/policies/upload",
+            json=policy_payload,
+            headers={"Authorization": f"Bearer {customer_token}"}
+        )
+        assert r_denied.status_code == 403
+
+        # Merchant admin can upload policy
+        r_ok = await client.post(
+            "/api/v1/policies/upload",
+            json=policy_payload,
+            headers={"Authorization": f"Bearer {merchant_token}"}
+        )
+        assert r_ok.status_code == 200
+        assert r_ok.json()["title"] == "Nova Security Test Policy"
+
+

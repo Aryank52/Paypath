@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bell, Check, Clock, ShieldCheck, AlertTriangle, RotateCcw, X, ExternalLink } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { api } from '../services/api';
 
 interface NotificationItem {
   id: string;
@@ -24,8 +25,7 @@ export const NotificationCenter: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const fetchNotifications = () => {
     setIsLoading(true);
-    fetch('/api/v1/notifications')
-      .then((res) => res.json())
+    api.getNotifications()
       .then((data) => {
         setNotifications(data);
         const unread = data.filter((n: NotificationItem) => !n.is_read).length;
@@ -43,7 +43,7 @@ export const NotificationCenter: React.FC<Props> = ({ isOpen, onClose }) => {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      await fetch(`/api/v1/notifications/${id}/read`, { method: 'POST' });
+      await api.markNotificationAsRead(id);
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
       );

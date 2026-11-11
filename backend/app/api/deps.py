@@ -37,6 +37,14 @@ async def get_current_user(
             )
         return user
 
+    from app.core.config import settings
+    # In production, require strict authentication token
+    if settings.APP_ENV == "production":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token required."
+        )
+
     # Development fallback: Default to demo user for seamless local evaluation
     stmt = select(User).where(User.email.in_(["demo@paypath.ai", "demo@paypath.finance"]))
     result = await db.execute(stmt)

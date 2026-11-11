@@ -15,6 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db, AsyncSessionLocal
 from app.core.observability import logger
+from app.api.deps import require_role, get_current_user
+from app.models.user import UserRole
 from app.models import (
     User, Merchant, Product, MerchantPolicy, PolicyChunk,
     Transaction, TransactionEvent, ReclaimCase, Evidence,
@@ -192,7 +194,10 @@ async def get_system_health(db: AsyncSession = Depends(get_db)) -> Dict[str, Any
     }
 
 @router.get("/database")
-async def get_database_inventory(db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+async def get_database_inventory(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.PLATFORM_ADMIN))
+) -> Dict[str, Any]:
     """
     Returns exact row counts across all 20 PostgreSQL tables for system visualization.
     """
@@ -264,7 +269,10 @@ async def get_database_inventory(db: AsyncSession = Depends(get_db)) -> Dict[str
     }
 
 @router.get("/lineage-transactions")
-async def get_lineage_transactions(db: AsyncSession = Depends(get_db)) -> List[Dict[str, Any]]:
+async def get_lineage_transactions(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.PLATFORM_ADMIN))
+) -> List[Dict[str, Any]]:
     """
     Returns candidate transactions for data lineage inspection (hero transactions and key synthetic items).
     """
@@ -292,13 +300,17 @@ async def get_lineage_transactions(db: AsyncSession = Depends(get_db)) -> List[D
     ]
 
 @router.get("/lineage/{transaction_id}")
-async def get_transaction_lineage(transaction_id: str, db: AsyncSession = Depends(get_db)) -> Dict[str, Any]:
+async def get_transaction_lineage(
+    transaction_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Dict[str, Any]:
     """
     Traces full data lineage for a transaction:
     User -> Intent -> Transaction -> ML Signal -> RAG Retrieval -> Agent Run -> Policy Check -> Resolution -> Payment Action -> Verification -> Audit.
     """
     tx = await db.scalar(select(Transaction).where(Transaction.id == transaction_id))
-    if not tx:
+    if not tx or (tx.user_id != current_user.id and current_user.role != UserRole.PLATFORM_ADMIN):
         raise HTTPException(status_code=404, detail="Transaction not found for lineage")
 
     user = await db.scalar(select(User).where(User.id == tx.user_id))

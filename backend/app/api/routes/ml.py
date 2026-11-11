@@ -18,6 +18,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.api.deps import get_current_user
+from app.models.user import User, UserRole
 from app.models.ml import MLModelVersion, MLPrediction
 from app.models.transaction import Transaction
 from app.ml.features import FEATURE_NAMES
@@ -86,12 +88,13 @@ async def get_feature_definitions() -> Dict[str, Any]:
 async def explain_transaction(
     transaction_id: str,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ) -> Dict[str, Any]:
     """
     Computes real-time explainability breakdown and feature contributions for a given transaction.
     """
     tx = await db.get(Transaction, transaction_id)
-    if not tx:
+    if not tx or (tx.user_id != current_user.id and current_user.role != UserRole.PLATFORM_ADMIN):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Transaction '{transaction_id}' not found.",

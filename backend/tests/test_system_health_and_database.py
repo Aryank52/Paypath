@@ -31,8 +31,15 @@ async def test_system_health_endpoint():
 @pytest.mark.asyncio
 async def test_system_database_inventory_endpoint():
     """Verify database inventory endpoint accurately inspects all tables."""
+    from app.core.security import create_access_token
+    from app.services.seed_service import USER_MARCUS_ID
+
+    admin_token = create_access_token(USER_MARCUS_ID, role="platform_admin")
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        res = await client.get("/api/v1/system/database")
+        res = await client.get(
+            "/api/v1/system/database",
+            headers={"Authorization": f"Bearer {admin_token}"}
+        )
         assert res.status_code == 200
         data = res.json()
         assert data["database"] == "paypath"

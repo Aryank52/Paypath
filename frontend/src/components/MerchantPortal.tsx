@@ -14,36 +14,40 @@ export const MerchantPortal: React.FC = () => {
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
-    fetch('/api/v1/merchants')
-      .then((res) => res.json())
+    api.listMerchants()
       .then((data) => {
         setMerchants(data);
         if (data.length > 0) setSelectedMerchant(data[0]);
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error('Failed to load merchants:', err);
+      });
   }, []);
 
   const handleUploadPolicy = async () => {
     if (!selectedMerchant) return;
     setIsUploading(true);
+    setStatusMessage(null);
     try {
-      const res = await fetch(`/api/v1/merchants/${selectedMerchant.id}/policies`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: policyTitle,
-          policy_type: 'REFUND',
-          content: policyContent,
-          rules: { return_window_days: 45, partial_refund_max_pct: 75 }
-        })
+      const data = await api.uploadMerchantPolicy(selectedMerchant.id, {
+        title: policyTitle,
+        policy_type: 'REFUND',
+        content: policyContent,
+        rules: { return_window_days: 45, partial_refund_max_pct: 75 }
       });
-      const data = await res.json();
-      alert(`Policy ingested as ${data.status}! Chunks indexed: ${data.chunks_indexed}`);
-    } catch (err) {
+      setStatusMessage({
+        type: 'success',
+        text: `Policy ingested as ${data.status}! Chunks indexed: ${data.chunks_indexed || 0}`
+      });
+    } catch (err: any) {
       console.error(err);
-      alert('Error uploading policy');
+      setStatusMessage({
+        type: 'error',
+        text: err.message || 'Error uploading policy'
+      });
     } finally {
       setIsUploading(false);
     }
@@ -52,21 +56,21 @@ export const MerchantPortal: React.FC = () => {
   const handleSimulate = async () => {
     if (!selectedMerchant) return;
     setIsSimulating(true);
+    setStatusMessage(null);
     try {
-      const res = await fetch(`/api/v1/merchants/${selectedMerchant.id}/simulate-policy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transaction_amount: simulationAmount,
-          issue_type: 'DAMAGED_ITEM',
-          transaction_age_days: simulationAge,
-          evidence_provided: true
-        })
+      const data = await api.simulatePolicy(selectedMerchant.id, {
+        transaction_amount: simulationAmount,
+        issue_type: 'DAMAGED_ITEM',
+        transaction_age_days: simulationAge,
+        evidence_provided: true
       });
-      const data = await res.json();
       setSimulationResult(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setStatusMessage({
+        type: 'error',
+        text: err.message || 'Error simulating policy'
+      });
     } finally {
       setIsSimulating(false);
     }
@@ -85,6 +89,24 @@ export const MerchantPortal: React.FC = () => {
           Manage merchant return rules, ingest documents with RAG chunking, and simulate dispute outcomes before publishing.
         </p>
       </div>
+
+      {statusMessage && (
+        <div
+          className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-all ${
+            statusMessage.type === 'success'
+              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+          }`}
+        >
+          <span>{statusMessage.text}</span>
+          <button
+            onClick={() => setStatusMessage(null)}
+            className="text-slate-400 hover:text-white ml-2 text-sm"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Left Column: Merchant Selection & Policy Ingestion */}
