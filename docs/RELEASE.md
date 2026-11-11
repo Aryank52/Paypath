@@ -1,6 +1,6 @@
-# PayPath Production Release Notes — Version 1.1.0
+# PayPath Production Release Notes — Version 1.0.0 (Production Release)
 
-**Document Version:** 1.1.0 (Phase 19 Final Production Certification)  
+**Document Version:** 1.0.0 (Phase 23 Production Release Authority)  
 **Date:** November 2026  
 **System Motto:** *Understand. Decide. Act. Verify.*  
 
@@ -8,7 +8,7 @@
 
 ## 1. Release Executive Summary
 
-**PayPath 1.1.0** represents the definitive, production-hardened release of the AI Transaction Intelligence, Agentic Commerce & Payment Action Platform. This release unifies:
+**PayPath 1.0.0** represents the definitive, production-hardened release of the AI Transaction Intelligence, Agentic Commerce & Payment Action Platform. This release unifies:
 * **Real PostgreSQL 16.15 Persistence**: 21 normalized relational tables (20 application domain tables + 1 alembic migration metadata table), 303 active records, Alembic stamped at `head`.
 * **PayCore Payment Gateway**: Direct integration with PayPal REST API v2 (`Orders v2`, `Payments v2`, `Captures v2`) with secondary independent read-back verification and financial invariants.
 * **Deterministic Policy Engine**: Four-state policy gate (`ALLOW`, `REVIEW`, `BLOCK`, `ESCALATE`) strictly constraining all AI/ML advisory proposals.
