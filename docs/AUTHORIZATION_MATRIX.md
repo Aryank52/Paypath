@@ -89,3 +89,4 @@ PayPath implements an authoritative, defense-in-depth Role-Based Access Control 
 1. **Non-Authoritative UI:** Toggling personas in the PayPath frontend updates the interface display and triggers an explicit re-authentication request against `/api/v1/auth/login`. If a token lacks the authoritative role claim, the backend rejects the request immediately.
 2. **Deterministic Token Invalidation:** When a user logs out, their token jti is placed in the database revocation table. Subsequent API calls with that token return 401 Unauthorized regardless of expiration window.
 3. **Database-Enforced Tenant Isolation:** Where applicable, foreign key constraints and SQL queries filter by `user_id` or `merchant_id` at the query builder layer, preventing data leakage even in the event of an application logic anomaly.
+

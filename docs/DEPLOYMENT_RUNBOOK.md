@@ -91,3 +91,4 @@ git push origin main
    - In Vercel Dashboard: Project -> Deployments -> Select previous build -> Click "Instant Rollback".
 3. **Database Restore:**
    - In Render PostgreSQL: Backups tab -> Choose desired snapshot -> Click "Restore to New Instance" or restore point-in-time.
+

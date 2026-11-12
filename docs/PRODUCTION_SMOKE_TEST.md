@@ -123,3 +123,4 @@ HTTP/2 400 Bad Request
 | **Merchant Directory** | 5 records | 5 records returned | **PASSED** |
 | **IDOR & Auth Protection**| HTTP 401 on missing auth | HTTP 401 Unauthorized | **PASSED** |
 | **Webhook Signature Guard**| HTTP 400 on forged header | HTTP 400 Bad Request | **PASSED** |
+

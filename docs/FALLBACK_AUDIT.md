@@ -100,3 +100,4 @@ This audit details every fallback mechanism in PayPath, certifying that:
 | **PayPal Webhooks** | Mock verification in unit tests | Strict PayPal API verification + replay check | **Yes** — spoofed events rejected |
 | **Gemini AI Engine** | Mock responses in mock tests | Deterministic Policy Engine defaults to safe verification | **Yes** — AI is non-authoritative |
 | **Auth Personas** | Seeded credentials via real login | Seeded credentials via real login | **Yes** — valid JWTs guaranteed |
+

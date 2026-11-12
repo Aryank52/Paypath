@@ -65,3 +65,4 @@ To prevent cross-tenant data leakage:
 - **Render PostgreSQL Backups:** Automated daily snapshots retained with point-in-time recovery capabilities.
 - **Connection Health Checks:** Uvicorn startup executes `SELECT 1` against PostgreSQL 16 before serving traffic. If the query fails, the startup procedure aborts.
 - **Fail-Closed Guarantee:** In the event of network partition or database failure, PayPath returns HTTP 503 rather than corrupting in-flight transactions.
+

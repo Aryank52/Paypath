@@ -77,3 +77,4 @@ The upload pipeline and security barriers are rigorously validated by the automa
   - Spoofed `.pdf` containing raw executable or text bytes: **REJECTED (415 Unsupported Media Type)**.
   - Path traversal attack string `../../etc/passwd`: **SANITIZED to `upload_<uuid>.dat`**.
   - File size $> 10\text{ MB}$: **REJECTED (413 Request Entity Too Large)**.
+
