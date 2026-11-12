@@ -22,7 +22,7 @@ import { api } from '../services/api';
 import { Transaction, ReclaimCase } from '../types';
 
 export const OverviewDashboard: React.FC = () => {
-  const { setActiveTab, setSelectedTransaction, setIsCommandCenterOpen } = useStore();
+  const { setActiveTab, setSelectedTransaction, setIsCommandCenterOpen, setAuthModal } = useStore();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [reclaimCases, setReclaimCases] = useState<ReclaimCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +40,11 @@ export const OverviewDashboard: React.FC = () => {
       setReclaimCases(cases || []);
     } catch (err: any) {
       console.error('Failed to load overview data:', err);
-      setError('Unable to load latest financial intelligence telemetry. Please try again.');
+      const isAuthErr = err.message?.toLowerCase().includes('token') ||
+        err.message?.toLowerCase().includes('expired') ||
+        err.message?.toLowerCase().includes('authenticated') ||
+        err.message?.toLowerCase().includes('credentials');
+      setError(isAuthErr ? 'Your session expired. Sign in again.' : 'Unable to load transactions. Retry.');
     } finally {
       setIsLoading(false);
     }
@@ -294,10 +298,16 @@ export const OverviewDashboard: React.FC = () => {
             <span>{error}</span>
           </div>
           <button
-            onClick={loadData}
+            onClick={() => {
+              if (error.toLowerCase().includes('expired') || error.toLowerCase().includes('sign in')) {
+                setAuthModal('login');
+              } else {
+                loadData();
+              }
+            }}
             className="px-2.5 py-1 rounded bg-rose-900/40 hover:bg-rose-900/60 text-white font-medium border border-rose-500/30 transition-colors"
           >
-            Retry
+            {error.toLowerCase().includes('expired') || error.toLowerCase().includes('sign in') ? 'Sign In' : 'Retry'}
           </button>
         </div>
       )}

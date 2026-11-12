@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   RotateCcw,
   Upload,
@@ -10,7 +10,9 @@ import {
   Sparkles,
   Camera,
   Check,
-  RefreshCw
+  RefreshCw,
+  AlertCircle,
+  FileCheck
 } from 'lucide-react';
 import { api } from '../services/api';
 import { useStore } from '../store/useStore';
@@ -21,9 +23,36 @@ export const ReclaimResolutionCenter: React.FC = () => {
   const [issueType, setIssueType] = useState('DAMAGED_ITEM');
   const [description, setDescription] = useState('My headphones arrived with a cracked plastic headband on the left ear cup.');
   const [evidenceName, setEvidenceName] = useState('nova_damaged_headband.jpg');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
   const [resolutionData, setResolutionData] = useState<any>(null);
   const [refundResult, setRefundResult] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.pdf', '.doc', '.docx'];
+  const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFileError(null);
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      setFileError('Unsupported file format. Please upload JPG, PNG, PDF, DOC, or DOCX.');
+      return;
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      setFileError('File exceeds maximum allowed size of 10MB.');
+      return;
+    }
+
+    setSelectedFile(file);
+    setEvidenceName(file.name);
+  };
 
   // 1. Submit Evidence & Run RECLAIM Workflow
   const handleAnalyzeDispute = async () => {
@@ -162,16 +191,52 @@ export const ReclaimResolutionCenter: React.FC = () => {
               />
             </div>
 
-            {/* Photo Evidence Uploader */}
+            {/* Supporting Evidence Uploader */}
             <div>
               <label className="text-[11px] font-medium text-slate-300 block mb-1.5">
-                Photographic Evidence (Required by Merchant Policy)
+                Supporting Evidence
               </label>
-              <div className="p-4 rounded-lg border-2 border-dashed border-slate-800 hover:border-indigo-500/50 bg-slate-950/40 text-center transition-colors">
-                <Upload className="w-5 h-5 text-indigo-400 mx-auto mb-1.5" />
-                <div className="text-xs font-medium text-slate-300">{evidenceName}</div>
-                <div className="text-[10px] text-slate-500 mt-0.5">JPEG / PNG • 2.4 MB</div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                disabled={step !== 'upload'}
+                accept="image/png,image/jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.png,.jpg,.jpeg,.pdf,.doc,.docx"
+                className="hidden"
+              />
+              <div
+                onClick={() => step === 'upload' && fileInputRef.current?.click()}
+                className={`p-4 rounded-lg border-2 border-dashed bg-slate-950/40 text-center transition-colors cursor-pointer ${
+                  fileError
+                    ? 'border-rose-500/50 hover:border-rose-500'
+                    : selectedFile
+                    ? 'border-emerald-500/50 hover:border-emerald-500 bg-emerald-950/10'
+                    : 'border-slate-800 hover:border-indigo-500/50'
+                }`}
+              >
+                {selectedFile ? (
+                  <FileCheck className="w-5 h-5 text-emerald-400 mx-auto mb-1.5" />
+                ) : (
+                  <Upload className="w-5 h-5 text-indigo-400 mx-auto mb-1.5" />
+                )}
+                <div className="text-xs font-medium text-slate-200">
+                  {selectedFile ? selectedFile.name : evidenceName}
+                </div>
+                <div className="text-[10px] text-slate-400 mt-0.5">
+                  {selectedFile
+                    ? `${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB • Attached`
+                    : 'Evidence files: JPG, PNG, PDF, DOC, DOCX'}
+                </div>
+                <div className="text-[9px] text-indigo-400 font-medium mt-1">
+                  Click to select file from device
+                </div>
               </div>
+              {fileError && (
+                <div className="mt-1.5 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11px] flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                  <span>{fileError}</span>
+                </div>
+              )}
             </div>
 
             {/* Submit Action */}

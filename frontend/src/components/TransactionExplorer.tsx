@@ -234,11 +234,15 @@ export const TransactionExplorer: React.FC = () => {
         <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-            <span>{error}</span>
+            <span>
+              {error.toLowerCase().includes('authenticated') || error.toLowerCase().includes('expired') || error.toLowerCase().includes('token')
+                ? 'Your session expired. Sign in again.'
+                : 'Unable to load transactions. Retry.'}
+            </span>
           </div>
           <button
             onClick={() => {
-              if (error.toLowerCase().includes('authenticated') || error.toLowerCase().includes('credentials')) {
+              if (error.toLowerCase().includes('authenticated') || error.toLowerCase().includes('expired') || error.toLowerCase().includes('token') || error.toLowerCase().includes('credentials')) {
                 setAuthModal('login');
               } else {
                 fetchTransactions();
@@ -246,8 +250,15 @@ export const TransactionExplorer: React.FC = () => {
             }}
             className="px-3 py-1 rounded bg-rose-600/30 hover:bg-rose-600/50 text-white font-medium text-xs transition-colors"
           >
-            {error.toLowerCase().includes('authenticated') || error.toLowerCase().includes('credentials') ? 'Sign In' : 'Retry'}
+            {error.toLowerCase().includes('authenticated') || error.toLowerCase().includes('expired') || error.toLowerCase().includes('token') || error.toLowerCase().includes('credentials') ? 'Sign In' : 'Retry'}
           </button>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 text-indigo-400 animate-spin shrink-0" />
+          <span>Loading transactions...</span>
         </div>
       )}
 
@@ -256,7 +267,7 @@ export const TransactionExplorer: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <ShoppingBag className="w-4 h-4 text-indigo-400 shrink-0" />
             <span>
-              No transactions found for this account. Create a guarded order in the Shopping Hub to record your first transaction.
+              No transactions available for this account. Create a guarded order in the Shopping Hub to record your first transaction.
             </span>
           </div>
           <button
@@ -283,6 +294,15 @@ export const TransactionExplorer: React.FC = () => {
             onCellMouseOver={handleCellMouseOver}
             onRowClicked={(event) => setSelectedTransaction(event.data)}
             animateRows={true}
+            loading={isLoading}
+            overlayLoadingTemplate={'<div class="ag-overlay-loading-center text-slate-300 font-medium text-xs flex items-center justify-center gap-2"><span>Loading transactions...</span></div>'}
+            overlayNoRowsTemplate={
+              error
+                ? (error.toLowerCase().includes('expired') || error.toLowerCase().includes('token') || error.toLowerCase().includes('authenticated')
+                  ? '<div class="text-rose-400 text-xs font-medium">Your session expired. Sign in again.</div>'
+                  : '<div class="text-rose-400 text-xs font-medium">Unable to load transactions. Retry.</div>')
+                : '<div class="text-slate-400 text-xs font-medium">No transactions available for this account.</div>'
+            }
           />
         </div>
       </div>

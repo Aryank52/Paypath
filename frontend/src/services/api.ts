@@ -86,7 +86,7 @@ export const api = {
     mobile_number?: string;
     preferred_currency?: string;
   }): Promise<UserProfile> => {
-    const res = await fetch(`${API_BASE}/auth/profile`, {
+    const res = await fetchWithAuth(`${API_BASE}/auth/profile`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -99,7 +99,7 @@ export const api = {
   },
 
   changePassword: async (data: { current_password: string; new_password: string }) => {
-    const res = await fetch(`${API_BASE}/auth/password/change`, {
+    const res = await fetchWithAuth(`${API_BASE}/auth/password/change`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -112,7 +112,7 @@ export const api = {
   },
 
   setupMFA: async () => {
-    const res = await fetch(`${API_BASE}/auth/mfa/setup`, {
+    const res = await fetchWithAuth(`${API_BASE}/auth/mfa/setup`, {
       method: 'POST',
       headers: getAuthHeaders()
     });
@@ -121,7 +121,7 @@ export const api = {
   },
 
   enableMFA: async (code: string) => {
-    const res = await fetch(`${API_BASE}/auth/mfa/enable`, {
+    const res = await fetchWithAuth(`${API_BASE}/auth/mfa/enable`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ code })
@@ -134,7 +134,7 @@ export const api = {
   },
 
   disableMFA: async (code: string) => {
-    const res = await fetch(`${API_BASE}/auth/mfa/disable`, {
+    const res = await fetchWithAuth(`${API_BASE}/auth/mfa/disable`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ code })
@@ -238,7 +238,7 @@ export const api = {
     item_description?: string;
     user_intent_id?: string;
   }) => {
-    const res = await fetch(`${API_BASE}/paycore/orders/create`, {
+    const res = await fetchWithAuth(`${API_BASE}/paycore/orders/create`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -251,7 +251,7 @@ export const api = {
   },
 
   captureOrder: async (orderId: string) => {
-    const res = await fetch(`${API_BASE}/paycore/orders/capture`, {
+    const res = await fetchWithAuth(`${API_BASE}/paycore/orders/capture`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ order_id: orderId })
@@ -264,7 +264,7 @@ export const api = {
   },
 
   refundPayment: async (data: { transaction_id: string; amount: number; reason?: string }) => {
-    const res = await fetch(`${API_BASE}/paycore/refunds`, {
+    const res = await fetchWithAuth(`${API_BASE}/paycore/refunds`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -277,7 +277,7 @@ export const api = {
   },
 
   verifyResource: async (resourceId: string, actionType: 'CAPTURE' | 'REFUND' = 'CAPTURE', expectedAmount = 89.0) => {
-    const res = await fetch(`${API_BASE}/paycore/verify/${resourceId}?action_type=${actionType}&expected_amount=${expectedAmount}`, {
+    const res = await fetchWithAuth(`${API_BASE}/paycore/verify/${resourceId}?action_type=${actionType}&expected_amount=${expectedAmount}`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to verify resource');
@@ -286,7 +286,7 @@ export const api = {
 
   // Shopping & Intent
   parseIntent: async (prompt: string) => {
-    const res = await fetch(`${API_BASE}/intent/parse`, {
+    const res = await fetchWithAuth(`${API_BASE}/intent/parse`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ prompt })
@@ -299,7 +299,7 @@ export const api = {
   },
 
   searchProducts: async (category = 'headphones', budget = 100.0, purpose = 'travel'): Promise<Product[]> => {
-    const res = await fetch(`${API_BASE}/shop/search?category=${encodeURIComponent(category)}&budget=${budget}&purpose=${encodeURIComponent(purpose)}`, {
+    const res = await fetchWithAuth(`${API_BASE}/shop/search?category=${encodeURIComponent(category)}&budget=${budget}&purpose=${encodeURIComponent(purpose)}`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to search products');
@@ -313,7 +313,7 @@ export const api = {
     category?: string;
     user_budget?: number;
   }) => {
-    const res = await fetch(`${API_BASE}/shop/propose-purchase`, {
+    const res = await fetchWithAuth(`${API_BASE}/shop/propose-purchase`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -327,7 +327,7 @@ export const api = {
 
   // Payment Guard
   evaluateGuard: async (data: { amount: number; merchant_name: string; category?: string }): Promise<GuardEvaluation> => {
-    const res = await fetch(`${API_BASE}/guard/evaluate`, {
+    const res = await fetchWithAuth(`${API_BASE}/guard/evaluate`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -341,7 +341,7 @@ export const api = {
 
   // RECLAIM
   createReclaimCase: async (data: { transaction_id: string; issue_type: string; description: string }): Promise<ReclaimCase> => {
-    const res = await fetch(`${API_BASE}/reclaim/cases`, {
+    const res = await fetchWithAuth(`${API_BASE}/reclaim/cases`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -356,7 +356,7 @@ export const api = {
   uploadEvidence: async (caseId: string, file: File): Promise<EvidenceItem> => {
     const formData = new FormData();
     formData.append('file', file);
-    const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}/evidence`, {
+    const res = await fetchWithAuth(`${API_BASE}/reclaim/cases/${caseId}/evidence`, {
       method: 'POST',
       headers: getAuthHeaders(false),
       body: formData
@@ -369,7 +369,7 @@ export const api = {
   },
 
   evaluateCase: async (caseId: string) => {
-    const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}/evaluate`, {
+    const res = await fetchWithAuth(`${API_BASE}/reclaim/cases/${caseId}/evaluate`, {
       method: 'POST',
       headers: getAuthHeaders()
     });
@@ -381,7 +381,7 @@ export const api = {
   },
 
   approveRefund: async (caseId: string) => {
-    const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}/approve`, {
+    const res = await fetchWithAuth(`${API_BASE}/reclaim/cases/${caseId}/approve`, {
       method: 'POST',
       headers: getAuthHeaders()
     });
@@ -393,7 +393,7 @@ export const api = {
   },
 
   getReclaimCases: async (): Promise<ReclaimCase[]> => {
-    const res = await fetch(`${API_BASE}/reclaim/cases`, {
+    const res = await fetchWithAuth(`${API_BASE}/reclaim/cases`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch reclaim cases');
@@ -401,7 +401,7 @@ export const api = {
   },
 
   getCase: async (caseId: string): Promise<ReclaimCase> => {
-    const res = await fetch(`${API_BASE}/reclaim/cases/${caseId}`, {
+    const res = await fetchWithAuth(`${API_BASE}/reclaim/cases/${caseId}`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to get dispute case');
@@ -410,7 +410,7 @@ export const api = {
 
   // Recovery Intelligence
   getDuplicates: async (): Promise<DuplicateSignal[]> => {
-    const res = await fetch(`${API_BASE}/recover/duplicates`, {
+    const res = await fetchWithAuth(`${API_BASE}/recover/duplicates`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch duplicate signals');
@@ -418,7 +418,7 @@ export const api = {
   },
 
   getSubscriptions: async (): Promise<SubscriptionItem[]> => {
-    const res = await fetch(`${API_BASE}/recover/subscriptions`, {
+    const res = await fetchWithAuth(`${API_BASE}/recover/subscriptions`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch subscriptions');
@@ -427,7 +427,7 @@ export const api = {
 
   // Agents
   runCommerceWorkflow: async (prompt: string) => {
-    const res = await fetch(`${API_BASE}/agents/run-commerce`, {
+    const res = await fetchWithAuth(`${API_BASE}/agents/run-commerce`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ prompt })
@@ -440,7 +440,7 @@ export const api = {
   },
 
   runReclaimWorkflow: async (data: any) => {
-    const res = await fetch(`${API_BASE}/agents/run-reclaim`, {
+    const res = await fetchWithAuth(`${API_BASE}/agents/run-reclaim`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -454,7 +454,7 @@ export const api = {
 
   // Audit
   getAuditLogs: async () => {
-    const res = await fetch(`${API_BASE}/audit`, {
+    const res = await fetchWithAuth(`${API_BASE}/audit`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch audit logs');
@@ -469,7 +469,7 @@ export const api = {
   },
 
   getDatabaseInventory: async () => {
-    const res = await fetch(`${API_BASE}/system/database`, {
+    const res = await fetchWithAuth(`${API_BASE}/system/database`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch database inventory');
@@ -477,7 +477,7 @@ export const api = {
   },
 
   getLineageTransactions: async () => {
-    const res = await fetch(`${API_BASE}/system/lineage-transactions`, {
+    const res = await fetchWithAuth(`${API_BASE}/system/lineage-transactions`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch lineage transactions');
@@ -485,7 +485,7 @@ export const api = {
   },
 
   getTransactionLineage: async (id: string) => {
-    const res = await fetch(`${API_BASE}/system/lineage/${id}`, {
+    const res = await fetchWithAuth(`${API_BASE}/system/lineage/${id}`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch transaction lineage');
@@ -494,7 +494,7 @@ export const api = {
 
   // Machine Learning
   getMLModels: async () => {
-    const res = await fetch(`${API_BASE}/ml/models`, {
+    const res = await fetchWithAuth(`${API_BASE}/ml/models`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch ML models');
@@ -502,7 +502,7 @@ export const api = {
   },
 
   getMLFeatures: async () => {
-    const res = await fetch(`${API_BASE}/ml/features`, {
+    const res = await fetchWithAuth(`${API_BASE}/ml/features`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch ML features');
@@ -510,7 +510,7 @@ export const api = {
   },
 
   explainTransaction: async (id: string) => {
-    const res = await fetch(`${API_BASE}/ml/explain/${id}`, {
+    const res = await fetchWithAuth(`${API_BASE}/ml/explain/${id}`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) {
@@ -527,7 +527,7 @@ export const api = {
     user_id?: string;
     is_subscription?: boolean;
   }) => {
-    const res = await fetch(`${API_BASE}/ml/predict`, {
+    const res = await fetchWithAuth(`${API_BASE}/ml/predict`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -541,7 +541,7 @@ export const api = {
 
   // Multi-Merchant Portal
   listMerchants: async () => {
-    const res = await fetch(`${API_BASE}/merchants`, {
+    const res = await fetchWithAuth(`${API_BASE}/merchants`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch merchants');
@@ -549,7 +549,7 @@ export const api = {
   },
 
   getMerchant: async (merchantId: string) => {
-    const res = await fetch(`${API_BASE}/merchants/${merchantId}`, {
+    const res = await fetchWithAuth(`${API_BASE}/merchants/${merchantId}`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch merchant details');
@@ -562,7 +562,7 @@ export const api = {
     content: string;
     rules?: Record<string, any>;
   }) => {
-    const res = await fetch(`${API_BASE}/merchants/${merchantId}/policies`, {
+    const res = await fetchWithAuth(`${API_BASE}/merchants/${merchantId}/policies`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -581,7 +581,7 @@ export const api = {
     evidence_provided: boolean;
     custom_rules?: Record<string, any>;
   }) => {
-    const res = await fetch(`${API_BASE}/merchants/${merchantId}/simulate-policy`, {
+    const res = await fetchWithAuth(`${API_BASE}/merchants/${merchantId}/simulate-policy`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(data)
@@ -595,7 +595,7 @@ export const api = {
 
   // Notifications
   getNotifications: async () => {
-    const res = await fetch(`${API_BASE}/notifications`, {
+    const res = await fetchWithAuth(`${API_BASE}/notifications`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to fetch notifications');
@@ -603,7 +603,7 @@ export const api = {
   },
 
   markNotificationAsRead: async (id: string) => {
-    const res = await fetch(`${API_BASE}/notifications/${id}/read`, {
+    const res = await fetchWithAuth(`${API_BASE}/notifications/${id}/read`, {
       method: 'POST',
       headers: getAuthHeaders()
     });

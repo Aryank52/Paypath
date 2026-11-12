@@ -90,7 +90,7 @@ async def upload_evidence(
         file_name=unique_name,
         file_type=verified_mime,
         file_url=file_url,
-        evidence_type="PHOTO_DAMAGE",
+        evidence_type="PHOTO_DAMAGE" if "image" in verified_mime else "DOCUMENT_EVIDENCE",
         analysis_summary=analysis["analysis_summary"],
         confidence_score=analysis["confidence_score"]
     )
