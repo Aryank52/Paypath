@@ -272,7 +272,7 @@ async def get_database_inventory(
             })
             total_records += 1
     except Exception:
-        pass
+        await db.rollback()
 
     # Extract deep database connection telemetry
     db_diagnostics = {}
@@ -286,7 +286,7 @@ async def get_database_inventory(
 
         provider = (
             "Render Managed PostgreSQL"
-            if ("render" in host_name.lower() or "dpg-" in host_name.lower() or "frankfurt-postgres" in host_name.lower() or "oregon-postgres" in host_name.lower() or "ohio-postgres" in host_name.lower())
+            if ("render" in host_name.lower() or "dpg-" in host_name.lower() or "frankfurt-postgres" in host_name.lower() or "oregon-postgres" in host_name.lower() or "ohio-postgres" in host_name.lower() or "postgres" in host_name.lower() and "supabase" not in host_name.lower())
             else ("Supabase PostgreSQL" if "supabase" in host_name.lower() else ("PostgreSQL" if driver_name.startswith("postgres") else "SQLite (Test)"))
         )
 
@@ -297,6 +297,7 @@ async def get_database_inventory(
         current_usr = parsed_url.username
 
         if db.bind and db.bind.dialect.name != "sqlite":
+            await db.rollback()
             res_ver = await db.execute(text("SELECT version()"))
             res_db = await db.execute(text("SELECT current_database()"))
             res_user = await db.execute(text("SELECT current_user"))
