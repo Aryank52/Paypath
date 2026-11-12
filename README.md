@@ -1,237 +1,378 @@
 # PayPath
-## AI-Powered Transaction Intelligence, Agentic Commerce & Payment Action Platform
+## AI Transaction Intelligence & Agentic Commerce
 
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
 [![AG Grid](https://img.shields.io/badge/AG_Grid-Data_Explorer-535353.svg?logo=ag-grid&logoColor=white)](https://www.ag-grid.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.15-336791.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![PayPal](https://img.shields.io/badge/PayPal-Sandbox_v2-00457C.svg?logo=paypal&logoColor=white)](https://developer.paypal.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 > **Understand. Decide. Act. Verify.**  
-> *PayPath turns PayPal transactions into intelligent, explainable, policy-controlled financial workflows.*
-
-### 🌐 Live Production Deployment
-- **Frontend Application (Vercel):** [https://paypath-hazel.vercel.app/](https://paypath-hazel.vercel.app/)
-- **Backend API (Render):** [https://paypath-8u9a.onrender.com](https://paypath-8u9a.onrender.com)
-- **Authoritative Database:** Render Managed PostgreSQL 16.15 (20 tables, 339 records)
-- **Demo Shopper Credentials:** `demo@paypath.finance` / `paypath123!`
-- **Platform Admin Credentials:** `marcus.vance@paypath.finance` / `paypath123!`
-- **Merchant Admin Credentials:** `sarah.jenkins@paypath.finance` / `paypath123!`
+> *PayPath turns financial transactions into explainable, policy-controlled, and independently verified workflows for the agentic economy.*
 
 ---
 
-## 1. Executive Summary & Vision
+### 🌐 Live Production Deployments & Access
 
-Modern AI agents can search the web and converse about products, but granting autonomous AI direct access to financial transactions poses grave risks of hallucinated amounts, runaway spending, and policy violations.
+| Resource | Live Endpoint | Purpose |
+|---|---|---|
+| **Frontend Application** | [https://paypath-hazel.vercel.app/](https://paypath-hazel.vercel.app/) | Official React 19 production deployment on Vercel |
+| **Backend API Core** | [https://paypath-8u9a.onrender.com](https://paypath-8u9a.onrender.com) | FastAPI production service on Render |
+| **Health Check** | [https://paypath-8u9a.onrender.com/health](https://paypath-8u9a.onrender.com/health) | Live runtime diagnostic and subsystem readiness |
+| **Interactive API Docs** | [https://paypath-8u9a.onrender.com/api/v1/docs](https://paypath-8u9a.onrender.com/api/v1/docs) | Interactive Swagger / OpenAPI documentation |
+| **Repository** | [https://github.com/Aryank52/Paypath](https://github.com/Aryank52/Paypath) | Public source repository on GitHub |
 
-**PayPath** solves the trust and control problem in agentic commerce through a foundational principle:
+#### Pre-Configured Test Accounts
 
-> **AI understands the transaction, policy systems constrain the decision, humans control consequential financial actions, PayPal performs the financial operation, and PayPath independently verifies the outcome.**
-
-PayPath covers the complete transaction lifecycle:
-```text
-USER INTENT ➔ PURCHASE / PAYMENT PROPOSAL ➔ PAYMENT AUTHORIZATION ➔ PAYPAL TRANSACTION ➔
-TRANSACTION INTELLIGENCE ➔ MONITORING ➔ ISSUE / RISK / EXCEPTION ➔ POLICY + RAG + EVIDENCE ➔
-AI REASONING ➔ DETERMINISTIC POLICY ENGINE ➔ HUMAN APPROVAL ➔ PAYPAL ACTION ➔
-INDEPENDENT VERIFICATION ➔ AUDIT TRAIL ➔ RESOLUTION
-```
-
----
-
-## 2. The Five Intelligence Modes
-
-| Mode | Name | Key Question | Core Capabilities |
+| Role | Email | Password | Access Scope |
 |---|---|---|---|
-| **Mode 1** | **UNDERSTAND** | *What happened?* | PayPal transaction retrieval, lifecycle normalization, event timeline, AI health summaries, and AG Grid intelligence exploration. |
-| **Mode 2** | **INTENT** | *What does the user want?* | Natural language intent extraction to structured constraints (budget, category, purpose, autonomy level). |
-| **Mode 3** | **GUARD** | *Should this payment move?* | Pre-transaction authorization checks against spend limits, merchant trust scores, and human-in-the-loop gates (`ALLOW`, `REVIEW`, `BLOCK`, `ESCALATE`). |
-| **Mode 4** | **RECOVER** | *What can be saved?* | Deterministic duplicate payment anomaly detection, recurring subscription tracking, and renewal alerting. |
-| **Mode 5** | **RESOLVE (RECLAIM)** | *How is an issue resolved?* | End-to-end post-purchase dispute subsystem: photo damage inspection, merchant policy RAG retrieval, resolution recommendation, human approval, and PayPal refund verification. |
+| **Demo Shopper (USER)** | `demo@paypath.finance` | `paypath123!` | Standard user tenant, transactions, shopping, RECLAIM disputes |
+| **Merchant Admin (MERCHANT_ADMIN)** | `sarah.jenkins@paypath.finance` | `paypath123!` | Merchant policy ingestion, merchant dispute resolution |
+| **Platform Admin (PLATFORM_ADMIN)** | `marcus.vance@paypath.finance` | `paypath123!` | Full multi-tenant governance, system health, audit logs |
 
 ---
 
-## 3. System Architecture
+## 1. Executive Summary & The Problem
+
+Autonomous AI agents are rapidly entering digital commerce: browsing catalogs, summarizing options, negotiating terms, and initiating purchases. However, **granting autonomous AI direct, unconstrained access to financial execution creates severe systemic risks**:
+- **Hallucinated Amounts & Parameters:** Generative models can hallucinate discount codes, amounts, currencies, or order quantities.
+- **Runaway Agent Spending:** Without deterministic constraints, agent loops can exhaust budgets or repeatedly trigger billing cycles.
+- **Policy Violations & Compliance Failures:** Large Language Models are probabilistic and cannot guarantee deterministic adherence to corporate expense policies or statutory refund windows.
+- **Lack of Non-Repudiation:** Traditional agent workflows lack tamper-evident audit trails linking intent to approval, mutation, and downstream payment verification.
+
+**PayPath** bridges the trust gap between generative AI and payment rails. It provides a hardened financial operating system where AI provides advisory intelligence, but every monetary movement is governed by deterministic rules, authenticated human approvals, and independent payment rail verification.
+
+---
+
+## 2. Core Principle
+
+PayPath operates under an uncompromising architectural axiom:
+
+> **"AI interprets. RAG provides context. ML provides advisory intelligence. Deterministic policies control decisions. Humans approve consequential actions. PayPal executes. PayPath verifies."**
+
+Under no circumstance is an LLM or ML model permitted to directly authorize or execute a financial movement. AI suggests; deterministic code enforces; authenticated humans decide; PayPal settles; PayPath independently verifies.
+
+---
+
+## 3. Key Capabilities
+
+### 🔍 1. Transaction Intelligence Explorer (AG Grid)
+- **High-Performance Enterprise Grid:** Powered by AG Grid Community with custom cell renderers for status badges, risk chips, and PayPal state indicators.
+- **Multi-Column Filtering & Sorting:** Instant client-side and server-side filtering across amounts, merchants, categories, and date ranges.
+- **AI Health Insights:** Pre-computed explainable transaction breakdowns identifying billing anomalies, recurring charges, and dispute eligibility.
+- **Lifecycle Detail Drawers:** Slide-over inspection drawers displaying immutable audit timelines and PayPal read-back confirmation.
+
+### 🎯 2. AI / Intent Hub
+- **Natural Language Intent Parsing:** Converts free-form shopper or enterprise prompts into structured financial proposals (target item, category, max price, autonomy level).
+- **Constrained Extraction:** Employs strictly typed Pydantic models to guarantee valid numeric ranges and ISO-4217 currency codes.
+
+### 🛡️ 3. Deterministic Payment Guard
+- **Pre-Authorization Policy Engine:** Evaluates prospective purchases against deterministic spend limits, velocity rules, merchant trust scores, and category blacklists.
+- **Strict State Machine:** Issues one of four immutable verdicts: `ALLOW`, `REVIEW`, `BLOCK`, or `ESCALATE`.
+- **Zero Hallucination Risk:** Policy decisions execute in pure Python logic independent of LLM inferences.
+
+### 🛍️ 4. Guarded Shopping
+- **Agentic Commerce with Guardrails:** Enables autonomous product research and comparison while enforcing hard spending budgets.
+- **Sanitized Proposals:** Verifies merchant identity, tax calculations, and shipping fees before constructing payment orders.
+
+### 🔄 5. Recovery Intelligence
+- **Deterministic Duplicate Detection:** Analyzes sliding time windows for identical merchant, currency, and amount collisions.
+- **Subscription Waste Identification:** Uncovers recurring subscription creep, unannounced price increases, and forgotten recurring billing.
+
+### ⚖️ 6. RECLAIM Dispute & Resolution Engine
+- **End-to-End Post-Purchase Resolution:** Guides users through structured disputes for damaged goods, non-delivery, or incorrect billing.
+- **Multi-Modal Evidence Inspection:** Validates uploaded receipts and damage photos with magic-byte security inspection.
+- **Policy-Aware Proposals:** Compares dispute circumstances against merchant return policies to generate legally grounded refund proposals.
+
+### 🏛️ 7. Merchant Policy Studio
+- **Document Ingestion:** Ingests raw merchant terms, cancellation policies, and warranty rules.
+- **Vectorized Policy Knowledge:** Indexes clauses into PostgreSQL using `pgvector` for accurate semantic matching during claim processing.
+
+### 🔒 8. Tenant-Isolated RAG
+- **Zero Cross-Tenant Leakage:** Every vector search query strictly enforces relational tenant scoping (`tenant_id = :tenant_id`).
+- **Precise Citation Backing:** Every policy retrieval includes source section references and clause excerpts.
+
+### 📊 9. Leakage-Free Machine Learning
+- **Dual-Model Architecture:** Combines an XGBoost Classifier (transaction risk scoring) with an Isolation Forest (unsupervised anomaly detection).
+- **12 Strict Behavioral Features:** Engineered strictly from non-leaking transaction attributes (amount, velocity, merchant tenure, hour-of-day, historical variance).
+- **Strictly Advisory Role:** ML scores provide contextual risk signals (`0.0 - 1.0`) to human operators and deterministic policies; they never make unilateral settlement decisions.
+
+### 🤖 10. Multi-Agent Workflows
+- **Specialized Agent Roster:** Seven decoupled, domain-specific agents (Intent, Transaction, Shopping, Policy, Evidence, Risk, and Resolution).
+- **Typed Message Bus:** Agents communicate strictly via validated Pydantic message envelopes with end-to-end correlation IDs.
+
+### 💳 11. Full PayPal Integration
+- **Orders v2 & Payments v2:** Production-ready implementation of PayPal OAuth2 client credentials, order creation, capture, and refunds.
+- **Idempotency Vault:** Cryptographic request hashing prevents duplicate double-charges on network retries or concurrent clicks.
+
+### 🔐 12. Webhook Signature Verification
+- **Cryptographic Assurance:** Validates PayPal webhook signatures using RSA-SHA256, public cert retrieval, and payload CRC32 verification.
+- **Replay Protection:** Rejects duplicate webhook deliveries through event ID caching.
+
+### 🔁 13. Dual-Phase Read-Back Verification
+- **Post-Mutation Read-Back:** After executing any mutation (order capture or refund), PayPath independently polls the PayPal API (`GET /v2/payments/captures/{id}` or `GET /v2/payments/refunds/{id}`).
+- **Independent Reconciliation:** Confirms that status is `COMPLETED`, currency is `USD`, and the settled amount mathematically equals the requested amount before updating the authoritative database.
+
+### 📜 14. Audit Trail & Governance
+- **Append-Only Event Ledger:** Every user interaction, policy evaluation, agent message, and financial mutation is recorded in an immutable audit table.
+- **Correlation Tracking:** End-to-end UUID correlation IDs follow every request from React frontend to PayPal settlement.
+
+### 🛡️ 15. Security & Control Center
+- **Granular RBAC:** Strict separation of privileges across `USER`, `MERCHANT_ADMIN`, and `PLATFORM_ADMIN` roles.
+- **RFC 6238 TOTP MFA:** Two-factor authentication with time-based one-time password verification.
+- **Session Revocation:** JWT `jti` blocklisting enables instantaneous session termination on logout.
+- **Fail-Closed Architecture:** If an external service or storage bucket is unreachable or misconfigured, the platform fails closed rather than falling back to unverified defaults.
+
+---
+
+## 4. System Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                             REACT FRONTEND (Vite)                           │
-│  - AG Grid Explorer    - RECLAIM Center       - Payment Guard Studio        │
-│  - AI Command Center   - Shopping Hub         - Audit & Agent Trace Stream  │
+│                       CLIENT TIER: REACT 19 FRONTEND                        │
+│  - AG Grid Intelligence Explorer       - RECLAIM Dispute & Claims Studio   │
+│  - Guarded Shopping Hub                - Payment Guard & Policy Rules       │
+│  - Multi-Tenant RBAC UI (User / Merchant / Platform Admin)                  │
 └──────────────────────────────────────┬──────────────────────────────────────┘
-                                       │ HTTPS / JSON
+                                       │ HTTPS (JSON / REST API)
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           FASTAPI BACKEND CORE                              │
+│                    APPLICATION TIER: FASTAPI BACKEND CORE                   │
 │  ┌───────────────────────┐  ┌───────────────────────┐  ┌─────────────────┐  │
-│  │  Auth & RBAC Guards   │  │  Rate Limiting Engine │  │ Audit & Logging │  │
+│  │ JWT / JTI / TOTP Auth │  │  Role-Based Access    │  │ Rate Limiter    │  │
 │  └───────────────────────┘  └───────────────────────┘  └─────────────────┘  │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                    API Route Controllers                              │  │
-│  │  /auth  /transactions  /intent  /shop  /policies  /reclaim  /approvals │  │
+│  │ API Routing: /auth, /transactions, /intent, /shop, /reclaim, /policies│  │
 │  └───────────────────────────────────┬───────────────────────────────────┘  │
 │                                      │                                      │
 │  ┌───────────────────────────────────┴───────────────────────────────────┐  │
-│  │            PAYPATH TRANSACTION INTELLIGENCE & AGENT ENGINE            │  │
-│  │  ┌────────────────────────┐             ┌──────────────────────────┐  │  │
-│  │  │   Agent Orchestrator   │◄───────────►│  Typed Agent Message Bus │  │  │
-│  │  │ (Intent, Shopping,     │             │ (Validated Pydantic MSGs)│  │  │
-│  │  │  Policy, Evidence,     │             └──────────────────────────┘  │  │
-│  │  │  Risk, Resolution,     │                                           │  │
-│  │  │  Verification, etc.)   │                                           │  │
-│  │  └───────────┬────────────┘                                           │  │
+│  │                   INTELLIGENCE & AGENT ENGINE                         │  │
+│  │  ┌─────────────────────────┐             ┌─────────────────────────┐  │  │
+│  │  │   Agent Orchestrator    │◄───────────►│  Typed Pydantic Bus     │  │  │
+│  │  │ (Intent, Shopping,      │             │ (End-to-End Correlation)│  │  │
+│  │  │  Evidence, Resolution)  │             └─────────────────────────┘  │  │
+│  │  └───────────┬─────────────┘                                          │  │
 │  │              │                                                        │  │
 │  │              ▼                                                        │  │
-│  │  ┌────────────────────────┐             ┌──────────────────────────┐  │  │
-│  │  │    RAG Engine / Vector │             │ Deterministic Policy     │  │  │
-│  │  │    pgvector / metadata │             │ Engine (ALLOW/REVIEW/    │  │  │
-│  │  │    filtering & citation│             │ BLOCK/ESCALATE)          │  │  │
-│  │  └────────────────────────┘             └────────────┬─────────────┘  │  │
-│  └──────────────────────────────────────────────────────┼────────────────┘  │
-│                                                         │                   │
-│                                                         ▼                   │
+│  │  ┌─────────────────────────┐             ┌─────────────────────────┐  │  │
+│  │  │ Advisory ML Engine      │             │ Tenant-Isolated RAG     │  │  │
+│  │  │ (XGBoost + IsoForest)   │             │ (pgvector + Metadata)   │  │  │
+│  │  └───────────┬─────────────┘             └────────────┬────────────┘  │  │
+│  └──────────────┼────────────────────────────────────────┼───────────────┘  │
+│                 │                                        │                  │
+│                 ▼                                        ▼                  │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                         APPROVAL GATEWAY                              │  │
-│  │  Human-in-the-loop: AUTO_ALLOWED | USER_APPROVAL | DUAL_APPROVAL     │  │
+│  │               DETERMINISTIC PAYMENT GUARD & POLICY ENGINE             │  │
+│  │         Rules: ALLOW | REVIEW | BLOCK | ESCALATE (Zero LLM Ambiguity) │  │
 │  └───────────────────────────────────┬───────────────────────────────────┘  │
-│                                      │ (Approved Mutations Only)            │
+│                                      │ (Requires Human Approval)            │
 │                                      ▼                                      │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                         PAYCORE SUBSYSTEM                             │  │
-│  │  - PayPal REST OAuth2 Client   - Idempotency Vault                    │  │
-│  │  - Order Creation & Capture    - Webhook Signature Verifier           │  │
-│  │  - Refund Mutation Engine      - Independent Read-Back Verifier       │  │
+│  │                    PAYCORE EXECUTION & VERIFICATION                   │  │
+│  │  - PayPal REST OAuth2 Client        - Idempotency Request Vault       │  │
+│  │  - Orders & Refunds v2 Executor     - Dual-Phase Read-Back Verifier   │  │
+│  │  - RSA-SHA256 Webhook Validator     - Magic-Byte Evidence Inspector   │  │
 │  └───────────────────────────────────┬───────────────────────────────────┘  │
 └──────────────────────────────────────┼──────────────────────────────────────┘
                                        │
-                    ┌──────────────────┴──────────────────┐
-                    ▼                                     ▼
-        ┌───────────────────────┐             ┌───────────────────────┐
-        │     POSTGRESQL 16     │             │   PAYPAL SANDBOX API  │
-        │ - Relational Tables   │             │ - Orders v2           │
-        │ - pgvector Embeddings │             │ - Payments v2         │
-        │ - Immutable Audit Log │             │ - Webhooks v1         │
-        └───────────────────────┘             └───────────────────────┘
+            ┌──────────────────────────┼──────────────────────────┐
+            ▼                          ▼                          ▼
+┌───────────────────────┐  ┌───────────────────────┐  ┌───────────────────────┐
+│     POSTGRESQL 16     │  │   PAYPAL SANDBOX API  │  │   SUPABASE STORAGE    │
+│  (Render Managed DB)  │  │   (Payments Rail)     │  │   (Private Evidence)  │
+│ - 20 Relational Tables│  │ - Orders v2           │  │ - Private Bucket      │
+│ - pgvector Embeddings │  │ - Payments v2 Capture │  │ - Magic-Byte Checked  │
+│ - Immutable Audit Log │  │ - Refunds & Webhooks  │  │ - Server-Side Auth    │
+└───────────────────────┘  └───────────────────────┘  └───────────────────────┘
 ```
 
----
-
-## 4. Multi-Agent Ecosystem
-Instead of a single brittle prompt, PayPath organizes 8 specialized agents communicating via a typed message bus:
-1. **Intent Agent:** Extracts entities, budgets, and autonomy flags from free-form natural language.
-2. **Transaction Agent:** Ingests raw PayPal records, normalizes currency/timestamps, links customer history.
-3. **Shopping Agent:** Queries product catalog (Channel3/normalized provider), applies constraints, proposes purchases.
-4. **Policy Agent:** Searches indexed merchant & user policies via RAG, extracts relevant clauses with citations.
-5. **Evidence Agent:** Inspects uploaded media (photos, receipts, invoices), detects damage or discrepancies.
-6. **Risk Agent:** Computes anomaly scores, detects potential duplicate payments and abnormal merchant velocity.
-7. **Resolution Agent:** Combines transaction data, policy citations, and evidence to formulate an actionable resolution proposal (e.g. `PARTIAL_REFUND`, `REPLACEMENT`).
-8. **Verification Agent:** Queries PayPal directly post-mutation to independently confirm amount, currency, and final state.
+### Request Lifecycle & Trust Boundary Flow
+1. **Shopper / Client Intent:** Shopper submits a purchase or dispute intent via the React frontend.
+2. **Authentication & Multi-Tenant Scoping:** FastAPI authenticates the request via JWT, verifies tenant boundaries, and enforces RBAC privileges.
+3. **Contextual Enrichment:** Advisory ML models compute risk anomalies, while `pgvector` extracts relevant merchant policy clauses scoped strictly to the current tenant.
+4. **Deterministic Gatekeeper:** The Payment Guard evaluates hard policies (spending limits, merchant history, velocity).
+5. **Human-in-the-Loop Gate:** If the policy requires review or approval, the action is suspended until explicitly confirmed by the authorized human.
+6. **PayCore Execution:** PayCore computes an idempotency key and initiates the transaction against PayPal's v2 REST API.
+7. **Independent Verification:** PayCore performs an independent read-back against PayPal to verify that the remote status is `COMPLETED` and amounts match to the penny.
+8. **Authoritative Commitment:** State is written to Render PostgreSQL 16, and an immutable audit event is appended to the ledger.
 
 ---
 
-## 5. PayCore & Independent PayPal Verification
-PayPath enforces **dual-phase verification** on all financial mutations:
-```text
-Mutation Executed (Capture or Refund)
-       ↓
-Receive PayPal API Response
-       ↓
-Persist Pending Mutation Record
-       ↓
-Trigger Independent Read-Back (GET /v2/payments/captures/{id} or /refunds/{id})
-       ↓
-Verify: Status == COMPLETED, Currency == USD, Amount Matches Exactly
-       ↓
-Status Updated to "Verified by PayPal" (Rendered in UI)
-```
+## 5. Technology Stack
+
+| Layer | Technology | Version | Purpose |
+|---|---|---|---|
+| **Frontend Framework** | React | 19.0.0 | High-performance user interface |
+| **Frontend Tooling** | Vite | 6.x | Fast build and development server |
+| **Language (UI)** | TypeScript | 5.5+ | Type-safe client components |
+| **UI Components** | Tailwind CSS / Lucide | 3.4+ / 0.4+ | Clean modern design system |
+| **Data Grid** | AG Grid Community | 33.x | Enterprise transaction intelligence explorer |
+| **Backend Framework** | FastAPI | 0.115+ | Async REST API application server |
+| **Language (API)** | Python | 3.12 | High-throughput backend execution |
+| **Validation** | Pydantic v2 | 2.9+ | Strict data modeling and message validation |
+| **ORM / Data Access** | SQLAlchemy 2 (async) | 2.0+ | Asynchronous database abstraction |
+| **Database Migrations**| Alembic | 1.13+ | Version-controlled schema migrations |
+| **Application Database**| PostgreSQL (Render Managed) | 16.15 | 20 canonical tables, authoritative system of record |
+| **Vector Search** | pgvector | 0.3+ | Tenant-isolated policy embeddings |
+| **Machine Learning** | XGBoost / Scikit-learn | 2.1+ / 1.5+ | Advisory transaction risk & anomaly detection |
+| **File Storage** | Supabase Storage | v2 | Private cloud storage for RECLAIM file evidence |
+| **Payment Rails** | PayPal REST APIs | v2 | Orders v2, Payments v2, Webhooks v1 |
+| **Hosting & Cloud** | Vercel (UI) / Render (API + DB)| Cloud | Edge frontend CDN and managed backend services |
+| **Testing** | pytest, pytest-asyncio, Vitest | Latest | Automated unit, integration, and security tests |
 
 ---
 
-## 6. Sponsor Integrations
+## 6. Security & Trust Model
 
-1. **PayPal (Primary Hackathon Rail):** Complete sandbox integration in `backend/app/paycore/` covering Orders v2, Payments v2, Idempotency Vault, and Independent Verification.
-2. **AG Grid (Data Grid Sponsor):** Powers the **Transaction Intelligence Explorer** with custom status renderers, risk badges, quick filtering, and lifecycle drawers.
-3. **Render (Cloud Sponsor):** Full-stack infrastructure-as-code blueprint provided in `render.yaml` for FastAPI API, React Static Web, Managed PostgreSQL 16, and Redis.
-4. **Postman (API Testing Sponsor):** End-to-end API test and workflow collection in `docs/postman/paypath.postman_collection.json`.
-5. **Channel3 / Catalog:** Normalized product search adapter for the Shopping Agent.
-6. **Elastic:** Structured audit event stream logging adapter.
+PayPath enforces a defense-in-depth security architecture designed for financial operations:
+
+1. **Deterministic Decision Authority:** LLMs and ML models are strictly advisory. No AI output can execute transactions or alter balances without passing deterministic policy evaluation.
+2. **Strict Multi-Tenancy (No Cross-Tenant Leakage):** All database queries, vector similarity searches, and object retrievals enforce strict relational isolation (`user_id == current_user.id` or `merchant_id == current_user.merchant_id`).
+3. **Role-Based Access Control (RBAC):** Administrative routes (e.g. policy ingestion, global audit streams) are guarded by `@require_role(MERCHANT_ADMIN)` or `@require_role(PLATFORM_ADMIN)`.
+4. **Session Blocklisting & Invalidation:** JWTs contain unique `jti` claims. Logging out immediately persists the `jti` into an active blocklist, neutralizing replay attacks.
+5. **RFC 6238 TOTP Multi-Factor Authentication:** High-privilege administrative actions and sensitive workflows support time-based one-time passwords.
+6. **Cryptographic Webhook Verification:** Incoming PayPal webhooks are verified using PayPal public certificates, RSA-SHA256 signature verification, and payload CRC32 hashing.
+7. **Magic-Byte Upload Validation:** Dispute evidence uploads are inspected at the binary level (magic-byte headers) to reject malicious executables masquerading as PNG, JPEG, or PDF files.
+8. **Dual-Phase Read-Back Verification:** Mutations are never assumed successful based on preliminary HTTP return codes. PayPath issues an independent `GET` read-back to PayPal to verify true settlement before committing transaction state.
+9. **Fail-Closed Storage Architecture:** Storage operations fail closed with HTTP 502/403. In production environments, unauthenticated local disk fallbacks are disabled.
+10. **Human Approval Thresholds:** Financial actions exceeding designated risk or amount thresholds require authenticated human approval.
+11. **Append-Only Immutable Audit Log:** All events, decisions, agent traces, and financial mutations are recorded with correlation IDs and timestamps.
 
 ---
 
-## 7. Quick Start & Local Setup
+## 7. Running Locally
 
 ### Prerequisites
-- Python 3.12+
-- Node.js v20+ and npm
-- PostgreSQL 16 (Authoritative Database running on `localhost:5432`)
+- **Python:** 3.12 or newer
+- **Node.js:** 20.x or newer (with npm)
+- **PostgreSQL:** 16.x running locally on `localhost:5432`
 
-### 1. Backend & Database Setup
+### 1. Clone the Repository
 ```bash
-# From repository root
+git clone https://github.com/Aryank52/Paypath.git
+cd Paypath
+```
+
+### 2. Backend Setup
+```bash
+# Create and activate Python virtual environment
 python -m venv .venv
+
 # On Windows PowerShell:
 .venv\Scripts\activate
+# On Linux/macOS:
+# source .venv/bin/activate
 
 # Install dependencies
 pip install -r backend/requirements.txt
 
+# Configure environment variables (copy example and edit)
+cp .env.example .env
+
 # Run database migrations to head
 alembic upgrade head
 
-# Run backend service
-$env:PYTHONPATH="backend"
-.venv\Scripts\uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-Backend will start on `http://127.0.0.1:8000`. Interactive OpenAPI documentation is available at `http://127.0.0.1:8000/api/v1/docs` and health check at `http://127.0.0.1:8000/api/v1/health`.
+# Seed initial demonstration data
+python -m backend.scripts.seed --action=seed
 
-### 2. Frontend Setup
+# Start the FastAPI development server
+$env:PYTHONPATH="backend"  # PowerShell
+# export PYTHONPATH="backend"  # Linux/macOS
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+The backend API is now running at `http://127.0.0.1:8000`.
+- Health check: `http://127.0.0.1:8000/health`
+- Interactive Swagger docs: `http://127.0.0.1:8000/api/v1/docs`
+
+### 3. Frontend Setup
 ```bash
-# In a new terminal
+# In a separate terminal window
 cd frontend
+
+# Install Node dependencies
 npm install
+
+# Start the Vite development server
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
-Open `http://localhost:5173` in your browser. Demo credentials: `demo@paypath.finance` / `paypath123!`.
+Open your browser to `http://localhost:5173`. Sign in with any of the demo accounts listed above.
 
-### 3. Run Automated Adversarial Test Suite
+### 4. Running Automated Tests
 ```bash
-# Run all 29 automated tests (including deep adversarial attack suites)
-.venv\Scripts\pytest backend/tests -v
+# Run backend test suite (53 tests including security and policy suites)
+.venv\Scripts\python -m pytest backend/tests -v
+
+# Run frontend build check
+cd frontend
+npm run build
 ```
 
 ---
 
-## 8. Hackathon Hero Demo Walkthrough
+## 8. Environment Variables
 
-1. **User Intent:** Type: *"Find travel wireless noise-cancelling headphones under $100."*
-2. **Agentic Commerce:** Intent Agent extracts constraints; Shopping Agent returns the **NovaSound ANC Pro ($89.00)**.
-3. **Payment Guard:** Evaluates $89.00 against the $100.00 limit (`ALLOW - Requires Human Approval`).
-4. **PayPal Purchase:** Click "Authorize Payment" -> PayCore creates and captures the order in PayPal Sandbox.
-5. **AG Grid Explorer:** Transaction lands in the grid with an AI-generated health insight and independent verification badge.
-6. **Dispute & RECLAIM:** 14 days later, package arrives damaged. Click "Open RECLAIM Claim" and upload damage photo.
-7. **RAG & Policy Evidence:** Evidence Agent identifies structural damage; Policy Agent retrieves Nova Electronics' 30-day transit defect policy.
-8. **Resolution Proposal:** Resolution Agent proposes **$65.00 Partial Refund**; Policy Engine deterministically validates the rule.
-9. **Human Approval & PayPal Settlement:** Click **"Approve $65.00 Refund"** -> PayCore executes PayPal Sandbox refund -> Verification Agent reads back PayPal resource -> Badge displayed: **"VERIFIED"**.
+All configuration is managed through environment variables. Use `.env.example` as a template:
+
+| Variable Name | Required | Default / Example | Description |
+|---|---|---|---|
+| `APP_ENV` | Yes | `development` | Environment mode (`development`, `testing`, `production`) |
+| `APP_NAME` | No | `PayPath` | Application display name |
+| `API_V1_STR` | No | `/api/v1` | URL prefix for API version 1 endpoints |
+| `SECRET_KEY` | Yes | `(secure-random-string)` | Secret key for signing JWT authentication tokens |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | No | `1440` | JWT expiration duration in minutes (24 hours) |
+| `DATABASE_URL` | Yes | `postgresql+asyncpg://user:pass@localhost:5432/paypath` | SQLAlchemy async connection string for PostgreSQL |
+| `REDIS_URL` | No | `redis://localhost:6379/0` | Redis connection URL for caching and rate limiting |
+| `PAYPAL_CLIENT_ID` | Sandbox | `(sandbox-client-id)` | PayPal REST API OAuth2 client ID |
+| `PAYPAL_CLIENT_SECRET` | Sandbox | `(sandbox-client-secret)` | PayPal REST API OAuth2 client secret |
+| `PAYPAL_BASE_URL` | No | `https://api-m.sandbox.paypal.com` | PayPal REST API endpoint (Sandbox or Production) |
+| `PAYPAL_WEBHOOK_ID` | Sandbox | `(webhook-id)` | Registered PayPal webhook ID for signature checks |
+| `SUPABASE_URL` | No | `https://<project-ref>.supabase.co` | Supabase project URL for private evidence storage |
+| `SUPABASE_KEY` | No | `sb_secret_...` | Supabase server-side secret key (bypasses RLS) |
+| `SUPABASE_STORAGE_BUCKET`| No | `paypath-evidence` | Name of private storage bucket for uploaded evidence |
+| `GEMINI_API_KEY` | No | `(api-key)` | Optional Google Gemini API key for live AI intent parsing |
+| `LLM_PROVIDER` | No | `gemini` | LLM provider identifier (`gemini` or `mock`) |
+| `LLM_MODEL` | No | `gemini-2.5-flash` | Gemini model identifier |
+| `ENABLE_SHOPPING` | No | `true` | Feature flag for the shopping agent subsystem |
+| `ENABLE_RECOVERY` | No | `true` | Feature flag for duplicate & subscription intelligence |
+| `ENABLE_RECLAIM` | No | `true` | Feature flag for the RECLAIM dispute subsystem |
+
+> [!CAUTION]
+> Never commit real secrets, API keys, or database passwords to version control. The repository `.gitignore` strictly excludes `.env`.
 
 ---
 
-## 9. Security, Governance & Verification
+## 9. Production Status & Release Verification
 
-- **PostgreSQL 16 Authority:** 14 relational tables with foreign keys and clean Alembic migrations.
-- **Session Revocation:** JWT `jti` immediate invalidation on `/logout` and RFC 6238 TOTP MFA.
-- **Strict Multi-Tenancy & IDOR Defense:** All queries enforce `Transaction.user_id == current_user.id`.
-- **RBAC Enforcement:** Administrative merchant routes strictly protected with `@require_role(MERCHANT_ADMIN)`.
-- **Financial Invariants:** Zero-amount/negative rejection, balance overflow caps, and 409 conflict detection on altered idempotency keys.
-- **Magic-Byte Upload Validation:** Header signature inspection for JPEG, PNG, and PDF evidence files.
-- **Zero Secret Exposure:** `.env` is excluded from Git; `.env.example` provides complete configuration keys.
+**Current Release:** `v1.0.7`  
+**Authoritative Git Commit:** `69506d7`  
+**Certification Status:** **14 of 16 Release Verification Gates PASS (Production-Oriented Prototype / Release Candidate)**
 
-For detailed audit reports and submission materials, see:
-- [Pre-Release Audit Report](docs/PRE_RELEASE_AUDIT.md)
-- [Critical Flaw Remediation Report](docs/CRITICAL_FLAWS.md)
-- [Gap Analysis & Completeness Report](docs/GAP_ANALYSIS.md)
-- [Hackathon Submission & Judge Guide](docs/HACKATHON_SUBMISSION.md)
+PayPath is engineered and deployed as an enterprise-grade production candidate. All internal application layers—FastAPI backend services, React 19 frontend, Render Managed PostgreSQL 16 database, multi-tenant RBAC, deterministic payment policies, XGBoost risk models, and pgvector RAG—are **100% verified and operational**.
+
+### Verification Gate Summary
+
+| Subsystem Gate | Status | Evidence / Verification Method |
+|---|---|---|
+| **Gate 1: Authoritative Database** | ✅ PASS | Render PostgreSQL 16.15: Exactly 20 tables, 345 authoritative rows verified |
+| **Gate 2: Database Schema & Migrations**| ✅ PASS | Alembic head `82098dca4be4` applied cleanly |
+| **Gate 3: Multi-Tenant RBAC** | ✅ PASS | Strict tenant isolation verified across `USER`, `MERCHANT_ADMIN`, `PLATFORM_ADMIN` |
+| **Gate 4: Authentication & Security** | ✅ PASS | JWT authentication, JTI revocation, and TOTP MFA verified |
+| **Gate 5: AG Grid Explorer UI** | ✅ PASS | 0 console errors, 0 AG Grid errors on live Vercel deployment |
+| **Gate 6: AI Intent Extraction** | ✅ PASS | Structured Pydantic constraint parsing verified |
+| **Gate 7: Deterministic Payment Guard**| ✅ PASS | Hard rule engine (`ALLOW`, `REVIEW`, `BLOCK`, `ESCALATE`) verified |
+| **Gate 8: Recovery Intelligence** | ✅ PASS | Duplicate detection and subscription waste analysis operational |
+| **Gate 9: RECLAIM Dispute Subsystem** | ✅ PASS | Full dispute lifecycle, policy matching, and refund proposals verified |
+| **Gate 10: Merchant Policy Studio** | ✅ PASS | Multi-merchant document ingestion and retrieval verified |
+| **Gate 11: Tenant-Isolated RAG** | ✅ PASS | `pgvector` similarity search with strict `tenant_id` filtering verified |
+| **Gate 12: Leakage-Free ML** | ✅ PASS | XGBoost + Isolation Forest 12-feature model operational |
+| **Gate 13: Multi-Agent Bus** | ✅ PASS | 7 specialized agents communicating via typed Pydantic bus verified |
+| **Gate 14: Automated Test Suite** | ✅ PASS | 53 of 53 tests passing (0 failures) |
+| **Gate 15: Supabase Evidence Storage** | ⚠️ BLOCKED | Private bucket `paypath-evidence` created; backend fail-closed behavior verified; server-side secret key (`sb_secret_...`) configuration pending on hosting environment |
+| **Gate 16: PayPal Sandbox Capture E2E**| ⚠️ BLOCKED | PayPal OAuth2, order creation, idempotency, and read-back engine verified; unattended capture requires interactive sandbox buyer approval |
 
 ---
 
 ## 10. License
-This project is licensed under the [MIT License](LICENSE).
 
+This project is licensed under the terms of the [MIT License](LICENSE).

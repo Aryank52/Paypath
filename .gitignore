@@ -20,5 +20,11 @@ coverage/
 backend/uploads/
 backend/backups/*.sql
 pyrightconfig.json
+.ruff_cache/
+.coverage
+htmlcov/
+*.tmp
+*.bak
+
 
 

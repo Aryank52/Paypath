@@ -59,7 +59,7 @@ async def test_file_upload_security_magic_bytes():
     )
     name, url, size, mime = await validate_and_save_upload(valid_file)
     assert mime == "image/jpeg"
-    assert url.startswith("/uploads/evidence/")
+    assert "/uploads/evidence/" in url or url.startswith("http")
     assert size > 0
 
     # 2. Fake extension (text/sh disguised as jpg)
