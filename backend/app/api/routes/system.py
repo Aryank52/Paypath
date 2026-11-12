@@ -260,6 +260,7 @@ async def get_database_inventory(
             })
 
     # Include alembic_version migration metadata table
+    alembic_ver = None
     try:
         alembic_res = await db.execute(text("SELECT version_num FROM alembic_version"))
         alembic_ver = alembic_res.scalar()
@@ -273,9 +274,63 @@ async def get_database_inventory(
     except Exception:
         pass
 
+    # Extract deep database connection telemetry
+    db_diagnostics = {}
+    try:
+        from app.core.database import engine
+        parsed_url = engine.url
+        driver_name = parsed_url.drivername
+        host_name = parsed_url.host or "local/socket"
+        port_num = parsed_url.port or 5432
+        database_name = parsed_url.database
+
+        provider = (
+            "Render Managed PostgreSQL"
+            if ("render" in host_name.lower() or "dpg-" in host_name.lower() or "frankfurt-postgres" in host_name.lower() or "oregon-postgres" in host_name.lower() or "ohio-postgres" in host_name.lower())
+            else ("Supabase PostgreSQL" if "supabase" in host_name.lower() else ("PostgreSQL" if driver_name.startswith("postgres") else "SQLite (Test)"))
+        )
+
+        server_ver = None
+        server_addr = None
+        server_port = None
+        current_db = database_name
+        current_usr = parsed_url.username
+
+        if db.bind and db.bind.dialect.name != "sqlite":
+            res_ver = await db.execute(text("SELECT version()"))
+            res_db = await db.execute(text("SELECT current_database()"))
+            res_user = await db.execute(text("SELECT current_user"))
+            res_addr = await db.execute(text("SELECT inet_server_addr()"))
+            res_port = await db.execute(text("SELECT inet_server_port()"))
+
+            server_ver = res_ver.scalar()
+            current_db = res_db.scalar()
+            current_usr = res_user.scalar()
+            server_addr = str(res_addr.scalar())
+            server_port = res_port.scalar()
+
+        db_diagnostics = {
+            "provider": provider,
+            "driver": driver_name,
+            "host": host_name,
+            "port": port_num,
+            "database_name": current_db,
+            "current_user": current_usr,
+            "server_address": server_addr,
+            "server_port": server_port,
+            "postgresql_version": server_ver,
+            "alembic_head": alembic_ver,
+            "is_authoritative_app_db": True,
+            "is_supabase_postgres": "supabase" in host_name.lower(),
+        }
+    except Exception as exc:
+        db_diagnostics = {"error": str(exc)}
+
     return {
         "database": "paypath",
         "engine": "PostgreSQL 16",
+        "diagnostics": db_diagnostics,
+        "alembic_head": alembic_ver,
         "application_tables": len(table_models),
         "total_tables": len(inventory),
         "total_records": total_records,

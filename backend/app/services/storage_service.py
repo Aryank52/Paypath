@@ -31,11 +31,32 @@ class StorageService:
         return getattr(settings, "SUPABASE_STORAGE_BUCKET", "paypath-evidence")
 
     @property
+    def key_role(self) -> str:
+        """Inspects JWT token payload to identify whether key is anon or service_role."""
+        if not self.supabase_key:
+            return "NOT_CONFIGURED"
+        try:
+            parts = self.supabase_key.split(".")
+            if len(parts) == 3:
+                import base64
+                import json
+                payload_b64 = parts[1] + "=" * (-len(parts[1]) % 4)
+                payload_json = json.loads(base64.urlsafe_b64decode(payload_b64.encode()))
+                return payload_json.get("role", "anon")
+        except Exception:
+            pass
+        return "UNKNOWN"
+
+    @property
+    def is_service_role(self) -> bool:
+        return self.key_role == "service_role"
+
+    @property
     def is_supabase_configured(self) -> bool:
         return bool(self.supabase_url and self.supabase_key)
 
     async def ensure_bucket_exists(self) -> Dict[str, Any]:
-        """Verifies whether the target Supabase storage bucket exists; creates it if missing."""
+        """Verifies whether the target Supabase storage bucket exists; creates it if missing and service_role permitted."""
         if not self.is_supabase_configured:
             return {"status": "NOT_CONFIGURED", "bucket": self.bucket_name}
 
@@ -50,8 +71,25 @@ class StorageService:
                 if get_resp.status_code == 200:
                     return {"status": "EXISTS", "bucket": self.bucket_name}
 
-                # Attempt creation
-                logger.info(f"Supabase bucket {self.bucket_name} not found (status {get_resp.status_code}). Provisioning private bucket...")
+                # If key is anon, do not send POST /storage/v1/bucket because it violates Supabase RLS and produces Postgres errors
+                if not self.is_service_role:
+                    logger.info(
+                        f"Supabase bucket '{self.bucket_name}' not provisioned yet. "
+                        f"Current key role is '{self.key_role}'. Bucket creation restricted to service_role or Dashboard."
+                    )
+                    return {
+                        "status": "AWAITING_PROVISIONING",
+                        "bucket": self.bucket_name,
+                        "key_role": self.key_role,
+                        "detail": (
+                            f"Bucket '{self.bucket_name}' has not been created in Supabase project yet. "
+                            f"Create bucket '{self.bucket_name}' (Private) via Supabase Dashboard -> Storage -> New Bucket, "
+                            f"or provide service_role key in Render environment."
+                        )
+                    }
+
+                # Attempt creation with service_role key
+                logger.info(f"Supabase bucket {self.bucket_name} not found. Provisioning private bucket via service_role...")
                 create_resp = await client.post(
                     f"{base}/storage/v1/bucket",
                     headers={**headers, "Content-Type": "application/json"},
@@ -114,6 +152,8 @@ class StorageService:
                     "provider": "SUPABASE_STORAGE",
                     "bucket": self.bucket_name,
                     "endpoint": base,
+                    "key_role": self.key_role,
+                    "is_service_role": self.is_service_role,
                     "available_buckets": available_buckets,
                     "bucket_status": bucket_status,
                     "auto_created": auto_created,
