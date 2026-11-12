@@ -13,6 +13,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useStore, UserPersona } from '../store/useStore';
+import { api } from '../services/api';
 
 export const Navbar: React.FC = () => {
   const { 
@@ -25,20 +26,69 @@ export const Navbar: React.FC = () => {
     setActiveTab, 
     isAuthenticated, 
     currentUser, 
+    loginUser,
     logoutUser, 
     setAuthModal 
   } = useStore();
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const togglePersona = (newPersona: UserPersona) => {
-    setPersona(newPersona);
-    if (newPersona === 'MERCHANT_ADMIN') {
-      setActiveTab('merchants');
-    } else if (newPersona === 'PLATFORM_ADMIN') {
-      setActiveTab('system');
-    } else {
-      setActiveTab('overview');
+  const togglePersona = async (newPersona: UserPersona) => {
+    // If the authenticated user already matches this role, simply change persona view and tab
+    const effectiveRole = currentUser?.role;
+    if (
+      (newPersona === 'PLATFORM_ADMIN' && effectiveRole === 'PLATFORM_ADMIN') ||
+      (newPersona === 'MERCHANT_ADMIN' && (effectiveRole === 'MERCHANT_ADMIN' || effectiveRole === 'PLATFORM_ADMIN')) ||
+      (newPersona === 'SHOPPER' && effectiveRole === 'USER')
+    ) {
+      setPersona(newPersona);
+      if (newPersona === 'MERCHANT_ADMIN') {
+        setActiveTab('merchants');
+      } else if (newPersona === 'PLATFORM_ADMIN') {
+        setActiveTab('system');
+      } else {
+        setActiveTab('overview');
+      }
+      return;
+    }
+
+    // Switch demo personas with real JWT authentication
+    const creds =
+      newPersona === 'PLATFORM_ADMIN'
+        ? { email: 'marcus.vance@paypath.finance', password: 'paypath123!' }
+        : newPersona === 'MERCHANT_ADMIN'
+        ? { email: 'sarah.jenkins@paypath.finance', password: 'paypath123!' }
+        : { email: 'demo@paypath.finance', password: 'paypath123!' };
+
+    try {
+      const res = await api.login(creds);
+      loginUser(res.access_token, {
+        id: res.user_id,
+        email: res.email,
+        full_name: res.full_name,
+        role: res.role as any,
+        is_active: true,
+        email_verified: true,
+        mfa_enabled: false,
+        preferred_currency: 'USD'
+      });
+      if (newPersona === 'MERCHANT_ADMIN') {
+        setActiveTab('merchants');
+      } else if (newPersona === 'PLATFORM_ADMIN') {
+        setActiveTab('system');
+      } else {
+        setActiveTab('overview');
+      }
+    } catch (err) {
+      console.error('Failed to authenticate as demo persona:', err);
+      setPersona(newPersona);
+      if (newPersona === 'MERCHANT_ADMIN') {
+        setActiveTab('merchants');
+      } else if (newPersona === 'PLATFORM_ADMIN') {
+        setActiveTab('system');
+      } else {
+        setActiveTab('overview');
+      }
     }
   };
 

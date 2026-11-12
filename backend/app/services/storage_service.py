@@ -65,9 +65,16 @@ class StorageService:
                     "content_type": content_type
                 }
             except Exception as e:
-                logger.warning(f"Supabase upload failed, falling back to secure local storage: {e}")
+                logger.warning(f"Supabase upload failed: {e}")
+                is_prod = getattr(settings, "APP_ENV", "development").lower() == "production"
+                if is_prod:
+                    logger.error(f"Production cloud storage failure: cannot store to ephemeral disk in production: {e}")
+                    raise RuntimeError(f"Production cloud storage failure: {e}") from e
 
-        # Local filesystem storage fallback
+        # Local filesystem storage fallback (only allowed in non-production environments)
+        is_prod = getattr(settings, "APP_ENV", "development").lower() == "production"
+        if is_prod:
+            raise RuntimeError("Cloud evidence storage (Supabase) is not configured in production.")
         user_folder = os.path.join(self.local_upload_dir, user_id or "shared")
         os.makedirs(user_folder, exist_ok=True)
         local_path = os.path.join(user_folder, filename)

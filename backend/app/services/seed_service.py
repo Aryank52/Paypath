@@ -114,6 +114,20 @@ async def seed_demo_data(db: AsyncSession, force_reset: bool = False) -> Dict[st
     )
     if existing and not force_reset:
         logger.info("Demo data already seeded. Checking supplementary entities...")
+        # Repair demo users where mfa_enabled is True but mfa_secret is None
+        broken_mfa_users = (await db.scalars(
+            select(User).where(
+                User.mfa_enabled == True,
+                User.mfa_secret.is_(None),
+                User.id.in_([USER_SARAH_ID, USER_MARCUS_ID, USER_ALEX_ID])
+            )
+        )).all()
+        if broken_mfa_users:
+            for u in broken_mfa_users:
+                logger.info(f"Repairing demo user {u.email}: disabling unconfigured MFA")
+                u.mfa_enabled = False
+            await db.commit()
+
         actions_count = await db.scalar(select(func.count(PaymentAction.id)))
         if not actions_count:
             logger.info("Populating supplementary lineage records (actions, verifications, intents, audit)...")
@@ -151,7 +165,7 @@ async def seed_demo_data(db: AsyncSession, force_reset: bool = False) -> Dict[st
             role=UserRole.MERCHANT_ADMIN,
             is_active=True,
             email_verified=True,
-            mfa_enabled=True,
+            mfa_enabled=False,
         ),
         User(
             id=USER_MARCUS_ID,
@@ -163,7 +177,7 @@ async def seed_demo_data(db: AsyncSession, force_reset: bool = False) -> Dict[st
             role=UserRole.PLATFORM_ADMIN,
             is_active=True,
             email_verified=True,
-            mfa_enabled=True,
+            mfa_enabled=False,
         ),
         User(
             id=USER_ELENA_ID,

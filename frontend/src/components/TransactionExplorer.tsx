@@ -1,18 +1,21 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, ModuleRegistry } from 'ag-grid-community';
-import { ClientSideRowModelModule } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-quartz.css';
+import { 
+  ColDef, 
+  ModuleRegistry, 
+  AllCommunityModule,
+  themeQuartz, 
+  colorSchemeDarkBlue 
+} from 'ag-grid-community';
 
-import { Search, Filter, RefreshCw, Eye, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Search, Filter, RefreshCw, Eye, ShieldCheck, AlertCircle, ShoppingBag, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
 import { Transaction } from '../types';
 import { useStore } from '../store/useStore';
 import { TransactionDetailModal } from './TransactionDetailModal';
 
-// Register AG Grid modules
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+// Register all community modules for AG Grid v36 (resolves error #200: missingModule)
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 export const TransactionExplorer: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -168,6 +171,20 @@ export const TransactionExplorer: React.FC = () => {
     resizable: true,
   }), []);
 
+  // PayPath Dark Theming via AG Grid v36 Theming API (eliminates CSS conflicts & error #239)
+  const paypathGridTheme = useMemo(() => themeQuartz
+    .withPart(colorSchemeDarkBlue)
+    .withParams({
+      backgroundColor: '#020617',
+      foregroundColor: '#e2e8f0',
+      headerBackgroundColor: '#0f172a',
+      headerTextColor: '#94a3b8',
+      borderColor: '#1e293b',
+      rowHoverColor: '#1e293b50',
+      selectedRowBackgroundColor: '#312e8130',
+      accentColor: '#6366f1',
+    }), []);
+
   return (
     <div className="space-y-4">
       {/* Top Search & Filter Bar */}
@@ -208,9 +225,10 @@ export const TransactionExplorer: React.FC = () => {
 
       {/* AG Grid Container */}
       <div className="h-[520px] w-full rounded-xl overflow-hidden border border-slate-800 shadow-xl bg-slate-950">
-        <div className="ag-theme-quartz-dark h-full w-full">
+        <div className="h-full w-full">
           <AgGridReact
             ref={gridRef}
+            theme={paypathGridTheme}
             rowData={transactions}
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}

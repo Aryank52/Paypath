@@ -20,9 +20,11 @@ import { LegalModal } from './components/LegalModal';
 import { CookieBanner } from './components/CookieBanner';
 import { Footer } from './components/Footer';
 import { useStore } from './store/useStore';
+import { api } from './services/api';
+import { Store } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const { activeTab, persona } = useStore();
+  const { activeTab, persona, currentUser, loginUser } = useStore();
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -48,7 +50,44 @@ export const App: React.FC = () => {
             {activeTab === 'reclaim' && <ReclaimResolutionCenter />}
             {activeTab === 'guard' && <PaymentGuardStudio />}
             {activeTab === 'recovery' && <RecoveryIntelligence />}
-            {activeTab === 'merchants' && <MerchantPortal />}
+            {activeTab === 'merchants' && (
+              (currentUser?.role === 'MERCHANT_ADMIN' || currentUser?.role === 'PLATFORM_ADMIN') ? (
+                <MerchantPortal />
+              ) : (
+                <div className="max-w-xl mx-auto my-12 p-8 rounded-2xl bg-slate-900 border border-slate-800 text-center space-y-4 shadow-xl">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+                    <Store className="w-6 h-6" />
+                  </div>
+                  <h2 className="text-lg font-bold text-white">Merchant Administrator Access Required</h2>
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    The Merchant Studio is restricted to verified merchant administrators (<span className="font-mono text-indigo-400">MERCHANT_ADMIN</span>) and platform operators. Your current active session is signed in as a Shopper (<span className="font-mono text-slate-300">{currentUser?.email || 'Guest'}</span>).
+                  </p>
+                  <div className="pt-2">
+                    <button
+                      onClick={() => {
+                        api.login({ email: 'sarah.jenkins@paypath.finance', password: 'paypath123!' })
+                          .then((res) => {
+                            loginUser(res.access_token, {
+                              id: res.user_id,
+                              email: res.email,
+                              full_name: res.full_name,
+                              role: res.role as any,
+                              is_active: true,
+                              email_verified: true,
+                              mfa_enabled: false,
+                              preferred_currency: 'USD'
+                            });
+                          })
+                          .catch(console.error);
+                      }}
+                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors cursor-pointer shadow-lg shadow-indigo-600/20"
+                    >
+                      Authenticate as Merchant Admin (Sarah Jenkins)
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
             {activeTab === 'profile' && <UserProfileView />}
             {activeTab === 'security' && <SecurityCenterView />}
             

@@ -87,6 +87,8 @@ async def validate_and_save_upload(file: UploadFile, subfolder: str = "evidence"
 
     # Check for Supabase Storage in production
     from app.core.config import settings
+    is_prod = getattr(settings, "APP_ENV", "development").lower() == "production"
+
     if getattr(settings, "SUPABASE_URL", None) and getattr(settings, "SUPABASE_KEY", None):
         try:
             from app.services.storage_service import storage_service
@@ -94,7 +96,18 @@ async def validate_and_save_upload(file: UploadFile, subfolder: str = "evidence"
             return unique_file_name, res["url"], total_size, matched_type
         except Exception as e:
             from app.core.observability import logger
-            logger.warning(f"Supabase upload failed, falling back to local: {e}")
+            logger.warning(f"Supabase upload failed: {e}")
+            if is_prod:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Secure evidence cloud storage is temporarily unavailable. Upload could not be verified."
+                )
+    elif is_prod:
+        # In production, ephemeral local storage is prohibited to prevent evidence loss across container restarts
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Cloud evidence storage (Supabase) is required in production. Ephemeral local storage is disabled."
+        )
 
     target_dir = os.path.join(UPLOAD_DIR, subfolder)
     os.makedirs(target_dir, exist_ok=True)

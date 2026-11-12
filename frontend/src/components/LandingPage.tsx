@@ -18,34 +18,37 @@ import {
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
+import { api } from '../services/api';
+
 export const LandingPage: React.FC = () => {
   const { setAuthModal, setActiveTab, loginUser } = useStore();
 
-  const handleLaunchDemo = (role: 'SHOPPER' | 'PLATFORM_ADMIN') => {
-    if (role === 'PLATFORM_ADMIN') {
-      loginUser('demo-token-marcus', {
-        id: 'usr_marcus_vance',
-        email: 'marcus.vance@paypath.finance',
-        full_name: 'Marcus Vance',
-        mobile_number: '+1 (555) 456-7890',
-        preferred_currency: 'USD',
-        role: 'PLATFORM_ADMIN',
+  const handleLaunchDemo = async (role: 'SHOPPER' | 'PLATFORM_ADMIN') => {
+    const creds = role === 'PLATFORM_ADMIN'
+      ? { email: 'marcus.vance@paypath.finance', password: 'paypath123!' }
+      : { email: 'demo@paypath.finance', password: 'paypath123!' };
+
+    try {
+      const res = await api.login(creds);
+      loginUser(res.access_token, {
+        id: res.user_id,
+        email: res.email,
+        full_name: res.full_name,
+        role: res.role as any,
         is_active: true,
         email_verified: true,
-        mfa_enabled: true
+        mfa_enabled: false,
+        preferred_currency: 'USD'
       });
-    } else {
-      loginUser('demo-token-alex', {
-        id: 'usr_alex_chen',
-        email: 'demo@paypath.finance',
-        full_name: 'Alex Chen',
-        mobile_number: '+1 (555) 234-5678',
-        preferred_currency: 'USD',
-        role: 'USER',
-        is_active: true,
-        email_verified: true,
-        mfa_enabled: false
-      });
+      if (role === 'PLATFORM_ADMIN') {
+        setActiveTab('system');
+      } else {
+        setActiveTab('overview');
+      }
+    } catch (err) {
+      console.error('Demo authentication error:', err);
+      // Open login modal so user can enter credentials directly
+      setAuthModal('login');
     }
   };
 
