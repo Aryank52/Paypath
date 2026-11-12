@@ -18,9 +18,9 @@ python -m backend.scripts.seed --action=verify
 
 ---
 
-## 2. Seeded Personas & Credentials
+## 2. Seeded Personas & Access
 
-All test personas share the secure default password: `paypath123!`
+Demo access credentials for seeded personas are managed privately for evaluators. Contact the project owner for credentials.
 
 | User ID | Email | Full Name | Role | MFA Enabled | Persona Profile |
 |---------|-------|-----------|------|-------------|-----------------|

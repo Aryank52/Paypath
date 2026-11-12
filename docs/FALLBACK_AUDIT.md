@@ -84,7 +84,7 @@ This audit details every fallback mechanism in PayPath, certifying that:
 - **Previous Hazard:** Frontend components previously set mock strings (e.g. `'demo-token-alex'`) in `localStorage` when clicking quick demo cards, resulting in 401 Unauthorized errors when fetching transactions.
 - **Production Hardening:**
   - Removed all synthetic client-side tokens.
-  - Every demo persona switch executes an authentic `POST /api/v1/auth/login` HTTP request against the FastAPI backend using real seeded demo credentials (`paypath123!`).
+  - Every demo persona switch executes an authentic `POST /api/v1/auth/login` HTTP request against the FastAPI backend using authentic seeded demo credentials.
   - The returned cryptographic JWT is validated and stored in `localStorage`.
   - If the backend is unreachable, the UI surfaces a connection error banner rather than displaying a broken or fake state.
 - **Certification Result:** **PASSED (Real Authentication Enforced)**

@@ -44,7 +44,7 @@ server: Render
 ```bash
 curl -X POST "https://paypath-8u9a.onrender.com/api/v1/auth/login" \
      -H "Content-Type: application/json" \
-     -d '{"email": "demo@paypath.finance", "password": "paypath123!"}'
+     -d '{"email": "demo@paypath.finance", "password": "<DEMO_PASSWORD>"}'
 ```
 **Actual Live Response Output:**
 ```json

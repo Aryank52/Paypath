@@ -43,7 +43,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"demo@paypath.finance\",\n  \"password\": \"paypath123!\"\n}"
+              "raw": "{\n  \"email\": \"demo@paypath.finance\",\n  \"password\": \"{{demo_password}}\"\n}"
             },
             "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
           }

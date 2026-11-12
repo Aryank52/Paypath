@@ -10,7 +10,7 @@
 ### 1.1 Render Infrastructure
 1. **PostgreSQL Database:**
    - Managed PostgreSQL 16.15 instance.
-   - Internal Database URL: `postgresql://paypath_db_user:PASSWORD@dpg-...-a/paypath_db`
+   - Internal Database URL: `postgresql://paypath_db_user:<DB_PASSWORD>@dpg-...-a/paypath_db`
    - Connection Pooling: Disabled in URI (SQLAlchemy asyncpg manages application-level connection pool).
 2. **Web Service:**
    - Environment: Python 3.12
@@ -37,7 +37,7 @@
 | Variable Name | Required | Example / Production Value | Purpose |
 | :--- | :--- | :--- | :--- |
 | `APP_ENV` | Yes | `production` | Enables strict fail-closed security and disables dev fallbacks |
-| `DATABASE_URL` | Yes | `postgresql+asyncpg://user:pass@host/db` | Authoritative PostgreSQL 16 connection string |
+| `DATABASE_URL` | Yes | `postgresql+asyncpg://<DB_USER>:<DB_PASSWORD>@<DB_HOST>/<DB_NAME>` | Authoritative PostgreSQL 16 connection string |
 | `SECRET_KEY` | Yes | *Cryptographically random 64-char hex string* | JWT signing and HMAC validation |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | No | `1440` (24 hours) | JWT expiration lifetime |
 | `ALLOWED_ORIGINS` | Yes | `https://paypath.finance,https://paypath-frontend.vercel.app` | CORS origins permitted to access backend |

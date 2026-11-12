@@ -182,15 +182,17 @@ $$\sum \text{Rows} = 13 + 58 + 6 + 1 + 6 + 5 + 0 + 5 + 8 + 15 + 15 + 20 + 20 + 2
 
 ---
 
-## 6. Seed Credentials for System Evaluators
+## 6. Access Credentials for System Evaluators
 
 All roles are active and verified in Render PostgreSQL 16:
 
-| Role | Email | Password | Primary Capabilities |
-| :--- | :--- | :--- | :--- |
-| **Platform Admin** | `marcus.vance@paypath.finance` | `paypath123!` | System diagnostics, database inventory, storage diagnostics, audit logs |
-| **Merchant Admin** | `sarah.jenkins@paypath.finance` | `paypath123!` | Merchant portal, policy management, chunk embeddings, dispute review |
-| **Shopper / User** | `demo@paypath.finance` | `paypath123!` | Transaction intelligence, AG Grid, dispute filing, shopping assistant |
+Demo credentials are provided privately for judges/evaluators. Contact the project owner for access.
+
+| Role | Email | Primary Capabilities |
+| :--- | :--- | :--- |
+| **Platform Admin** | `marcus.vance@paypath.finance` | System diagnostics, database inventory, storage diagnostics, audit logs |
+| **Merchant Admin** | `sarah.jenkins@paypath.finance` | Merchant portal, policy management, chunk embeddings, dispute review |
+| **Shopper / User** | `demo@paypath.finance` | Transaction intelligence, AG Grid, dispute filing, shopping assistant |
 
 ---
 

@@ -123,9 +123,7 @@ PayPath covers the complete transaction lifecycle:
 - **Database:** Render PostgreSQL 16 (20 application tables, 339 live rows)
 
 ### Demo Credentials
-- **Customer / Shopper:** `demo@paypath.finance` / `paypath123!`
-- **Merchant Admin:** `sarah.jenkins@paypath.finance` / `paypath123!`
-- **Platform Admin:** `marcus.vance@paypath.finance` / `paypath123!`
+Demo credentials are provided privately for judges/evaluators. Contact the project owner for access.
 
 ### Guided 5-Minute Evaluation Walkthrough
 
@@ -135,7 +133,7 @@ PayPath covers the complete transaction lifecycle:
 
 #### Step 2: High-Performance Transaction Explorer
 - Navigate to `https://paypath-hazel.vercel.app/` (or `http://127.0.0.1:5173`) in your browser.
-- Log in with `demo@paypath.finance` / `paypath123!`.
+- Log in with your evaluator credentials.
 - View the **Transaction Intelligence Explorer** powered by AG Grid.
 - Notice the **VERIFIED** independent payment badges, merchant logos, and instant search/filtering.
 - Hover over any transaction: **Intent-aware prefetching** fetches the audit timeline before you even click!

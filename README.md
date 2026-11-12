@@ -1,9 +1,9 @@
 # PayPath
 ## AI Transaction Intelligence & Agentic Commerce
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![React](https://img.shields.io/badge/React-19.0-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
-[![AG Grid](https://img.shields.io/badge/AG_Grid-Data_Explorer-535353.svg?logo=ag-grid&logoColor=white)](https://www.ag-grid.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.8-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-19.3.1-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
+[![AG Grid](https://img.shields.io/badge/AG_Grid-36.3.0-535353.svg?logo=ag-grid&logoColor=white)](https://www.ag-grid.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16.15-336791.svg?logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![PayPal](https://img.shields.io/badge/PayPal-Sandbox_v2-00457C.svg?logo=paypal&logoColor=white)](https://developer.paypal.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -23,13 +23,9 @@
 | **Interactive API Docs** | [https://paypath-8u9a.onrender.com/api/v1/docs](https://paypath-8u9a.onrender.com/api/v1/docs) | Interactive Swagger / OpenAPI documentation |
 | **Repository** | [https://github.com/Aryank52/Paypath](https://github.com/Aryank52/Paypath) | Public source repository on GitHub |
 
-#### Pre-Configured Test Accounts
+### 🔑 Demo Access
 
-| Role | Email | Password | Access Scope |
-|---|---|---|---|
-| **Demo Shopper (USER)** | `demo@paypath.finance` | `paypath123!` | Standard user tenant, transactions, shopping, RECLAIM disputes |
-| **Merchant Admin (MERCHANT_ADMIN)** | `sarah.jenkins@paypath.finance` | `paypath123!` | Merchant policy ingestion, merchant dispute resolution |
-| **Platform Admin (PLATFORM_ADMIN)** | `marcus.vance@paypath.finance` | `paypath123!` | Full multi-tenant governance, system health, audit logs |
+Demo credentials are provided privately for judges/evaluators. Contact the project owner for access.
 
 ---
 
@@ -58,7 +54,7 @@ Under no circumstance is an LLM or ML model permitted to directly authorize or e
 ## 3. Key Capabilities
 
 ### 🔍 1. Transaction Intelligence Explorer (AG Grid)
-- **High-Performance Enterprise Grid:** Powered by AG Grid Community with custom cell renderers for status badges, risk chips, and PayPal state indicators.
+- **High-Performance Enterprise Grid:** Powered by AG Grid Community 36.3.0 with custom cell renderers for status badges, risk chips, and PayPal state indicators.
 - **Multi-Column Filtering & Sorting:** Instant client-side and server-side filtering across amounts, merchants, categories, and date ranges.
 - **AI Health Insights:** Pre-computed explainable transaction breakdowns identifying billing anomalies, recurring charges, and dispute eligibility.
 - **Lifecycle Detail Drawers:** Slide-over inspection drawers displaying immutable audit timelines and PayPal read-back confirmation.
@@ -130,7 +126,7 @@ Under no circumstance is an LLM or ML model permitted to directly authorize or e
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       CLIENT TIER: REACT 19 FRONTEND                        │
+│                      CLIENT TIER: REACT 19 FRONTEND (Vercel)                │
 │  - AG Grid Intelligence Explorer       - RECLAIM Dispute & Claims Studio   │
 │  - Guarded Shopping Hub                - Payment Guard & Policy Rules       │
 │  - Multi-Tenant RBAC UI (User / Merchant / Platform Admin)                  │
@@ -138,7 +134,7 @@ Under no circumstance is an LLM or ML model permitted to directly authorize or e
                                        │ HTTPS (JSON / REST API)
                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                    APPLICATION TIER: FASTAPI BACKEND CORE                   │
+│                 APPLICATION TIER: FASTAPI BACKEND CORE (Render)             │
 │  ┌───────────────────────┐  ┌───────────────────────┐  ┌─────────────────┐  │
 │  │ JWT / JTI / TOTP Auth │  │  Role-Based Access    │  │ Rate Limiter    │  │
 │  └───────────────────────┘  └───────────────────────┘  └─────────────────┘  │
@@ -180,46 +176,47 @@ Under no circumstance is an LLM or ML model permitted to directly authorize or e
             ▼                          ▼                          ▼
 ┌───────────────────────┐  ┌───────────────────────┐  ┌───────────────────────┐
 │     POSTGRESQL 16     │  │   PAYPAL SANDBOX API  │  │   SUPABASE STORAGE    │
-│  (Render Managed DB)  │  │   (Payments Rail)     │  │   (Private Evidence)  │
-│ - 20 Relational Tables│  │ - Orders v2           │  │ - Private Bucket      │
-│ - pgvector Embeddings │  │ - Payments v2 Capture │  │ - Magic-Byte Checked  │
-│ - Immutable Audit Log │  │ - Refunds & Webhooks  │  │ - Server-Side Auth    │
+│  (Render Managed DB)  │  │   (Payments Rail)     │  │   (Evidence Files)    │
+│ - Authoritative DB    │  │ - Orders v2           │  │ - Private Bucket Only │
+│ - 20 Relational Tables│  │ - Payments v2 Capture │  │ - Fail-Closed Design  │
+│ - 399 Verified Records│  │ - Refunds & Webhooks  │  │ - Server-Side Auth    │
+│ - pgvector Embeddings │  │ - Idempotency Vault   │  │ - Zero DB Connection  │
+│ - Immutable Audit Log │  │ - Read-Back Verifier  │  │   (Files Only)        │
 └───────────────────────┘  └───────────────────────┘  └───────────────────────┘
 ```
 
-### Request Lifecycle & Trust Boundary Flow
-1. **Shopper / Client Intent:** Shopper submits a purchase or dispute intent via the React frontend.
-2. **Authentication & Multi-Tenant Scoping:** FastAPI authenticates the request via JWT, verifies tenant boundaries, and enforces RBAC privileges.
-3. **Contextual Enrichment:** Advisory ML models compute risk anomalies, while `pgvector` extracts relevant merchant policy clauses scoped strictly to the current tenant.
-4. **Deterministic Gatekeeper:** The Payment Guard evaluates hard policies (spending limits, merchant history, velocity).
-5. **Human-in-the-Loop Gate:** If the policy requires review or approval, the action is suspended until explicitly confirmed by the authorized human.
-6. **PayCore Execution:** PayCore computes an idempotency key and initiates the transaction against PayPal's v2 REST API.
-7. **Independent Verification:** PayCore performs an independent read-back against PayPal to verify that the remote status is `COMPLETED` and amounts match to the penny.
-8. **Authoritative Commitment:** State is written to Render PostgreSQL 16, and an immutable audit event is appended to the ledger.
+### Authoritative Database & Storage Separation
+- **Render Managed PostgreSQL 16.15:** The **sole authoritative application database** for all relational entities, transactions, users, merchant policies, embeddings, and audit logs.
+- **Supabase Storage:** Used **strictly for evidence file storage** (damage photos, receipts). No transactional data or application tables reside in Supabase.
+- **Supabase PostgreSQL:** **NOT** the application database. PayPath maintains zero connection pools to Supabase PostgreSQL.
 
 ---
 
 ## 5. Technology Stack
 
-| Layer | Technology | Version | Purpose |
+| Layer | Technology | Verified Version | Purpose |
 |---|---|---|---|
-| **Frontend Framework** | React | 19.0.0 | High-performance user interface |
-| **Frontend Tooling** | Vite | 6.x | Fast build and development server |
-| **Language (UI)** | TypeScript | 5.5+ | Type-safe client components |
-| **UI Components** | Tailwind CSS / Lucide | 3.4+ / 0.4+ | Clean modern design system |
-| **Data Grid** | AG Grid Community | 33.x | Enterprise transaction intelligence explorer |
-| **Backend Framework** | FastAPI | 0.115+ | Async REST API application server |
-| **Language (API)** | Python | 3.12 | High-throughput backend execution |
-| **Validation** | Pydantic v2 | 2.9+ | Strict data modeling and message validation |
-| **ORM / Data Access** | SQLAlchemy 2 (async) | 2.0+ | Asynchronous database abstraction |
-| **Database Migrations**| Alembic | 1.13+ | Version-controlled schema migrations |
-| **Application Database**| PostgreSQL (Render Managed) | 16.15 | 20 canonical tables, authoritative system of record |
+| **Frontend Framework** | React | 19.3.1 | High-performance user interface |
+| **Frontend Tooling** | Vite | 8.3.7 | Fast build and development server |
+| **Language (UI)** | TypeScript | 7.0.2 | Type-safe client components |
+| **UI Styling** | Tailwind CSS | 4.3.5 | Clean modern utility design system |
+| **UI Icons** | Lucide React | 1.70.0 | Icon library |
+| **Data Grid** | AG Grid Community / React | 36.3.0 | Enterprise transaction intelligence explorer |
+| **State Management** | Zustand | 5.1.0 | Reactive lightweight client store |
+| **Server State** | TanStack React Query | 5.107.1 | Asynchronous server-state management |
+| **Backend Framework** | FastAPI | 0.115.8 | Async REST API application server |
+| **Language (API)** | Python | 3.12.10 | High-throughput backend execution |
+| **Validation** | Pydantic v2 | 2.10.6 | Strict data modeling and message validation |
+| **ORM / Data Access** | SQLAlchemy 2 (asyncio) | 2.0.38 | Asynchronous database abstraction |
+| **Database Driver** | asyncpg | 0.30.0 | High-performance async PostgreSQL driver |
+| **Database Migrations**| Alembic | 1.14.1 | Schema versioning (migration head `82098dca4be4`) |
+| **Application Database**| PostgreSQL (Render Managed) | 16.15 | 20 canonical tables, 399 authoritative records |
 | **Vector Search** | pgvector | 0.3+ | Tenant-isolated policy embeddings |
-| **Machine Learning** | XGBoost / Scikit-learn | 2.1+ / 1.5+ | Advisory transaction risk & anomaly detection |
-| **File Storage** | Supabase Storage | v2 | Private cloud storage for RECLAIM file evidence |
-| **Payment Rails** | PayPal REST APIs | v2 | Orders v2, Payments v2, Webhooks v1 |
+| **Machine Learning** | XGBoost / Scikit-learn | 3.4.1 / 1.9.1 | Advisory transaction risk & anomaly detection |
+| **File Storage** | Supabase Storage | v2 | Private bucket (`paypath-evidence`) for RECLAIM files |
+| **Payment Rails** | PayPal REST APIs | v2 | Orders v2, Payments v2, Webhooks v1 (Sandbox) |
 | **Hosting & Cloud** | Vercel (UI) / Render (API + DB)| Cloud | Edge frontend CDN and managed backend services |
-| **Testing** | pytest, pytest-asyncio, Vitest | Latest | Automated unit, integration, and security tests |
+| **Testing** | pytest, pytest-asyncio | 8.3.4 / 0.25.3 | Automated unit, integration, and security tests |
 
 ---
 
@@ -244,7 +241,7 @@ PayPath enforces a defense-in-depth security architecture designed for financial
 ## 7. Running Locally
 
 ### Prerequisites
-- **Python:** 3.12 or newer
+- **Python:** 3.12.10 or compatible
 - **Node.js:** 20.x or newer (with npm)
 - **PostgreSQL:** 16.x running locally on `localhost:5432`
 
@@ -296,7 +293,7 @@ npm install
 # Start the Vite development server
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
-Open your browser to `http://localhost:5173`. Sign in with any of the demo accounts listed above.
+Open your browser to `http://localhost:5173`. Sign in with your configured account.
 
 ### 4. Running Automated Tests
 ```bash
@@ -321,7 +318,7 @@ All configuration is managed through environment variables. Use `.env.example` a
 | `API_V1_STR` | No | `/api/v1` | URL prefix for API version 1 endpoints |
 | `SECRET_KEY` | Yes | `(secure-random-string)` | Secret key for signing JWT authentication tokens |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | No | `1440` | JWT expiration duration in minutes (24 hours) |
-| `DATABASE_URL` | Yes | `postgresql+asyncpg://user:pass@localhost:5432/paypath` | SQLAlchemy async connection string for PostgreSQL |
+| `DATABASE_URL` | Yes | `postgresql+asyncpg://postgres:postgres@localhost:5432/paypath` | SQLAlchemy async connection string for PostgreSQL |
 | `REDIS_URL` | No | `redis://localhost:6379/0` | Redis connection URL for caching and rate limiting |
 | `PAYPAL_CLIENT_ID` | Sandbox | `(sandbox-client-id)` | PayPal REST API OAuth2 client ID |
 | `PAYPAL_CLIENT_SECRET` | Sandbox | `(sandbox-client-secret)` | PayPal REST API OAuth2 client secret |
@@ -345,17 +342,16 @@ All configuration is managed through environment variables. Use `.env.example` a
 ## 9. Production Status & Release Verification
 
 **Current Release:** `v1.0.7`  
-**Authoritative Git Commit:** `69506d7`  
-**Certification Status:** **14 of 16 Release Verification Gates PASS (Production-Oriented Prototype / Release Candidate)**
+**Current Release Status:** **Production-Oriented Prototype / Release Candidate (14 of 16 Verification Gates PASS)**
 
-PayPath is engineered and deployed as an enterprise-grade production candidate. All internal application layers—FastAPI backend services, React 19 frontend, Render Managed PostgreSQL 16 database, multi-tenant RBAC, deterministic payment policies, XGBoost risk models, and pgvector RAG—are **100% verified and operational**.
+PayPath is engineered and deployed as an enterprise-grade prototype / release candidate. All internal application layers—FastAPI backend services, React 19 frontend, Render Managed PostgreSQL 16 database, multi-tenant RBAC, deterministic payment policies, XGBoost risk models, and pgvector RAG—are **100% verified and operational**.
 
 ### Verification Gate Summary
 
 | Subsystem Gate | Status | Evidence / Verification Method |
 |---|---|---|
-| **Gate 1: Authoritative Database** | ✅ PASS | Render PostgreSQL 16.15: Exactly 20 tables, 345 authoritative rows verified |
-| **Gate 2: Database Schema & Migrations**| ✅ PASS | Alembic head `82098dca4be4` applied cleanly |
+| **Gate 1: Authoritative Database** | ✅ PASS | Render PostgreSQL 16.15: Exactly 20 tables, 399 authoritative rows verified via live telemetry |
+| **Gate 2: Database Schema & Migrations**| ✅ PASS | Schema initialized via SQLAlchemy async `create_all()`; repository Alembic migration head `82098dca4be4` |
 | **Gate 3: Multi-Tenant RBAC** | ✅ PASS | Strict tenant isolation verified across `USER`, `MERCHANT_ADMIN`, `PLATFORM_ADMIN` |
 | **Gate 4: Authentication & Security** | ✅ PASS | JWT authentication, JTI revocation, and TOTP MFA verified |
 | **Gate 5: AG Grid Explorer UI** | ✅ PASS | 0 console errors, 0 AG Grid errors on live Vercel deployment |
@@ -365,11 +361,11 @@ PayPath is engineered and deployed as an enterprise-grade production candidate. 
 | **Gate 9: RECLAIM Dispute Subsystem** | ✅ PASS | Full dispute lifecycle, policy matching, and refund proposals verified |
 | **Gate 10: Merchant Policy Studio** | ✅ PASS | Multi-merchant document ingestion and retrieval verified |
 | **Gate 11: Tenant-Isolated RAG** | ✅ PASS | `pgvector` similarity search with strict `tenant_id` filtering verified |
-| **Gate 12: Leakage-Free ML** | ✅ PASS | XGBoost + Isolation Forest 12-feature model operational |
+| **Gate 12: Leakage-Free ML** | ✅ PASS | XGBoost 3.4.1 + Isolation Forest 12-feature model operational |
 | **Gate 13: Multi-Agent Bus** | ✅ PASS | 7 specialized agents communicating via typed Pydantic bus verified |
 | **Gate 14: Automated Test Suite** | ✅ PASS | 53 of 53 tests passing (0 failures) |
-| **Gate 15: Supabase Evidence Storage** | ⚠️ BLOCKED | Private bucket `paypath-evidence` created; backend fail-closed behavior verified; server-side secret key (`sb_secret_...`) configuration pending on hosting environment |
-| **Gate 16: PayPal Sandbox Capture E2E**| ⚠️ BLOCKED | PayPal OAuth2, order creation, idempotency, and read-back engine verified; unattended capture requires interactive sandbox buyer approval |
+| **Gate 15: Supabase Evidence Storage** | ⚠️ BLOCKED | Private Supabase Storage is implemented with fail-closed behavior; final hosted server-side credential verification remains pending. |
+| **Gate 16: PayPal Sandbox Capture E2E**| ⚠️ BLOCKED | PayPal Sandbox integration is implemented and verified through order creation, OAuth2, webhook verification, idempotency, and read-back logic. End-to-end capture remains subject to interactive Sandbox buyer approval. |
 
 ---
 
