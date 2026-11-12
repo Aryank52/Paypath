@@ -23,31 +23,15 @@ import { api } from '../services/api';
 export const LandingPage: React.FC = () => {
   const { setAuthModal, setActiveTab, loginUser } = useStore();
 
-  const handleLaunchDemo = async (role: 'SHOPPER' | 'PLATFORM_ADMIN') => {
-    const creds = role === 'PLATFORM_ADMIN'
-      ? { email: 'marcus.vance@paypath.finance', password: 'paypath123!' }
-      : { email: 'demo@paypath.finance', password: 'paypath123!' };
-
-    try {
-      const res = await api.login(creds);
-      loginUser(res.access_token, {
-        id: res.user_id,
-        email: res.email,
-        full_name: res.full_name,
-        role: res.role as any,
-        is_active: true,
-        email_verified: true,
-        mfa_enabled: false,
-        preferred_currency: 'USD'
-      });
+  const handleLaunchDemo = (role: 'SHOPPER' | 'PLATFORM_ADMIN') => {
+    const token = localStorage.getItem('paypath_token');
+    if (token) {
       if (role === 'PLATFORM_ADMIN') {
         setActiveTab('system');
       } else {
         setActiveTab('overview');
       }
-    } catch (err) {
-      console.error('Demo authentication error:', err);
-      // Open login modal so user can enter credentials directly
+    } else {
       setAuthModal('login');
     }
   };

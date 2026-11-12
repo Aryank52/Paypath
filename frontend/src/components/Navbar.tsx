@@ -33,7 +33,7 @@ export const Navbar: React.FC = () => {
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const togglePersona = async (newPersona: UserPersona) => {
+  const togglePersona = (newPersona: UserPersona) => {
     // If the authenticated user already matches this role, simply change persona view and tab
     const effectiveRole = currentUser?.role;
     if (
@@ -52,44 +52,8 @@ export const Navbar: React.FC = () => {
       return;
     }
 
-    // Switch demo personas with real JWT authentication
-    const creds =
-      newPersona === 'PLATFORM_ADMIN'
-        ? { email: 'marcus.vance@paypath.finance', password: 'paypath123!' }
-        : newPersona === 'MERCHANT_ADMIN'
-        ? { email: 'sarah.jenkins@paypath.finance', password: 'paypath123!' }
-        : { email: 'demo@paypath.finance', password: 'paypath123!' };
-
-    try {
-      const res = await api.login(creds);
-      loginUser(res.access_token, {
-        id: res.user_id,
-        email: res.email,
-        full_name: res.full_name,
-        role: res.role as any,
-        is_active: true,
-        email_verified: true,
-        mfa_enabled: false,
-        preferred_currency: 'USD'
-      });
-      if (newPersona === 'MERCHANT_ADMIN') {
-        setActiveTab('merchants');
-      } else if (newPersona === 'PLATFORM_ADMIN') {
-        setActiveTab('system');
-      } else {
-        setActiveTab('overview');
-      }
-    } catch (err) {
-      console.error('Failed to authenticate as demo persona:', err);
-      setPersona(newPersona);
-      if (newPersona === 'MERCHANT_ADMIN') {
-        setActiveTab('merchants');
-      } else if (newPersona === 'PLATFORM_ADMIN') {
-        setActiveTab('system');
-      } else {
-        setActiveTab('overview');
-      }
-    }
+    // Open login modal for manual authentication to target role
+    setAuthModal('login');
   };
 
   return (

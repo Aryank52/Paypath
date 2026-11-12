@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     # Supabase Storage (Evidence & File Persistence)
     SUPABASE_URL: Optional[str] = None
     SUPABASE_KEY: Optional[str] = None
+    SUPABASE_SECRET_KEY: Optional[str] = None
     SUPABASE_STORAGE_BUCKET: str = "paypath-evidence"
     
     # CORS Configuration

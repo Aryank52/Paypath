@@ -20,8 +20,9 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 export const TransactionExplorer: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [quickFilterText, setQuickFilterText] = useState('');
-  const { selectedTransaction, setSelectedTransaction, setActiveTab } = useStore();
+  const { selectedTransaction, setSelectedTransaction, setActiveTab, setAuthModal } = useStore();
   const gridRef = useRef<AgGridReact>(null);
 
   const [prefetchedIds, setPrefetchedIds] = useState<Set<string>>(new Set());
@@ -38,9 +39,15 @@ export const TransactionExplorer: React.FC = () => {
 
   const fetchTransactions = () => {
     setIsLoading(true);
+    setError(null);
     api.getTransactions()
-      .then(setTransactions)
-      .catch(console.error)
+      .then((data) => {
+        setTransactions(data || []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch transactions:', err);
+        setError(err.message || 'Failed to fetch transactions');
+      })
       .finally(() => setIsLoading(false));
   };
 
@@ -222,6 +229,45 @@ export const TransactionExplorer: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={() => {
+              if (error.toLowerCase().includes('authenticated') || error.toLowerCase().includes('credentials')) {
+                setAuthModal('login');
+              } else {
+                fetchTransactions();
+              }
+            }}
+            className="px-3 py-1 rounded bg-rose-600/30 hover:bg-rose-600/50 text-white font-medium text-xs transition-colors"
+          >
+            {error.toLowerCase().includes('authenticated') || error.toLowerCase().includes('credentials') ? 'Sign In' : 'Retry'}
+          </button>
+        </div>
+      )}
+
+      {transactions.length === 0 && !isLoading && !error && (
+        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between text-slate-300">
+          <div className="flex items-center gap-2.5">
+            <ShoppingBag className="w-4 h-4 text-indigo-400 shrink-0" />
+            <span>
+              No transactions found for this account. Create a guarded order in the Shopping Hub to record your first transaction.
+            </span>
+          </div>
+          <button
+            onClick={() => setActiveTab('shopping')}
+            className="flex items-center gap-1.5 px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors"
+          >
+            <span>Guarded Purchase</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+      )}
 
       {/* AG Grid Container */}
       <div className="h-[520px] w-full rounded-xl overflow-hidden border border-slate-800 shadow-xl bg-slate-950">

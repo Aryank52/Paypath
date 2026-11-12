@@ -28,6 +28,18 @@ export const getAuthHeaders = (isJson = true): HeadersInit => {
   return headers;
 };
 
+export const fetchWithAuth = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  const res = await fetch(input, init);
+  if (res.status === 401) {
+    if (localStorage.getItem('paypath_token')) {
+      localStorage.removeItem('paypath_token');
+      localStorage.removeItem('paypath_user');
+      window.dispatchEvent(new CustomEvent('paypath:auth-expired'));
+    }
+  }
+  return res;
+};
+
 export const api = {
   // Authentication & User Profile
   login: async (data: { email: string; password: string; mfa_code?: string }) => {
@@ -62,7 +74,7 @@ export const api = {
   },
 
   getMe: async (): Promise<UserProfile> => {
-    const res = await fetch(`${API_BASE}/auth/me`, {
+    const res = await fetchWithAuth(`${API_BASE}/auth/me`, {
       headers: getAuthHeaders()
     });
     if (!res.ok) throw new Error('Failed to retrieve user profile');
@@ -186,26 +198,35 @@ export const api = {
     if (params?.status) query.append('status', params.status);
     if (params?.risk_level) query.append('risk_level', params.risk_level);
     if (params?.merchant_name) query.append('merchant_name', params.merchant_name);
-    const res = await fetch(`${API_BASE}/transactions?${query.toString()}`, {
+    const res = await fetchWithAuth(`${API_BASE}/transactions?${query.toString()}`, {
       headers: getAuthHeaders()
     });
-    if (!res.ok) throw new Error('Failed to fetch transactions');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to fetch transactions');
+    }
     return res.json();
   },
 
   getTransaction: async (id: string): Promise<Transaction> => {
-    const res = await fetch(`${API_BASE}/transactions/${id}`, {
+    const res = await fetchWithAuth(`${API_BASE}/transactions/${id}`, {
       headers: getAuthHeaders()
     });
-    if (!res.ok) throw new Error('Failed to fetch transaction details');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to fetch transaction details');
+    }
     return res.json();
   },
 
   getTransactionEvents: async (id: string): Promise<TransactionEvent[]> => {
-    const res = await fetch(`${API_BASE}/transactions/${id}/events`, {
+    const res = await fetchWithAuth(`${API_BASE}/transactions/${id}/events`, {
       headers: getAuthHeaders()
     });
-    if (!res.ok) throw new Error('Failed to fetch transaction events');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to fetch transaction events');
+    }
     return res.json();
   },
 

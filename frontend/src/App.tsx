@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { LandingPage } from './components/LandingPage';
@@ -24,7 +24,29 @@ import { api } from './services/api';
 import { Store } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const { activeTab, persona, currentUser, loginUser } = useStore();
+  const { activeTab, persona, currentUser, loginUser, logoutUser, setAuthModal } = useStore();
+
+  useEffect(() => {
+    // 1. Listen for auth expiration events dispatched on 401
+    const handleAuthExpired = () => {
+      logoutUser();
+      setAuthModal('login');
+    };
+    window.addEventListener('paypath:auth-expired', handleAuthExpired);
+
+    // 2. Proactively validate existing token with /auth/me on mount if present
+    const token = localStorage.getItem('paypath_token');
+    if (token) {
+      api.getMe().catch(() => {
+        // Stale or expired token: clear immediately to avoid empty/broken UI
+        logoutUser();
+      });
+    }
+
+    return () => {
+      window.removeEventListener('paypath:auth-expired', handleAuthExpired);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
@@ -64,25 +86,10 @@ export const App: React.FC = () => {
                   </p>
                   <div className="pt-2">
                     <button
-                      onClick={() => {
-                        api.login({ email: 'sarah.jenkins@paypath.finance', password: 'paypath123!' })
-                          .then((res) => {
-                            loginUser(res.access_token, {
-                              id: res.user_id,
-                              email: res.email,
-                              full_name: res.full_name,
-                              role: res.role as any,
-                              is_active: true,
-                              email_verified: true,
-                              mfa_enabled: false,
-                              preferred_currency: 'USD'
-                            });
-                          })
-                          .catch(console.error);
-                      }}
+                      onClick={() => setAuthModal('login')}
                       className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition-colors cursor-pointer shadow-lg shadow-indigo-600/20"
                     >
-                      Authenticate as Merchant Admin (Sarah Jenkins)
+                      Sign In as Merchant Administrator
                     </button>
                   </div>
                 </div>

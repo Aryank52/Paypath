@@ -89,7 +89,12 @@ async def validate_and_save_upload(file: UploadFile, subfolder: str = "evidence"
     from app.core.config import settings
     is_prod = getattr(settings, "APP_ENV", "development").lower() == "production"
 
-    if getattr(settings, "SUPABASE_URL", None) and getattr(settings, "SUPABASE_KEY", None):
+    supabase_configured = bool(
+        getattr(settings, "SUPABASE_URL", None) and
+        (getattr(settings, "SUPABASE_SECRET_KEY", None) or getattr(settings, "SUPABASE_KEY", None))
+    )
+
+    if supabase_configured:
         try:
             from app.services.storage_service import storage_service
             res = await storage_service.upload_file(full_bytes, unique_file_name, matched_type, subfolder)

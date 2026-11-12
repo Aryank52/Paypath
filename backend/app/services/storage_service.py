@@ -24,7 +24,8 @@ class StorageService:
 
     @property
     def supabase_key(self) -> Optional[str]:
-        return getattr(settings, "SUPABASE_KEY", None)
+        # Prefer authoritative server-side secret key for storage operations
+        return getattr(settings, "SUPABASE_SECRET_KEY", None) or getattr(settings, "SUPABASE_KEY", None)
 
     @property
     def bucket_name(self) -> str:

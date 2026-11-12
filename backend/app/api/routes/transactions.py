@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.transaction import Transaction, TransactionEvent
 from app.schemas.transaction import TransactionResponse, TransactionEventResponse
 from app.api.deps import get_current_user
@@ -18,13 +18,29 @@ async def list_transactions(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    stmt = select(Transaction).where(Transaction.user_id == current_user.id).order_by(Transaction.created_at.desc())
+    stmt = select(Transaction).order_by(Transaction.created_at.desc())
+
+    # Role-based tenant and user scoping
+    if current_user.role == UserRole.PLATFORM_ADMIN:
+        # Platform administrators have authoritative platform-wide ledger visibility
+        if merchant_name:
+            stmt = stmt.where(Transaction.merchant_name == merchant_name)
+    elif current_user.role in (UserRole.MERCHANT_ADMIN, UserRole.MERCHANT_USER):
+        # Merchant administrators oversee transactions for their merchant store
+        if merchant_name:
+            stmt = stmt.where(Transaction.merchant_name == merchant_name)
+        else:
+            stmt = stmt.where(Transaction.user_id == current_user.id)
+    else:
+        # Shoppers have strict tenant boundary scoped to their own transactions
+        stmt = stmt.where(Transaction.user_id == current_user.id)
+        if merchant_name:
+            stmt = stmt.where(Transaction.merchant_name == merchant_name)
+
     if status:
         stmt = stmt.where(Transaction.status == status)
     if risk_level:
         stmt = stmt.where(Transaction.risk_level == risk_level)
-    if merchant_name:
-        stmt = stmt.where(Transaction.merchant_name == merchant_name)
 
     result = await db.execute(stmt)
     transactions = result.scalars().all()
@@ -36,10 +52,9 @@ async def get_transaction(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    stmt = select(Transaction).where(
-        Transaction.id == transaction_id,
-        Transaction.user_id == current_user.id
-    )
+    stmt = select(Transaction).where(Transaction.id == transaction_id)
+    if current_user.role != UserRole.PLATFORM_ADMIN:
+        stmt = stmt.where(Transaction.user_id == current_user.id)
     result = await db.execute(stmt)
     tx = result.scalar_one_or_none()
     if not tx:
@@ -78,11 +93,10 @@ async def get_transaction_events(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Verify transaction ownership to prevent IDOR information disclosure
-    tx_stmt = select(Transaction).where(
-        Transaction.id == transaction_id,
-        Transaction.user_id == current_user.id
-    )
+    # Verify transaction ownership or platform admin privilege to prevent IDOR information disclosure
+    tx_stmt = select(Transaction).where(Transaction.id == transaction_id)
+    if current_user.role != UserRole.PLATFORM_ADMIN:
+        tx_stmt = tx_stmt.where(Transaction.user_id == current_user.id)
     tx = (await db.execute(tx_stmt)).scalar_one_or_none()
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found.")
