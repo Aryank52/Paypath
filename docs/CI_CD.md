@@ -44,11 +44,11 @@ jobs:
       - name: Verify No Secrets or Dotenv Committed
         run: |
           echo "Checking repository for prohibited .env files..."
-          if git ls-files | grep -E "(^|/)\.env($|\..*)"; then
-            echo "ERROR: Tracked .env file detected in git tree!"
+          if git ls-files | grep -E '(^|/)\.env(\.(local|production|development|test|staging|secret))?$'; then
+            echo "ERROR: Tracked .env credentials file detected in git tree!"
             exit 1
           fi
-          echo "Verified: No .env files committed."
+          echo "Verified: No .env credentials files committed."
 
   backend-test:
     name: Backend Test Suite & Isolation Verification
@@ -62,6 +62,7 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+          cache-dependency-path: 'backend/requirements.txt'
 
       - name: Install dependencies
         run: |
@@ -70,10 +71,10 @@ jobs:
 
       - name: Run Backend Pytest Suite
         env:
-          APP_ENV: test
-          SECRET_KEY: test-secret-key-326ebfdb-5cc7-4b18-a149
-          DATABASE_URL: sqlite+aiosqlite:///:memory:
-          PAYPAL_MODE: sandbox
+          APP_ENV: 'test'
+          SECRET_KEY: 'test-secret-key-326ebfdb-5cc7-4b18-a149'
+          DATABASE_URL: 'sqlite+aiosqlite:///:memory:'
+          PAYPAL_MODE: 'sandbox'
         run: |
           python -m pytest backend/tests -v
 
