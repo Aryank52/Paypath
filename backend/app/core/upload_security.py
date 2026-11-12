@@ -100,7 +100,7 @@ async def validate_and_save_upload(file: UploadFile, subfolder: str = "evidence"
             if is_prod:
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail="Secure evidence cloud storage is temporarily unavailable. Upload could not be verified."
+                    detail=f"Secure evidence cloud storage error: {str(e)}"
                 )
     elif is_prod:
         # In production, ephemeral local storage is prohibited to prevent evidence loss across container restarts

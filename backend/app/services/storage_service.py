@@ -13,17 +13,115 @@ from app.core.observability import logger
 
 class StorageService:
     def __init__(self):
-        self.supabase_url = getattr(settings, "SUPABASE_URL", None)
-        self.supabase_key = getattr(settings, "SUPABASE_KEY", None)
-        self.bucket_name = getattr(settings, "SUPABASE_STORAGE_BUCKET", "paypath-evidence")
         self.local_upload_dir = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "evidence")
         )
         os.makedirs(self.local_upload_dir, exist_ok=True)
 
     @property
+    def supabase_url(self) -> Optional[str]:
+        return getattr(settings, "SUPABASE_URL", None)
+
+    @property
+    def supabase_key(self) -> Optional[str]:
+        return getattr(settings, "SUPABASE_KEY", None)
+
+    @property
+    def bucket_name(self) -> str:
+        return getattr(settings, "SUPABASE_STORAGE_BUCKET", "paypath-evidence")
+
+    @property
     def is_supabase_configured(self) -> bool:
         return bool(self.supabase_url and self.supabase_key)
+
+    async def ensure_bucket_exists(self) -> Dict[str, Any]:
+        """Verifies whether the target Supabase storage bucket exists; creates it if missing."""
+        if not self.is_supabase_configured:
+            return {"status": "NOT_CONFIGURED", "bucket": self.bucket_name}
+
+        base = self.supabase_url.rstrip("/")
+        headers = {
+            "Authorization": f"Bearer {self.supabase_key}",
+            "apikey": self.supabase_key,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                get_resp = await client.get(f"{base}/storage/v1/bucket/{self.bucket_name}", headers=headers)
+                if get_resp.status_code == 200:
+                    return {"status": "EXISTS", "bucket": self.bucket_name}
+
+                # Attempt creation
+                logger.info(f"Supabase bucket {self.bucket_name} not found (status {get_resp.status_code}). Provisioning private bucket...")
+                create_resp = await client.post(
+                    f"{base}/storage/v1/bucket",
+                    headers={**headers, "Content-Type": "application/json"},
+                    json={
+                        "id": self.bucket_name,
+                        "name": self.bucket_name,
+                        "public": False,
+                        "file_size_limit": 10485760
+                    }
+                )
+                if create_resp.status_code in (200, 201):
+                    logger.info(f"Supabase bucket {self.bucket_name} created successfully.")
+                    return {"status": "CREATED", "bucket": self.bucket_name}
+                elif create_resp.status_code in (400, 409):
+                    # Already exists or conflict
+                    return {"status": "EXISTS", "bucket": self.bucket_name}
+                else:
+                    logger.warning(f"Failed to create Supabase bucket {self.bucket_name}: {create_resp.status_code} {create_resp.text}")
+                    return {"status": "ERROR", "code": create_resp.status_code, "detail": create_resp.text}
+        except Exception as e:
+            logger.warning(f"Error checking/creating Supabase bucket: {e}")
+            return {"status": "ERROR", "detail": str(e)}
+
+    async def check_health(self) -> Dict[str, Any]:
+        """Provides deep diagnostic telemetry on the storage subsystem."""
+        if not self.is_supabase_configured:
+            return {
+                "configured": False,
+                "provider": "LOCAL_STORAGE",
+                "bucket": self.bucket_name,
+                "status": "NOT_CONFIGURED"
+            }
+
+        base = self.supabase_url.rstrip("/")
+        headers = {
+            "Authorization": f"Bearer {self.supabase_key}",
+            "apikey": self.supabase_key,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(f"{base}/storage/v1/bucket/{self.bucket_name}", headers=headers)
+                bucket_status = resp.status_code
+                bucket_data = resp.json() if resp.status_code == 200 else resp.text
+
+                auto_created = False
+                if bucket_status == 404:
+                    prov = await self.ensure_bucket_exists()
+                    if prov.get("status") in ("CREATED", "EXISTS"):
+                        auto_created = True
+                        bucket_status = 200
+                        bucket_data = prov
+
+                return {
+                    "configured": True,
+                    "provider": "SUPABASE_STORAGE",
+                    "bucket": self.bucket_name,
+                    "endpoint": base,
+                    "bucket_status": bucket_status,
+                    "auto_created": auto_created,
+                    "details": bucket_data,
+                    "status": "HEALTHY" if bucket_status == 200 else "DEGRADED"
+                }
+        except Exception as e:
+            return {
+                "configured": True,
+                "provider": "SUPABASE_STORAGE",
+                "bucket": self.bucket_name,
+                "status": "ERROR",
+                "error": str(e)
+            }
 
     async def upload_file(
         self,
@@ -50,6 +148,10 @@ class StorageService:
                 }
                 async with httpx.AsyncClient(timeout=30.0) as client:
                     resp = await client.post(upload_endpoint, content=file_bytes, headers=headers)
+                    if resp.status_code == 404:
+                        # Target bucket may not exist yet, attempt provisioning and retry once
+                        await self.ensure_bucket_exists()
+                        resp = await client.post(upload_endpoint, content=file_bytes, headers=headers)
                     resp.raise_for_status()
 
                 # Generate a 1-hour signed URL for private bucket access

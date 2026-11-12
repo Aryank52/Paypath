@@ -76,7 +76,8 @@ async def get_system_health(db: AsyncSession = Depends(get_db)) -> Dict[str, Any
             rag_chunks_count = 0
     rag_status = "ACTIVE" if rag_chunks_count > 0 else "EMPTY"
 
-    # 5. Local Storage Status
+    # 5. Storage Subsystem Status
+    from app.services.storage_service import storage_service
     upload_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "uploads"))
     storage_writable = os.access(upload_dir, os.W_OK) if os.path.exists(upload_dir) else False
 
@@ -176,7 +177,9 @@ async def get_system_health(db: AsyncSession = Depends(get_db)) -> Dict[str, Any
                 "last_successful_check": now_iso,
             },
             "storage": {
-                "status": "WRITABLE" if storage_writable else "READ_ONLY",
+                "status": "HEALTHY" if (storage_service.is_supabase_configured or storage_writable) else "READ_ONLY",
+                "provider": "SUPABASE_STORAGE" if storage_service.is_supabase_configured else "LOCAL_STORAGE",
+                "bucket": storage_service.bucket_name,
                 "upload_directory": upload_dir,
                 "last_successful_check": now_iso,
             },
@@ -192,6 +195,18 @@ async def get_system_health(db: AsyncSession = Depends(get_db)) -> Dict[str, Any
             },
         },
     }
+
+@router.get("/storage-diagnostic")
+async def get_storage_diagnostic(
+    current_user: User = Depends(require_role(UserRole.PLATFORM_ADMIN))
+) -> Dict[str, Any]:
+    """
+    Diagnostic endpoint for Cloud Evidence Storage (Supabase).
+    Tests bucket existence, configuration, and auto-provisions if missing.
+    """
+    from app.services.storage_service import storage_service
+    diag = await storage_service.check_health()
+    return diag
 
 @router.get("/database")
 async def get_database_inventory(

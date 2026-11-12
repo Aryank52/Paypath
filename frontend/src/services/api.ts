@@ -10,7 +10,10 @@ import {
   UserProfile
 } from '../types';
 
-const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const API_ORIGIN = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? 'https://paypath-8u9a.onrender.com' : '')
+).replace(/\/$/, '');
 const API_BASE = `${API_ORIGIN}/api/v1`;
 
 export const getAuthHeaders = (isJson = true): HeadersInit => {
