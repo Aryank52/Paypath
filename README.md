@@ -10,6 +10,14 @@
 > **Understand. Decide. Act. Verify.**  
 > *PayPath turns PayPal transactions into intelligent, explainable, policy-controlled financial workflows.*
 
+### 🌐 Live Production Deployment
+- **Frontend Application (Vercel):** [https://paypath-hazel.vercel.app/](https://paypath-hazel.vercel.app/)
+- **Backend API (Render):** [https://paypath-8u9a.onrender.com](https://paypath-8u9a.onrender.com)
+- **Authoritative Database:** Render Managed PostgreSQL 16.15 (20 tables, 339 records)
+- **Demo Shopper Credentials:** `demo@paypath.finance` / `paypath123!`
+- **Platform Admin Credentials:** `marcus.vance@paypath.finance` / `paypath123!`
+- **Merchant Admin Credentials:** `sarah.jenkins@paypath.finance` / `paypath123!`
+
 ---
 
 ## 1. Executive Summary & Vision

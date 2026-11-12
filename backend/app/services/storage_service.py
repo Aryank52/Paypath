@@ -32,9 +32,11 @@ class StorageService:
 
     @property
     def key_role(self) -> str:
-        """Inspects JWT token payload to identify whether key is anon or service_role."""
+        """Inspects JWT token payload or key prefix to identify whether key is anon or service_role."""
         if not self.supabase_key:
             return "NOT_CONFIGURED"
+        if self.supabase_key.startswith("sb_secret_") or self.supabase_key.startswith("sbp_"):
+            return "service_role"
         try:
             parts = self.supabase_key.split(".")
             if len(parts) == 3:
@@ -49,6 +51,10 @@ class StorageService:
 
     @property
     def is_service_role(self) -> bool:
+        if not self.supabase_key:
+            return False
+        if self.supabase_key.startswith("sb_secret_") or self.supabase_key.startswith("sbp_"):
+            return True
         return self.key_role == "service_role"
 
     @property

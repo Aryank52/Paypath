@@ -111,24 +111,30 @@ PayPath covers the complete transaction lifecycle:
 
 ## 4. Live Evaluation Guide for Judges
 
-### Pre-requisites & Local Ports
+### Live Cloud Deployments
+- **Production Web Application (Vercel):** [https://paypath-hazel.vercel.app/](https://paypath-hazel.vercel.app/)
+- **Production Backend API (Render):** [https://paypath-8u9a.onrender.com](https://paypath-8u9a.onrender.com)
+- **Interactive OpenAPI Documentation:** `https://paypath-8u9a.onrender.com/api/v1/docs`
+- **System Health & Diagnostic Check:** `https://paypath-8u9a.onrender.com/health`
+
+### Local Development Ports (Optional)
 - **Backend API:** `http://127.0.0.1:8000` (FastAPI + Swagger Docs at `/api/v1/docs`)
 - **Frontend App:** `http://127.0.0.1:5173` (Vite + React + Tailwind)
-- **Database:** PostgreSQL 16 on `localhost:5432/paypath`
+- **Database:** Render PostgreSQL 16 (20 application tables, 339 live rows)
 
 ### Demo Credentials
-- **Email:** `demo@paypath.finance` (or `demo@paypath.ai`)
-- **Password:** `paypath123!`
-- **Role:** Customer / Shopper (Full UI access)
+- **Customer / Shopper:** `demo@paypath.finance` / `paypath123!`
+- **Merchant Admin:** `sarah.jenkins@paypath.finance` / `paypath123!`
+- **Platform Admin:** `marcus.vance@paypath.finance` / `paypath123!`
 
 ### Guided 5-Minute Evaluation Walkthrough
 
 #### Step 1: System Health & Real Database Proof
-- Open `http://127.0.0.1:8000/api/v1/health` in your browser.
+- Open `https://paypath-8u9a.onrender.com/health` (or `http://127.0.0.1:8000/api/v1/health`) in your browser.
 - **Notice:** Returns `database: "PostgreSQL 16"`, `database_status: "CONNECTED"`, and `service: "PayPath"`.
 
 #### Step 2: High-Performance Transaction Explorer
-- Navigate to `http://127.0.0.1:5173` in your browser.
+- Navigate to `https://paypath-hazel.vercel.app/` (or `http://127.0.0.1:5173`) in your browser.
 - Log in with `demo@paypath.finance` / `paypath123!`.
 - View the **Transaction Intelligence Explorer** powered by AG Grid.
 - Notice the **VERIFIED** independent payment badges, merchant logos, and instant search/filtering.
@@ -154,7 +160,7 @@ PayPath covers the complete transaction lifecycle:
 
 ## 5. Automated Test Reproduction
 
-Every claim in this submission is verified by 29 automated tests. To reproduce the entire verification suite:
+Every claim in this submission is verified by 53 automated tests spanning security, RBAC, IDOR, payment lineage, ML determinism, and PayPal webhook cryptographic verification. To reproduce the entire verification suite:
 
 ```bash
 # In PayPath root directory

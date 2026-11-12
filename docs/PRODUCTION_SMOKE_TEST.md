@@ -4,7 +4,7 @@
 **Target Infrastructure:**
 - **Backend:** `https://paypath-8u9a.onrender.com` (Render Web Service)
 - **Database:** Render Managed PostgreSQL 16.15 (20 tables, 345 authoritative rows)
-- **Frontend Deployment:** Vercel Edge Network (`https://paypath.vercel.app` - HTTP 200 LIVE)
+- **Frontend Deployment:** Vercel Edge Network (`https://paypath-hazel.vercel.app/` - HTTP 200 LIVE)
 - **Custom Domain:** `https://paypath.finance` (DNS Propagation Pending)
 - **Payment Gateway:** PayPal Sandbox API (`https://api-m.sandbox.paypal.com`)
 - **Evidence Storage:** Supabase Cloud Storage (`paypath-evidence` - Blocked by RLS)
@@ -118,7 +118,7 @@ HTTP/2 400 Bad Request
 | Check Item | Target | Observed Live Value | Status |
 | :--- | :--- | :--- | :--- |
 | **Render API Status** | HTTP 200 | HTTP 200 (`HEALTHY`) | **PASSED** |
-| **Frontend Deployment**| HTTP 200 | `https://paypath.vercel.app` (HTTP 200) | **PASSED** |
+| **Frontend Deployment**| HTTP 200 | `https://paypath-hazel.vercel.app/` (HTTP 200) | **PASSED** |
 | **Custom Domain** | HTTP 200 | `https://paypath.finance` (DNS Pending) | **PENDING** |
 | **PostgreSQL 16 Status**| CONNECTED | `PostgreSQL 16` (20 Tables, 345 Rows) | **PASSED** |
 | **Supabase DB Isolation**| No DB queries | `is_supabase_postgres: false` | **PASSED** |
