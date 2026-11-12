@@ -90,6 +90,10 @@ class StorageService:
         }
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
+                # Check what buckets exist
+                list_resp = await client.get(f"{base}/storage/v1/bucket", headers=headers)
+                available_buckets = list_resp.json() if list_resp.status_code == 200 else f"HTTP {list_resp.status_code}: {list_resp.text}"
+
                 resp = await client.get(f"{base}/storage/v1/bucket/{self.bucket_name}", headers=headers)
                 bucket_status = resp.status_code
                 bucket_data = resp.json() if resp.status_code == 200 else resp.text
@@ -110,6 +114,7 @@ class StorageService:
                     "provider": "SUPABASE_STORAGE",
                     "bucket": self.bucket_name,
                     "endpoint": base,
+                    "available_buckets": available_buckets,
                     "bucket_status": bucket_status,
                     "auto_created": auto_created,
                     "provisioning_result": provisioning_result,
