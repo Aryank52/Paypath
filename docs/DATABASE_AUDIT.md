@@ -25,8 +25,8 @@ PayPath models 20 application domain tables in PostgreSQL 16 (verified via live 
 
 | Table Name | Primary Key | Key Relationships / Indices | Live Row Count | Purpose |
 | :--- | :--- | :--- | :---: | :--- |
-| `agent_runs` | `id` (String) | FK `user_id` -> `users.id` | 12 | Autonomous agent execution sessions and goals |
-| `agent_tool_calls` | `id` (String) | FK `run_id` -> `agent_runs.id` | 53 | Tool execution traces and deterministic verification outputs |
+| `agent_runs` | `id` (String) | FK `user_id` -> `users.id` | 13 | Autonomous agent execution sessions and goals |
+| `agent_tool_calls` | `id` (String) | FK `run_id` -> `agent_runs.id` | 58 | Tool execution traces and deterministic verification outputs |
 | `audit_logs` | `id` (String) | Indexed on `timestamp`, `event_type` | 6 | Immutable write-only security and financial action logs |
 | `evidence` | `id` (String) | FK `reclaim_case_id` | 1 | Uploaded receipts/damage photos, storage path, magic-byte verified MIME |
 | `merchant_policies` | `id` (String) | FK `merchant_id` -> `merchants.id` | 6 | Parsed policy rules, return windows, restocking fees, damage allowances |
@@ -47,7 +47,7 @@ PayPath models 20 application domain tables in PostgreSQL 16 (verified via live 
 | `webhook_events` | `id` (String) | Indexed on `paypal_event_id`, `transmission_id` | 0 | Authoritative persistent webhook deduplication and replay protection |
 
 **Total Application Tables:** Exactly 20 Tables.  
-**Exact Total Live Records:** 12 + 53 + 6 + 1 + 6 + 5 + 0 + 5 + 8 + 15 + 15 + 20 + 20 + 2 + 4 + 4 + 82 + 74 + 7 + 0 = **339 Authoritative Records**.  
+**Exact Total Live Records:** 13 + 58 + 6 + 1 + 6 + 5 + 0 + 5 + 8 + 15 + 15 + 20 + 20 + 2 + 4 + 4 + 82 + 74 + 7 + 0 = **345 Authoritative Records**.  
 **Mathematical Reconciliation:** 100% Reconciled to the single authoritative total.
 
 ---
@@ -95,7 +95,7 @@ On November 12, 2026, empirical database connection diagnostics were retrieved f
 | **Is Authoritative App DB** | `True` | **CONFIRMED** |
 | **Is Supabase PostgreSQL** | `False` | **ZERO CONNECTION** |
 | **Total Application Tables** | 20 tables | **VERIFIED** |
-| **Total Live Records** | 339 authoritative rows | **HEALTHY & RECONCILED** |
+| **Total Live Records** | 345 authoritative rows | **HEALTHY & RECONCILED** |
 
 ### Conclusion:
 PayPath's authoritative application database is 100% isolated within Render Managed PostgreSQL 16. Supabase PostgreSQL is **never** contacted for relational data operations. Supabase is strictly integrated for private file storage via its Storage REST API (`/storage/v1`).
