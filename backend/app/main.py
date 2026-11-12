@@ -119,6 +119,7 @@ ALLOWED_ORIGINS = [o for o in set(ALLOWED_ORIGINS) if o != "*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=r"^https://.*\.vercel\.app$" if settings.APP_ENV == "production" else None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],

@@ -10,7 +10,8 @@ import {
   UserProfile
 } from '../types';
 
-const API_BASE = '/api/v1';
+const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const API_BASE = `${API_ORIGIN}/api/v1`;
 
 export const getAuthHeaders = (isJson = true): HeadersInit => {
   const token = localStorage.getItem('paypath_token');
