@@ -156,6 +156,7 @@ class StorageService:
                     "is_service_role": self.is_service_role,
                     "available_buckets": available_buckets,
                     "bucket_status": bucket_status,
+                    "raw_bucket_response": resp.text,
                     "auto_created": auto_created,
                     "provisioning_result": provisioning_result,
                     "details": bucket_data,
@@ -199,7 +200,9 @@ class StorageService:
                         # Target bucket may not exist yet, attempt provisioning and retry once
                         await self.ensure_bucket_exists()
                         resp = await client.post(upload_endpoint, content=file_bytes, headers=headers)
-                    resp.raise_for_status()
+                    if resp.is_error:
+                        logger.error(f"Supabase Storage upload returned {resp.status_code}: {resp.text}")
+                        raise RuntimeError(f"Supabase Storage returned {resp.status_code}: {resp.text}")
 
                 # Generate a 1-hour signed URL for private bucket access
                 signed_url = await self.create_signed_url(dest_path, expires_in=3600)
