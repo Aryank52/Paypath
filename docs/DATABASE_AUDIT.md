@@ -21,24 +21,33 @@ In PayPath, all transactional records, user identities, merchant profiles, retur
 
 ## 2. Relational Schema & Table Inventory
 
-PayPath models 14 core tables in PostgreSQL:
+PayPath models 20 application tables + 1 Alembic metadata table in PostgreSQL 16 (verified via live diagnostic query against Render PostgreSQL):
 
-| Table Name | Primary Key | Key Relationships / Indices | Purpose |
-| :--- | :--- | :--- | :--- |
-| `users` | `id` (UUID) | Indexed on `email`, `role` | User accounts, hashed passwords, MFA configuration, active status |
-| `merchants` | `id` (UUID) | Indexed on `name`, `paypal_merchant_id` | Registered merchants, trust scores, dispute thresholds |
-| `merchant_policies` | `id` (UUID) | FK `merchant_id` -> `merchants.id` | Parsed policy rules, return windows, restocking fees, damage allowances |
-| `transactions` | `id` (UUID) | FK `user_id` -> `users.id`, FK `merchant_id` -> `merchants.id` | Authoritative financial ledger, amounts, currencies, status, risk scores |
-| `user_intents` | `id` (UUID) | FK `user_id` -> `users.id` | NLP-parsed user shopping intents, budget constraints, allowed categories |
-| `payment_actions` | `id` (UUID) | FK `transaction_id` -> `transactions.id` | PayPal action executions (CAPTURE, REFUND, AUTHORIZE, VOID) with status and raw responses |
-| `action_verifications` | `id` (UUID) | FK `action_id` -> `payment_actions.id` | Independent PayPal verification records proving external settlement |
-| `reclaim_cases` | `id` (UUID) | FK `transaction_id` -> `transactions.id`, FK `user_id` -> `users.id` | Post-purchase dispute cases, resolution tier, customer claims |
-| `reclaim_evidence` | `id` (UUID) | FK `case_id` -> `reclaim_cases.id` | Uploaded receipts/damage photos, Supabase storage path, magic-byte verified MIME |
-| `reclaim_events` | `id` (UUID) | FK `case_id` -> `reclaim_cases.id` | Dispute audit timeline, status changes, settlement amounts |
-| `notifications` | `id` (UUID) | FK `user_id` -> `users.id` | User transaction alerts, dispute updates, security warnings |
-| `token_revocations` | `jti` (String) | Indexed on `jti`, `expires_at` | Blocklist of logged-out JWT tokens |
-| `audit_logs` | `id` (UUID) | Indexed on `timestamp`, `event_type` | Immutable write-only security and financial action logs |
-| `ml_model_metadata` | `model_name` (String) | Indexed on `version` | Registered scikit-learn/XGBoost model metrics, weights, and training timestamps |
+| Table Name | Primary Key | Key Relationships / Indices | Live Row Count | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| `users` | `id` (String) | Indexed on `email`, `role` | 6 | User accounts, hashed passwords, MFA configuration, active status |
+| `merchants` | `id` (String) | Indexed on `name`, `slug` | 5 | Registered merchants, trust scores, dispute thresholds |
+| `products` | `id` (String) | FK `merchant_id` -> `merchants.id` | 20 | Merchant catalog products, SKU, price, category |
+| `merchant_policies` | `id` (String) | FK `merchant_id` -> `merchants.id` | 6 | Parsed policy rules, return windows, restocking fees, damage allowances |
+| `policy_chunks` | `id` (String) | FK `merchant_id`, `policy_id` | 20 | Chunked policy clauses with 128-dim embeddings for tenant-isolated RAG |
+| `transactions` | `id` (String) | FK `user_id`, FK `merchant_id` | 69 | Authoritative financial ledger, amounts, currencies, status, risk scores |
+| `transaction_events`| `id` (String) | FK `transaction_id` -> `transactions.id` | 69 | Transaction lifecycle audit events (created, captured, refunded) |
+| `reclaim_cases` | `id` (String) | FK `transaction_id`, FK `user_id` | 4 | Post-purchase dispute cases, resolution tier, customer claims |
+| `evidence` | `id` (String) | FK `reclaim_case_id` | 1 | Uploaded receipts/damage photos, storage path, magic-byte verified MIME |
+| `subscriptions` | `id` (String) | FK `user_id`, FK `merchant_id` | 4 | Active recurring merchant subscription authorizations |
+| `notifications` | `id` (String) | FK `user_id` -> `users.id` | 8 | User transaction alerts, dispute updates, security warnings |
+| `ml_model_versions` | `id` (String) | Indexed on `version` | 0 | Registered scikit-learn/XGBoost model version metadata |
+| `ml_predictions` | `id` (String) | FK `transaction_id` -> `transactions.id` | 5 | Persisted inference records, risk scores, anomaly scores, feature drivers |
+| `agent_runs` | `id` (String) | FK `user_id` -> `users.id` | 6 | Autonomous agent execution sessions and goals |
+| `agent_tool_calls` | `id` (String) | FK `agent_run_id` -> `agent_runs.id` | 27 | Tool execution traces and deterministic verification outputs |
+| `purchase_intents` | `id` (String) | FK `user_id` -> `users.id` | 2 | NLP-parsed user shopping intents, budget constraints, allowed categories |
+| `payment_actions` | `id` (String) | FK `transaction_id` -> `transactions.id` | 7 | PayPal action executions (CAPTURE, REFUND) with status and raw responses |
+| `payment_verifications`| `id` (String) | FK `action_id` -> `payment_actions.id` | 7 | Independent PayPal verification records proving external settlement |
+| `audit_logs` | `id` (String) | Indexed on `timestamp`, `event_type` | 6 | Immutable write-only security and financial action logs |
+| `webhook_events` | `id` (String) | Indexed on `paypal_event_id`, `transmission_id` | 0 | Authoritative persistent webhook deduplication and replay protection |
+| `alembic_version` | `version_num` | Primary migration key | 1 | Alembic database migration tracking |
+
+**Total Database Inventory:** 20 Application Tables + 1 System Table = 21 Authoritative Tables. All verified operational with zero errors.
 
 ---
 

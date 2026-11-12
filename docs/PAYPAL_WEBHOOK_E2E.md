@@ -12,8 +12,8 @@
 PayPath integrates with PayPal Sandbox for real-time payment capture, order authorization, automated and merchant-mediated refunds, and asynchronous webhook lifecycle notifications.
 
 To prevent payment tampering, forged notifications, and replay attacks, PayPath enforces:
-1. **Cryptographic Signature Verification:** Every incoming webhook is checked against PayPal's verification service using the `PAYPAL-TRANSMISSION-ID`, `PAYPAL-TRANSMISSION-TIME`, `PAYPAL-TRANSMISSION-SIG`, `PAYPAL-CERT-URL`, and configured `PAYPAL_WEBHOOK_ID`.
-2. **Replay Defense:** Transmission IDs and Event IDs are recorded in an in-memory / cache deduplication store. Duplicate transmissions receive HTTP 200 with an idempotent "Already Processed" response without duplicate state mutations.
+1. **Asymmetric Cryptographic Signature Verification (RSA-SHA256):** Every incoming webhook is authenticated using PayPal's X.509 public key certificate. The verifier reconstructs the signed message `<transmission_id>|<transmission_time>|<webhook_id>|<crc32(raw_body)>` and validates the RSA PKCS#1 v1.5 signature using SHA-256. If configured, a fallback check can also cross-verify via PayPal's `/v1/notifications/verify-webhook-signature` API.
+2. **Persistent PostgreSQL Replay Defense:** Transmission IDs and Event IDs are recorded in the authoritative `webhook_events` PostgreSQL 16 table (`paypal_event_id` and `transmission_id`). Duplicate transmissions receive HTTP 200 with an idempotent `{"status": "IGNORED", "reason": "DUPLICATE_EVENT"}` response without duplicate financial mutations, surviving container and service restarts.
 3. **Audit Trail Recording:** Verified events are logged into PostgreSQL 16 with timestamps, event types, resource IDs, and financial delta tracking.
 
 ---
@@ -26,30 +26,32 @@ PayPal Cloud
      ▼
 FastAPI Route (`webhooks.py`)
      │
-     ├── 1. Validate presence of required headers:
+     ├── 1. Validate presence of all 5 required PayPal headers:
+     │      - PAYPAL-AUTH-ALGO (e.g. SHA256withRSA)
+     │      - PAYPAL-CERT-URL (must end with .paypal.com and start with /v1/notifications/certs/)
      │      - PAYPAL-TRANSMISSION-ID
-     │      - PAYPAL-TRANSMISSION-TIME
-     │      - PAYPAL-TRANSMISSION-SIG
-     │      - PAYPAL-CERT-URL
+     │      - PAYPAL-TRANSMISSION-SIG (Base64-encoded RSA signature)
+     │      - PAYPAL-TRANSMISSION-TIME (validated within 30-minute timestamp window)
      │
-     ├── 2. Verify Certificate URL Origin:
-     │      - Must end with .paypal.com
+     ├── 2. Cryptographic RSA-SHA256 Verification:
+     │      - Fetch & cache X.509 PEM certificate from PayPal (or test registry in tests)
+     │      - Extract RSA public key
+     │      - Compute CRC32 checksum over exact raw body bytes
+     │      - Format string: <transmission_id>|<transmission_time>|<webhook_id>|<crc32>
+     │      - Verify RSA signature with PKCS#1 v1.5 padding and SHA-256
      │
-     ├── 3. Contact PayPal Signature Verification API:
-     │      - POST /v1/notifications/verify-webhook-signature
-     │      - Pass transmission parameters, webhook ID, and raw payload
-     │      - If verification_status != "SUCCESS" -> REJECT (400 Bad Request)
+     ├── 3. Persistent Replay & Deduplication Check (PostgreSQL 16):
+     │      - Query WebhookEvent.paypal_event_id == event_id
+     │      - Query WebhookEvent.transmission_id == transmission_id
+     │      - If record exists in DB -> RETURN 200 {"status": "IGNORED", "reason": "DUPLICATE_..."}
      │
-     ├── 4. Replay Check:
-     │      - Key: paypal_webhook:{event_id}:{transmission_id}
-     │      - If key exists in cache -> RETURN 200 {"status": "duplicate_ignored"}
-     │
-     ├── 5. Authoritative State Mutation (PostgreSQL 16):
+     ├── 4. Authoritative State Mutation (PostgreSQL 16):
+     │      - Insert WebhookEvent record with status "WEBHOOK_AUTHENTICATED"
      │      - PAYMENT.CAPTURE.COMPLETED -> Update Transaction status to COMPLETED
      │      - PAYMENT.CAPTURE.DENIED -> Mark Transaction FAILED / REJECTED
      │      - PAYMENT.CAPTURE.REFUNDED -> Update Transaction refund amount, set status REFUNDED / PARTIALLY_REFUNDED
      │
-     └── 6. Persist Audit Record & Dispatch Real-Time Notifications
+     └── 5. Persist Audit Record & Dispatch Real-Time Notifications
 ```
 
 ---

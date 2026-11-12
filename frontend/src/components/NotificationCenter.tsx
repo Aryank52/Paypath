@@ -145,7 +145,7 @@ export const NotificationCenter: React.FC<Props> = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div className="p-3 border-t border-slate-800 bg-slate-950 text-center text-[10px] text-slate-500">
-          In-App & Transactional Email Provider Synchronized
+          In-App Notifications Active • External SMTP Disconnected
         </div>
       </div>
     </div>
