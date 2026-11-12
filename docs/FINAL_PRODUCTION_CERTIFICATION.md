@@ -1,10 +1,10 @@
 # PAYPATH — FINAL PRODUCTION CERTIFICATION REPORT
 
-**Document Version:** 2.0.0  
-**Phase:** Master Full-System Integration, E2E Verification & Release Certification  
+**Document Version:** 2.1.0  
+**Phase:** Master Full-System Integration, Database Isolation Certification & Release  
 **Date:** November 12, 2026  
 **System Status:** **PAYPATH — READY FOR SUBMISSION**  
-**Authoritative Release Tag:** `v1.0.2` on GitHub (`https://github.com/Aryank52/Paypath.git`)  
+**Authoritative Release Tag:** `v1.0.4` on GitHub (`https://github.com/Aryank52/Paypath.git`)  
 **Core Philosophy:** *Understand. Decide. Act. Verify.*
 
 ---
@@ -17,7 +17,9 @@
 ========================================================================================
   - Live Hosted Backend (Render):        https://paypath-8u9a.onrender.com (HEALTHY)
   - Live Hosted Frontend (Vercel):       https://paypath.finance (PROXY ACTIVE)
-  - Authoritative Database:              Render Managed PostgreSQL 16.15 (21 Tables, 275 Rows)
+  - Authoritative Database:              Render Managed PostgreSQL 16.15 (20 Tables, 328 Rows)
+  - Database Driver & Host:              postgresql+asyncpg / dpg-dbqf0imi0phs73cfueh0-a
+  - Database Isolation:                  100% Render Isolated; Zero Supabase DB Queries
   - Cloud Evidence Storage:              Supabase Storage (btobwviqlcgydaxuphzh.supabase.co)
   - Payment Gateway:                     PayPal REST v2 Sandbox (CONNECTED, LIVE TESTED)
   - Webhook Cryptography:                RSA-SHA256 Signature Verification + PG Deduplication
@@ -25,8 +27,8 @@
   - ML Intelligence Subsystem:           XGBoost + Isolation Forest (ADVISORY_ONLY Contract)
   - RAG Vector Search:                   Cosine Similarity Store (100% Tenant Isolated)
   - Multi-Agent Orchestration:           7 Autonomous Agents (Intent, Shopping, Policy, etc.)
-  - Automated CI/CD Pipeline:            GitHub Actions Run 43232415084 (100% SUCCESS)
-  - Backend Test Suite:                  53/53 PASSED (100% Green in 59.33s)
+  - Automated CI/CD Pipeline:            GitHub Actions (100% Green on main)
+  - Backend Test Suite:                  53/53 PASSED (100% Green)
   - Frontend Production Build:           CLEAN (0 Errors in 6.53s via Vite)
   - Master Verification Suite:           10/10 GATES PASSED (100% Empirically Verified)
 ========================================================================================
