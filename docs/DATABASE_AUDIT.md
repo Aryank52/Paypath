@@ -31,7 +31,7 @@ PayPath models 20 application tables + 1 Alembic metadata table in PostgreSQL 16
 | `merchant_policies` | `id` (String) | FK `merchant_id` -> `merchants.id` | 6 | Parsed policy rules, return windows, restocking fees, damage allowances |
 | `policy_chunks` | `id` (String) | FK `merchant_id`, `policy_id` | 20 | Chunked policy clauses with 128-dim embeddings for tenant-isolated RAG |
 | `transactions` | `id` (String) | FK `user_id`, FK `merchant_id` | 69 | Authoritative financial ledger, amounts, currencies, status, risk scores |
-| `transaction_events`| `id` (String) | FK `transaction_id` -> `transactions.id` | 69 | Transaction lifecycle audit events (created, captured, refunded) |
+| `transaction_events`| `id` (String) | FK `transaction_id` -> `transactions.id` | 70 | Transaction lifecycle audit events (created, captured, refunded) |
 | `reclaim_cases` | `id` (String) | FK `transaction_id`, FK `user_id` | 4 | Post-purchase dispute cases, resolution tier, customer claims |
 | `evidence` | `id` (String) | FK `reclaim_case_id` | 1 | Uploaded receipts/damage photos, storage path, magic-byte verified MIME |
 | `subscriptions` | `id` (String) | FK `user_id`, FK `merchant_id` | 4 | Active recurring merchant subscription authorizations |
@@ -41,8 +41,8 @@ PayPath models 20 application tables + 1 Alembic metadata table in PostgreSQL 16
 | `agent_runs` | `id` (String) | FK `user_id` -> `users.id` | 6 | Autonomous agent execution sessions and goals |
 | `agent_tool_calls` | `id` (String) | FK `agent_run_id` -> `agent_runs.id` | 27 | Tool execution traces and deterministic verification outputs |
 | `purchase_intents` | `id` (String) | FK `user_id` -> `users.id` | 2 | NLP-parsed user shopping intents, budget constraints, allowed categories |
-| `payment_actions` | `id` (String) | FK `transaction_id` -> `transactions.id` | 7 | PayPal action executions (CAPTURE, REFUND) with status and raw responses |
-| `payment_verifications`| `id` (String) | FK `action_id` -> `payment_actions.id` | 7 | Independent PayPal verification records proving external settlement |
+| `payment_actions` | `id` (String) | FK `transaction_id` -> `transactions.id` | 8 | PayPal action executions (CAPTURE, REFUND) with status and raw responses |
+| `payment_verifications`| `id` (String) | FK `action_id` -> `payment_actions.id` | 8 | Independent PayPal verification records proving external settlement |
 | `audit_logs` | `id` (String) | Indexed on `timestamp`, `event_type` | 6 | Immutable write-only security and financial action logs |
 | `webhook_events` | `id` (String) | Indexed on `paypal_event_id`, `transmission_id` | 0 | Authoritative persistent webhook deduplication and replay protection |
 | `alembic_version` | `version_num` | Primary migration key | 1 | Alembic database migration tracking |

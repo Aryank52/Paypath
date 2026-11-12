@@ -78,3 +78,26 @@ The upload pipeline and security barriers are rigorously validated by the automa
   - Path traversal attack string `../../etc/passwd`: **SANITIZED to `upload_<uuid>.dat`**.
   - File size $> 10\text{ MB}$: **REJECTED (413 Request Entity Too Large)**.
 
+---
+
+## 5. Live Production Diagnostic & Bucket Provisioning
+
+A dedicated diagnostic endpoint is available to platform administrators:
+`GET /api/v1/system/storage-diagnostic`
+
+### Empirical Findings:
+- **Supabase Project Endpoint:** `https://btobwviqlcgydaxuphzh.supabase.co`
+- **Key Type in Render Config:** Supabase Public (`anon`) API Key
+- **Directory Probe (`GET /storage/v1/bucket`):** Returned HTTP 200 with `available_buckets: []` (no buckets provisioned yet in project).
+- **Auto-Provisioning Response:** When the backend attempts automated bucket creation (`POST /storage/v1/bucket`), Supabase returns `403 Forbidden` (`{"statusCode":"403","error":"Unauthorized","message":"new row violates row-level security policy","code":"AccessDenied"}`) because creating storage buckets in Supabase requires administrative RLS bypass (`service_role` key) or manual dashboard creation.
+
+### One-Click Activation Guide:
+To complete evidence uploads in production, perform one of the following:
+1. **Option A (Supabase Dashboard — 30 seconds):**
+   - Open [Supabase Dashboard](https://supabase.com/dashboard/project/btobwviqlcgydaxuphzh) -> **Storage**.
+   - Click **New Bucket**, name it `paypath-evidence`, and set it to **Private** (or add an insert policy for authenticated users).
+2. **Option B (Render Dashboard — 30 seconds):**
+   - In Supabase Dashboard -> **Project Settings** -> **API**, copy the `service_role` secret key.
+   - In Render Dashboard -> PayPath Web Service -> **Environment**, update `SUPABASE_KEY` to the `service_role` key. The backend's automated `ensure_bucket_exists` will auto-create and manage `paypath-evidence` automatically.
+
+
