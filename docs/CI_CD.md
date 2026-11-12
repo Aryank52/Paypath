@@ -5,7 +5,7 @@
 **Target Environments:**
 - Pull Requests / Commits on `main`: Automated Quality Gate (Hygiene + Backend Test + Frontend Build)
 - Backend Continuous Deployment: Render Web Service (`https://paypath-8u9a.onrender.com`)
-- Frontend Continuous Deployment: Vercel Edge Network (`https://paypath.finance`)
+- Frontend Continuous Deployment: Vercel Edge Network (`https://paypath.vercel.app` - LIVE; `https://paypath.finance` - DNS pending)
 
 ---
 

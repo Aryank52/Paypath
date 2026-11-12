@@ -80,24 +80,37 @@ The upload pipeline and security barriers are rigorously validated by the automa
 
 ---
 
-## 5. Live Production Diagnostic & Bucket Provisioning
+## 5. Live Production Diagnostic & Empirical Test Results
 
 A dedicated diagnostic endpoint is available to platform administrators:
 `GET /api/v1/system/storage-diagnostic`
 
 ### Empirical Findings:
 - **Supabase Project Endpoint:** `https://btobwviqlcgydaxuphzh.supabase.co`
-- **Key Type in Render Config:** Supabase Public (`anon`) API Key
-- **Directory Probe (`GET /storage/v1/bucket`):** Returned HTTP 200 with `available_buckets: []` (no buckets provisioned yet in project).
-- **Auto-Provisioning Response:** When the backend attempts automated bucket creation (`POST /storage/v1/bucket`), Supabase returns `403 Forbidden` (`{"statusCode":"403","error":"Unauthorized","message":"new row violates row-level security policy","code":"AccessDenied"}`) because creating storage buckets in Supabase requires administrative RLS bypass (`service_role` key) or manual dashboard creation.
+- **Key Type in Render Config:** Supabase Public (`anon`) API Key (`is_service_role: false`)
+- **Bucket Creation:** Bucket `paypath-evidence` has been manually created in Supabase project `btobwviqlcgydaxuphzh`.
+- **Live Upload Probe (`POST /api/v1/reclaim/cases/rc_nova_damage_hero/evidence`):**
+  When uploading authentic PNG magic bytes (`\x89PNG\r\n\x1a\n...`), Supabase Storage REST API (`POST /storage/v1/object/paypath-evidence/...`) responds with HTTP 400:
+  ```json
+  {"statusCode":"403","error":"Unauthorized","message":"new row violates row-level security policy","code":"AccessDenied"}
+  ```
+- **Fail-Closed Verification:**
+  The Render backend strictly refuses to write to ephemeral local container disk in production and returns:
+  `HTTP 502 Bad Gateway: "Secure evidence cloud storage error: Production cloud storage failure: Supabase Storage returned 400: {"statusCode":"403","error":"Unauthorized","message":"new row violates row-level security policy","code":"AccessDenied"}"`
+- **Gate 4 Status:** **BLOCKED** pending RLS policy authorization or `service_role` key configuration.
 
-### One-Click Activation Guide:
-To complete evidence uploads in production, perform one of the following:
+---
+
+## 6. One-Click Unblocking Guide
+
+To achieve 100% verified cloud persistence and unblock Gate 4:
+
 1. **Option A (Supabase Dashboard — 30 seconds):**
-   - Open [Supabase Dashboard](https://supabase.com/dashboard/project/btobwviqlcgydaxuphzh) -> **Storage**.
-   - Click **New Bucket**, name it `paypath-evidence`, and set it to **Private** (or add an insert policy for authenticated users).
-2. **Option B (Render Dashboard — 30 seconds):**
+   - Open [Supabase Dashboard](https://supabase.com/dashboard/project/btobwviqlcgydaxuphzh) -> **Storage** -> `paypath-evidence` -> **Policies**.
+   - Add an RLS Policy on `storage.objects`: Allow `INSERT` and `SELECT` for `anon` and `authenticated` roles.
+2. **Option B (Render Dashboard — 30 seconds, Recommended):**
    - In Supabase Dashboard -> **Project Settings** -> **API**, copy the `service_role` secret key.
-   - In Render Dashboard -> PayPath Web Service -> **Environment**, update `SUPABASE_KEY` to the `service_role` key. The backend's automated `ensure_bucket_exists` will auto-create and manage `paypath-evidence` automatically.
+   - In Render Dashboard -> PayPath Web Service -> **Environment**, update `SUPABASE_KEY` to the `service_role` key. The backend will bypass RLS and store/sign artifacts autonomously.
+
 
 

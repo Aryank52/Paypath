@@ -94,3 +94,20 @@ curl -X POST "https://paypath-8u9a.onrender.com/api/v1/paycore/webhooks/paypal" 
 ```
 *HTTP 400 Bad Request — Confirms fail-closed protection is actively running on Render.*
 
+---
+
+## 5. Live Production Webhook Audit: Real vs. Simulated
+
+PayPath enforces strict production truthfulness regarding incoming PayPal webhooks:
+
+- **Registered Webhook ID:** `6ES101932C8932818` (Registered on PayPal Sandbox pointing to `https://paypath-8u9a.onrender.com/api/v1/paycore/webhooks/paypal`).
+- **Simulated Events Processed:**
+  - `WH-58D329510W468432D-8HN650336L201105X` (`PAYMENT.CAPTURE.COMPLETED`, Capture ID `12A34567BC123456S`)
+  - `WH-1GE84257G0350133W-6RW800890C634293G` (`PAYMENT.CAPTURE.REFUNDED`, Refund ID `1Y107995YT783435V`)
+- **Event Classification:**
+  These events were delivered by the official **PayPal Sandbox Webhook Simulator**. They verify that Render parses headers, validates certificates, and applies state mutations correctly.
+- **Organic Checkout Events:**
+  No real organic buyer checkout webhooks have been received on the live endpoint yet, because unattended checkout in PayPal Sandbox requires interactive human buyer approval on the PayPal Wallet interface.
+- **Status:** **SIMULATED VERIFIED (Organic Pending Interactive Buyer Flow)**.
+
+

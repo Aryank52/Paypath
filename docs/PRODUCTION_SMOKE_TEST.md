@@ -3,10 +3,11 @@
 **Execution Date:** 2026-11-12  
 **Target Infrastructure:**
 - **Backend:** `https://paypath-8u9a.onrender.com` (Render Web Service)
-- **Database:** Render Managed PostgreSQL 16.15
-- **Frontend:** Vercel Edge Network (`https://paypath.finance`)
+- **Database:** Render Managed PostgreSQL 16.15 (20 tables, 339 authoritative rows)
+- **Frontend Deployment:** Vercel Edge Network (`https://paypath.vercel.app` - HTTP 200 LIVE)
+- **Custom Domain:** `https://paypath.finance` (DNS Propagation Pending)
 - **Payment Gateway:** PayPal Sandbox API (`https://api-m.sandbox.paypal.com`)
-- **Evidence Storage:** Supabase Cloud Storage (`paypath-evidence`)
+- **Evidence Storage:** Supabase Cloud Storage (`paypath-evidence` - Blocked by RLS)
 
 ---
 
@@ -117,10 +118,18 @@ HTTP/2 400 Bad Request
 | Check Item | Target | Observed Live Value | Status |
 | :--- | :--- | :--- | :--- |
 | **Render API Status** | HTTP 200 | HTTP 200 (`HEALTHY`) | **PASSED** |
-| **PostgreSQL 16 Status** | CONNECTED | `PostgreSQL 16` (CONNECTED) | **PASSED** |
-| **Shopper Authentication** | Valid JWT | JWT generated (`usr_alex_01`) | **PASSED** |
-| **Transaction Feed** | > 0 records | 17 records returned | **PASSED** |
+| **Frontend Deployment**| HTTP 200 | `https://paypath.vercel.app` (HTTP 200) | **PASSED** |
+| **Custom Domain** | HTTP 200 | `https://paypath.finance` (DNS Pending) | **PENDING** |
+| **PostgreSQL 16 Status**| CONNECTED | `PostgreSQL 16` (20 Tables, 339 Rows) | **PASSED** |
+| **Supabase DB Isolation**| No DB queries | `is_supabase_postgres: false` | **PASSED** |
+| **Evidence Storage** | Real cloud upload | HTTP 403 RLS violation (502 fail-closed) | **BLOCKED** |
+| **PayPal Order Creation**| Real PayPal ID | Real Order `6WB574076N630073G` created | **PASSED** |
+| **PayPal Auto Capture**| External settlement| `422 ORDER_NOT_APPROVED` (Needs buyer login)| **BLOCKED** |
+| **PayPal Webhook** | Verified delivery | Events `WH-58D3...` & `WH-1GE8...` | **SIMULATED** |
+| **Shopper Authentication**| Valid JWT | JWT generated (`usr_alex_01`) | **PASSED** |
+| **Transaction Feed** | > 0 records | 74 total in DB, 22 loaded for user | **PASSED** |
 | **Merchant Directory** | 5 records | 5 records returned | **PASSED** |
 | **IDOR & Auth Protection**| HTTP 401 on missing auth | HTTP 401 Unauthorized | **PASSED** |
 | **Webhook Signature Guard**| HTTP 400 on forged header | HTTP 400 Bad Request | **PASSED** |
+
 
