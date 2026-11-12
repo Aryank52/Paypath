@@ -58,15 +58,13 @@ class StorageService:
                     json={
                         "id": self.bucket_name,
                         "name": self.bucket_name,
-                        "public": False,
-                        "file_size_limit": 10485760
+                        "public": False
                     }
                 )
                 if create_resp.status_code in (200, 201):
                     logger.info(f"Supabase bucket {self.bucket_name} created successfully.")
                     return {"status": "CREATED", "bucket": self.bucket_name}
-                elif create_resp.status_code in (400, 409):
-                    # Already exists or conflict
+                elif create_resp.status_code in (400, 409) and "already exists" in create_resp.text.lower():
                     return {"status": "EXISTS", "bucket": self.bucket_name}
                 else:
                     logger.warning(f"Failed to create Supabase bucket {self.bucket_name}: {create_resp.status_code} {create_resp.text}")
@@ -97,12 +95,15 @@ class StorageService:
                 bucket_data = resp.json() if resp.status_code == 200 else resp.text
 
                 auto_created = False
-                if bucket_status == 404:
-                    prov = await self.ensure_bucket_exists()
-                    if prov.get("status") in ("CREATED", "EXISTS"):
+                provisioning_result = None
+                if bucket_status == 404 or (bucket_status == 400 and ("NoSuchBucket" in resp.text or "Bucket not found" in resp.text)):
+                    provisioning_result = await self.ensure_bucket_exists()
+                    if provisioning_result.get("status") in ("CREATED", "EXISTS"):
                         auto_created = True
                         bucket_status = 200
-                        bucket_data = prov
+                        bucket_data = provisioning_result
+                    else:
+                        bucket_data = provisioning_result
 
                 return {
                     "configured": True,
@@ -111,6 +112,7 @@ class StorageService:
                     "endpoint": base,
                     "bucket_status": bucket_status,
                     "auto_created": auto_created,
+                    "provisioning_result": provisioning_result,
                     "details": bucket_data,
                     "status": "HEALTHY" if bucket_status == 200 else "DEGRADED"
                 }
@@ -148,7 +150,7 @@ class StorageService:
                 }
                 async with httpx.AsyncClient(timeout=30.0) as client:
                     resp = await client.post(upload_endpoint, content=file_bytes, headers=headers)
-                    if resp.status_code == 404:
+                    if resp.status_code == 404 or (resp.status_code == 400 and ("NoSuchBucket" in resp.text or "Bucket not found" in resp.text)):
                         # Target bucket may not exist yet, attempt provisioning and retry once
                         await self.ensure_bucket_exists()
                         resp = await client.post(upload_endpoint, content=file_bytes, headers=headers)
