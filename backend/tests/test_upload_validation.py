@@ -80,3 +80,4 @@ async def test_file_size_exceeded_rejected():
     with pytest.raises(HTTPException) as exc_info:
         await validate_and_save_upload(file, subfolder="test")
     assert exc_info.value.status_code == 413
+

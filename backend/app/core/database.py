@@ -70,4 +70,10 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        if "postgres" in db_url:
+            from sqlalchemy import text
+            try:
+                await conn.execute(text("ALTER TABLE evidence ALTER COLUMN file_url TYPE TEXT;"))
+            except Exception as e:
+                logger.warning(f"Could not alter evidence.file_url: {e}")
 

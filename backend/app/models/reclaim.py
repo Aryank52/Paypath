@@ -22,7 +22,7 @@ class Evidence(TimeStampedModel):
     reclaim_case_id = Column(String(36), ForeignKey("reclaim_cases.id"), nullable=False, index=True)
     file_name = Column(String(255), nullable=False)
     file_type = Column(String(100), nullable=False)
-    file_url = Column(String(500), nullable=False)
+    file_url = Column(Text, nullable=False)
     evidence_type = Column(String(50), default="PHOTO_DAMAGE", nullable=False) # PHOTO_DAMAGE, INVOICE, CORRESPONDENCE
     analysis_summary = Column(Text, nullable=True)
     confidence_score = Column(Numeric(4, 2), nullable=True)
