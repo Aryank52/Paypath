@@ -46,3 +46,25 @@ class SubscriptionResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class SharedFeedItem(BaseModel):
+    public_reference: str
+    merchant_name: str
+    item: str
+    amount: float
+    currency: str
+    payment_state: str
+    risk_level: str
+    verification_status: str
+    source: str
+    ai_summary: Optional[str] = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class SharedFeedResponse(BaseModel):
+    total_records: int
+    page: int
+    limit: int
+    items: List[SharedFeedItem]
+    provenance: str = "RENDER_POSTGRESQL_16"
+

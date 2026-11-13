@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     ENABLE_ELASTIC: bool = False
     ENABLE_BRYNTUM: bool = False
     ENABLE_KERNEL: bool = False
+    DEMO_MODE_ENABLED: bool = True
 
     class Config:
         env_file = ".env"

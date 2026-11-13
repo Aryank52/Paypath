@@ -35,6 +35,9 @@ async def get_current_user(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User account is deactivated."
             )
+        user._token_payload = payload
+        user.is_demo = bool(payload.get("demo_mode", False))
+        user.demo_persona = payload.get("demo_persona")
         return user
 
     from app.core.config import settings

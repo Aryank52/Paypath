@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   ShieldCheck, 
   ArrowRight, 
@@ -14,25 +14,35 @@ import {
   ChevronRight,
   Eye,
   SlidersHorizontal,
-  Bot
+  Bot,
+  Store,
+  Loader2
 } from 'lucide-react';
 import { useStore } from '../store/useStore';
-
 import { api } from '../services/api';
 
 export const LandingPage: React.FC = () => {
-  const { setAuthModal, setActiveTab, loginUser } = useStore();
+  const { setAuthModal, setActiveTab, enterDemoSession } = useStore();
+  const [enteringDemo, setEnteringDemo] = useState<string | null>(null);
 
-  const handleLaunchDemo = (role: 'SHOPPER' | 'PLATFORM_ADMIN') => {
-    const token = localStorage.getItem('paypath_token');
-    if (token) {
+  const handleEnterDemo = async (role: 'SHOPPER' | 'MERCHANT_ADMIN' | 'PLATFORM_ADMIN' = 'SHOPPER') => {
+    setEnteringDemo(role);
+    try {
+      const personaKey = role === 'PLATFORM_ADMIN' ? 'platform_admin' : role === 'MERCHANT_ADMIN' ? 'merchant' : 'shopper';
+      const session = await api.createDemoSession(personaKey);
+      enterDemoSession(session);
       if (role === 'PLATFORM_ADMIN') {
         setActiveTab('system');
+      } else if (role === 'MERCHANT_ADMIN') {
+        setActiveTab('merchants');
       } else {
         setActiveTab('overview');
       }
-    } else {
+    } catch (err: any) {
+      console.error('Failed to create demo session:', err);
       setAuthModal('login');
+    } finally {
+      setEnteringDemo(null);
     }
   };
 
@@ -61,35 +71,60 @@ export const LandingPage: React.FC = () => {
         {/* Hero CTAs */}
         <div className="mt-10 flex flex-wrap items-center gap-4">
           <button
-            onClick={() => setAuthModal('signup')}
-            className="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm flex items-center gap-2 shadow-lg shadow-indigo-600/20 transition-all cursor-pointer"
+            onClick={() => handleEnterDemo('SHOPPER')}
+            disabled={enteringDemo !== null}
+            className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-semibold text-sm flex items-center gap-2.5 shadow-xl shadow-indigo-600/30 transition-all cursor-pointer"
           >
-            <span>Get Started Free</span>
+            {enteringDemo === 'SHOPPER' ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-sky-200" />
+            )}
+            <span>Explore Live Demo</span>
             <ArrowRight className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setAuthModal('login')}
+            className="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-medium text-sm transition-all cursor-pointer"
+          >
+            Sign In / Register
           </button>
           <a
             href="#how-it-works"
-            className="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white font-medium text-sm transition-all"
+            className="px-6 py-3.5 rounded-xl bg-slate-900/50 hover:bg-slate-800/80 border border-slate-800/60 text-slate-400 hover:text-slate-200 font-medium text-sm transition-all"
           >
-            See How It Works
+            Architecture
           </a>
         </div>
 
         {/* Instant Exploration Cards */}
         <div className="mt-12 pt-8 border-t border-slate-900/80 flex flex-wrap items-center gap-4 text-xs text-slate-400">
-          <span className="font-semibold text-slate-300 uppercase tracking-wider text-[11px]">Instant Live Portal:</span>
+          <span className="font-semibold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span>Instant Demo Modes (No Login Required):</span>
+          </span>
           <button
-            onClick={() => handleLaunchDemo('SHOPPER')}
+            onClick={() => handleEnterDemo('SHOPPER')}
+            disabled={enteringDemo !== null}
             className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-indigo-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <Bot className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Shopper Portal (Alex Chen)</span>
+            {enteringDemo === 'SHOPPER' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Bot className="w-3.5 h-3.5 text-indigo-400" />}
+            <span>Shopper (Alex Chen)</span>
           </button>
           <button
-            onClick={() => handleLaunchDemo('PLATFORM_ADMIN')}
+            onClick={() => handleEnterDemo('MERCHANT_ADMIN')}
+            disabled={enteringDemo !== null}
+            className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-emerald-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            {enteringDemo === 'MERCHANT_ADMIN' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Store className="w-3.5 h-3.5 text-emerald-400" />}
+            <span>Merchant (Sarah Jenkins)</span>
+          </button>
+          <button
+            onClick={() => handleEnterDemo('PLATFORM_ADMIN')}
+            disabled={enteringDemo !== null}
             className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sky-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer"
           >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />
+            {enteringDemo === 'PLATFORM_ADMIN' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <SlidersHorizontal className="w-3.5 h-3.5 text-sky-400" />}
             <span>Control Center (Marcus Vance)</span>
           </button>
         </div>

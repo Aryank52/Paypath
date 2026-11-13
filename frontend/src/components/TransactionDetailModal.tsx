@@ -27,13 +27,36 @@ export const TransactionDetailModal: React.FC<Props> = ({ transaction, onClose }
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
   const { setActiveTab } = useStore();
 
+  const isPublicRecord = Boolean(transaction.id?.startsWith('PP-TRX-'));
+
   useEffect(() => {
+    if (isPublicRecord) {
+      setEvents([
+        {
+          id: `${transaction.id}-evt-init`,
+          event_type: 'ORDER_INITIALIZED',
+          actor: 'BUYER',
+          description: `Order initialized for ${transaction.item_description || 'verified purchase'}`,
+          created_at: transaction.created_at || new Date().toISOString(),
+        },
+        {
+          id: `${transaction.id}-evt-cap`,
+          event_type: transaction.status === 'REFUNDED' ? 'PAYMENT_REFUNDED' : 'PAYMENT_CAPTURED',
+          actor: 'PAYPAL_LEDGER',
+          description: `Transaction status confirmed as ${transaction.status} via PayPal Ledger`,
+          created_at: transaction.created_at || new Date().toISOString(),
+        }
+      ]);
+      setIsLoadingEvents(false);
+      return;
+    }
+
     setIsLoadingEvents(true);
     api.getTransactionEvents(transaction.id)
       .then(setEvents)
       .catch(console.error)
       .finally(() => setIsLoadingEvents(false));
-  }, [transaction.id]);
+  }, [transaction.id, isPublicRecord, transaction.created_at, transaction.item_description, transaction.status]);
 
   const handleOpenReclaim = () => {
     onClose();
@@ -62,7 +85,9 @@ export const TransactionDetailModal: React.FC<Props> = ({ transaction, onClose }
                   {isSynthetic ? 'DEMO SEED' : 'PAYPAL SANDBOX'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono mt-0.5">ID: {transaction.id}</p>
+              <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                {isPublicRecord ? `Ref: ${transaction.id}` : `ID: ${transaction.id}`}
+              </p>
             </div>
           </div>
           <button
@@ -185,13 +210,19 @@ export const TransactionDetailModal: React.FC<Props> = ({ transaction, onClose }
               )}
             </div>
           </div>
-          <button
-            onClick={handleOpenReclaim}
-            className="flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors shadow-md shadow-emerald-600/20 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Open RECLAIM Resolution</span>
-          </button>
+          {isPublicRecord ? (
+            <div className="text-[11px] text-slate-400 italic">
+              Public Ledger Record • Reclaim resolution available for personal orders
+            </div>
+          ) : (
+            <button
+              onClick={handleOpenReclaim}
+              className="flex items-center justify-center space-x-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium transition-colors shadow-md shadow-emerald-600/20 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Open RECLAIM Resolution</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

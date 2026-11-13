@@ -130,6 +130,54 @@ export interface UserProfile {
   is_active: boolean;
   email_verified: boolean;
   mfa_enabled: boolean;
+  is_demo?: boolean;
+}
+
+export interface SharedFeedItem {
+  public_reference: string;
+  merchant_name: string;
+  item: string;
+  amount: number;
+  currency: string;
+  payment_state: string;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  verification_status: string;
+  source: string;
+  ai_summary?: string;
+  created_at: string;
+}
+
+export interface SharedFeedResponse {
+  total_records: number;
+  page: number;
+  limit: number;
+  items: SharedFeedItem[];
+  provenance: string;
+}
+
+export interface PersonaSwitchResponse {
+  access_token: string;
+  token_type: string;
+  user_id: string;
+  email: string;
+  role: string;
+  active_persona: 'SHOPPER' | 'MERCHANT_ADMIN' | 'PLATFORM_ADMIN';
+  allowed_personas: ('SHOPPER' | 'MERCHANT_ADMIN' | 'PLATFORM_ADMIN')[];
+  full_name?: string;
+  tenant?: string;
+  permissions: string[];
+}
+
+export interface DemoSessionResponse {
+  access_token: string;
+  token_type: string;
+  user_id: string;
+  email: string;
+  role: string;
+  active_persona: 'SHOPPER' | 'MERCHANT_ADMIN' | 'PLATFORM_ADMIN';
+  allowed_personas: ('SHOPPER' | 'MERCHANT_ADMIN' | 'PLATFORM_ADMIN')[];
+  full_name?: string;
+  is_demo: boolean;
 }
 
 

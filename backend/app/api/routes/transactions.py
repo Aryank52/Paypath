@@ -1,14 +1,100 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func, or_
 from app.core.database import get_db
 from app.models.user import User, UserRole
 from app.models.transaction import Transaction, TransactionEvent
-from app.schemas.transaction import TransactionResponse, TransactionEventResponse
-from app.api.deps import get_current_user
+from app.schemas.transaction import (
+    TransactionResponse,
+    TransactionEventResponse,
+    SharedFeedResponse,
+    SharedFeedItem
+)
+from app.api.deps import get_current_user, oauth2_scheme
 
 router = APIRouter(prefix="/transactions", tags=["Transactions"])
+
+@router.get("/feed", response_model=SharedFeedResponse)
+async def get_transaction_feed(
+    page: int = Query(1, ge=1, description="Page number"),
+    limit: int = Query(50, ge=1, le=100, description="Items per page (max 100)"),
+    status: Optional[str] = Query(None, description="Filter by transaction status"),
+    risk_level: Optional[str] = Query(None, description="Filter by risk level (LOW, MEDIUM, HIGH)"),
+    search: Optional[str] = Query(None, description="Search merchant or item"),
+    db: AsyncSession = Depends(get_db),
+    token: Optional[str] = Depends(oauth2_scheme),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Sanitized read-only transaction intelligence feed available to authenticated users.
+    Backed by authoritative Render PostgreSQL transactions table.
+    Enforces strict data sanitization: NO internal IDs, emails, PayPal IDs, or tenant secrets.
+    """
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication token required to access transaction intelligence feed."
+        )
+    # Subquery to calculate deterministic sequential sequence number per transaction
+    seq_subquery = select(
+        Transaction.id.label("tx_id"),
+        func.row_number().over(order_by=Transaction.created_at.asc()).label("seq_num")
+    ).subquery()
+
+    query = (
+        select(Transaction, seq_subquery.c.seq_num)
+        .join(seq_subquery, Transaction.id == seq_subquery.c.tx_id)
+        .order_by(Transaction.created_at.desc())
+    )
+
+    count_query = select(func.count(Transaction.id))
+
+    if status:
+        query = query.where(Transaction.status == status)
+        count_query = count_query.where(Transaction.status == status)
+    if risk_level:
+        query = query.where(Transaction.risk_level == risk_level)
+        count_query = count_query.where(Transaction.risk_level == risk_level)
+    if search:
+        search_filter = or_(
+            Transaction.merchant_name.ilike(f"%{search}%"),
+            Transaction.item_description.ilike(f"%{search}%")
+        )
+        query = query.where(search_filter)
+        count_query = count_query.where(search_filter)
+
+    total_records = (await db.execute(count_query)).scalar() or 0
+
+    offset = (page - 1) * limit
+    query = query.offset(offset).limit(limit)
+
+    results = (await db.execute(query)).all()
+
+    items = [
+        SharedFeedItem(
+            public_reference=f"PP-TRX-{seq_num:06d}",
+            merchant_name=tx.merchant_name,
+            item=tx.item_description or "General Order",
+            amount=float(tx.amount),
+            currency=tx.currency,
+            payment_state=tx.status,
+            risk_level=tx.risk_level,
+            verification_status=tx.verification_status,
+            source=tx.source_type,
+            ai_summary=tx.ai_summary,
+            created_at=tx.created_at
+        )
+        for tx, seq_num in results
+    ]
+
+    return SharedFeedResponse(
+        total_records=total_records,
+        page=page,
+        limit=limit,
+        items=items,
+        provenance="RENDER_POSTGRESQL_16"
+    )
 
 @router.get("", response_model=List[TransactionResponse])
 async def list_transactions(

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Transaction, ReclaimCase, UserProfile } from '../types';
+import { Transaction, ReclaimCase, UserProfile, DemoSessionResponse } from '../types';
 
 export type ActiveTab =
   | 'landing'
@@ -33,6 +33,12 @@ interface AppState {
   persona: UserPersona;
   setPersona: (persona: UserPersona) => void;
   isAuthenticated: boolean;
+  isDemoMode: boolean;
+  setIsDemoMode: (isDemo: boolean) => void;
+  isSwitchingPersona: boolean;
+  setIsSwitchingPersona: (switching: boolean) => void;
+  allowedPersonas: UserPersona[];
+  setAllowedPersonas: (personas: UserPersona[]) => void;
   currentUser: UserProfile | null;
   authModal: AuthModalType;
   setAuthModal: (modal: AuthModalType) => void;
@@ -44,6 +50,8 @@ interface AppState {
   setVerificationToken: (token: string | null) => void;
   loginUser: (token: string, user: UserProfile) => void;
   logoutUser: () => void;
+  enterDemoSession: (session: DemoSessionResponse) => void;
+  exitDemoSession: () => void;
   updateCurrentUser: (updates: Partial<UserProfile>) => void;
   selectedTransaction: Transaction | null;
   setSelectedTransaction: (tx: Transaction | null) => void;
@@ -63,13 +71,14 @@ const getInitialAuth = () => {
   try {
     const token = localStorage.getItem('paypath_token');
     const userRaw = localStorage.getItem('paypath_user');
+    const isDemo = localStorage.getItem('paypath_is_demo') === 'true';
     if (token && userRaw) {
-      return { token, user: JSON.parse(userRaw) as UserProfile };
+      return { token, user: JSON.parse(userRaw) as UserProfile, isDemo };
     }
   } catch {
     // ignore parse error
   }
-  return { token: null, user: null };
+  return { token: null, user: null, isDemo: false };
 };
 
 const initialAuth = getInitialAuth();
@@ -80,6 +89,18 @@ export const useStore = create<AppState>((set) => ({
   persona: (initialAuth.user?.role as UserPersona) || 'SHOPPER',
   setPersona: (persona) => set({ persona }),
   isAuthenticated: !!initialAuth.token,
+  isDemoMode: initialAuth.isDemo,
+  setIsDemoMode: (isDemo) => set({ isDemoMode: isDemo }),
+  isSwitchingPersona: false,
+  setIsSwitchingPersona: (switching) => set({ isSwitchingPersona: switching }),
+  allowedPersonas: initialAuth.isDemo
+    ? ['SHOPPER', 'MERCHANT_ADMIN', 'PLATFORM_ADMIN']
+    : initialAuth.user?.role === 'PLATFORM_ADMIN'
+    ? ['SHOPPER', 'MERCHANT_ADMIN', 'PLATFORM_ADMIN']
+    : initialAuth.user?.role === 'MERCHANT_ADMIN'
+    ? ['SHOPPER', 'MERCHANT_ADMIN']
+    : ['SHOPPER'],
+  setAllowedPersonas: (personas) => set({ allowedPersonas: personas }),
   currentUser: initialAuth.user,
   authModal: null,
   setAuthModal: (modal) => set({ authModal: modal }),
@@ -93,6 +114,7 @@ export const useStore = create<AppState>((set) => ({
   loginUser: (token: string, user: UserProfile) => {
     localStorage.setItem('paypath_token', token);
     localStorage.setItem('paypath_user', JSON.stringify(user));
+    localStorage.removeItem('paypath_is_demo');
     const persona: UserPersona =
       user.role === 'PLATFORM_ADMIN'
         ? 'PLATFORM_ADMIN'
@@ -101,9 +123,59 @@ export const useStore = create<AppState>((set) => ({
         : 'SHOPPER';
     set({
       isAuthenticated: true,
+      isDemoMode: false,
       currentUser: user,
       persona,
+      allowedPersonas:
+        user.role === 'PLATFORM_ADMIN'
+          ? ['SHOPPER', 'MERCHANT_ADMIN', 'PLATFORM_ADMIN']
+          : user.role === 'MERCHANT_ADMIN'
+          ? ['SHOPPER', 'MERCHANT_ADMIN']
+          : ['SHOPPER'],
       activeTab: 'overview',
+      authModal: null,
+      mfaPending: null,
+    });
+  },
+
+  enterDemoSession: (session: DemoSessionResponse) => {
+    localStorage.setItem('paypath_token', session.access_token);
+    localStorage.setItem('paypath_is_demo', 'true');
+    const userObj: UserProfile = {
+      id: session.user_id,
+      email: session.email,
+      role: session.role as any,
+      full_name: session.full_name,
+      preferred_currency: 'USD',
+      is_active: true,
+      email_verified: true,
+      mfa_enabled: false,
+      is_demo: true
+    };
+    localStorage.setItem('paypath_user', JSON.stringify(userObj));
+    set({
+      isAuthenticated: true,
+      isDemoMode: true,
+      currentUser: userObj,
+      persona: session.active_persona,
+      allowedPersonas: session.allowed_personas,
+      activeTab: 'overview',
+      authModal: null,
+      mfaPending: null,
+    });
+  },
+
+  exitDemoSession: () => {
+    localStorage.removeItem('paypath_token');
+    localStorage.removeItem('paypath_user');
+    localStorage.removeItem('paypath_is_demo');
+    set({
+      isAuthenticated: false,
+      isDemoMode: false,
+      currentUser: null,
+      persona: 'SHOPPER',
+      allowedPersonas: ['SHOPPER'],
+      activeTab: 'landing',
       authModal: null,
       mfaPending: null,
     });
@@ -112,10 +184,13 @@ export const useStore = create<AppState>((set) => ({
   logoutUser: () => {
     localStorage.removeItem('paypath_token');
     localStorage.removeItem('paypath_user');
+    localStorage.removeItem('paypath_is_demo');
     set({
       isAuthenticated: false,
+      isDemoMode: false,
       currentUser: null,
       persona: 'SHOPPER',
+      allowedPersonas: ['SHOPPER'],
       activeTab: 'landing',
       authModal: null,
       mfaPending: null,

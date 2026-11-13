@@ -14,6 +14,7 @@ from app.api.routes.webhooks import router as webhooks_router
 from app.api.routes.notifications import router as notifications_router
 from app.api.routes.system import router as system_router
 from app.api.routes.ml import router as ml_router
+from app.api.routes.demo import router as demo_router
 
 __all__ = [
     "auth_router",
@@ -32,4 +33,5 @@ __all__ = [
     "notifications_router",
     "system_router",
     "ml_router",
+    "demo_router",
 ]

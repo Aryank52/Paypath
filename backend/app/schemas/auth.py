@@ -65,3 +65,32 @@ class UserResponse(BaseModel):
     mfa_enabled: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
+class PersonaSwitchRequest(BaseModel):
+    persona: str  # "shopper", "merchant", "platform_admin"
+
+class PersonaSwitchResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_id: str
+    email: str
+    role: str
+    active_persona: str
+    allowed_personas: list[str]
+    full_name: Optional[str] = None
+    tenant: Optional[str] = None
+    permissions: list[str]
+
+class DemoSessionRequest(BaseModel):
+    persona: Optional[str] = "shopper"  # "shopper", "merchant", "platform_admin"
+
+class DemoSessionResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user_id: str
+    email: str
+    role: str
+    active_persona: str
+    allowed_personas: list[str]
+    full_name: Optional[str] = None
+    is_demo: bool = True

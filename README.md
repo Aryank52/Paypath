@@ -23,9 +23,10 @@
 | **Interactive API Docs** | [https://paypath-8u9a.onrender.com/api/v1/docs](https://paypath-8u9a.onrender.com/api/v1/docs) | Interactive Swagger / OpenAPI documentation |
 | **Repository** | [https://github.com/Aryank52/Paypath](https://github.com/Aryank52/Paypath) | Public source repository on GitHub |
 
-### 🔑 Demo Access
+### 🔑 Evaluator & Demo Access
 
-Demo credentials are provided privately for judges/evaluators. Contact the project owner for access.
+- **1-Click Live Demo Mode:** Evaluators can click the **"Explore Live Demo"** button directly on the [PayPath Landing Page](https://paypath-hazel.vercel.app/) to immediately launch an authenticated session across Shopper, Merchant Admin, and Control Center views with zero manual setup.
+- **Private Credentials:** Direct email/password credentials are provided privately for judges and evaluators upon request. Contact the project owner for access.
 
 ---
 
@@ -363,7 +364,7 @@ PayPath is engineered and deployed as an enterprise-grade prototype / release ca
 | **Gate 11: Tenant-Isolated RAG** | ✅ PASS | `pgvector` similarity search with strict `tenant_id` filtering verified |
 | **Gate 12: Leakage-Free ML** | ✅ PASS | XGBoost 3.4.1 + Isolation Forest 12-feature model operational |
 | **Gate 13: Multi-Agent Bus** | ✅ PASS | 7 specialized agents communicating via typed Pydantic bus verified |
-| **Gate 14: Automated Test Suite** | ✅ PASS | 61 of 61 tests passing (0 failures) |
+| **Gate 14: Automated Test Suite** | ✅ PASS | 66 of 66 tests passing (0 failures) |
 | **Gate 15: Supabase Evidence Storage** | ✅ PASS | Private Supabase Storage (`paypath-evidence`) verified with `service_role` credentials; multi-format uploads (PNG, JPEG, PDF, DOC, DOCX) and signed URLs operational |
 | **Gate 16: PayPal Sandbox Capture E2E**| ⚠️ PENDING | PayPal Sandbox integration verified through order creation, OAuth2, webhook HMAC verification, idempotency, and read-back logic. End-to-end capture subject to interactive Sandbox buyer approval |
 

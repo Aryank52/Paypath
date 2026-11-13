@@ -15,7 +15,8 @@ _REVOKED_TOKENS: set[str] = set()
 def create_access_token(
     subject: Union[str, Any],
     role: str = "USER",
-    expires_delta: Optional[timedelta] = None
+    expires_delta: Optional[timedelta] = None,
+    extra_claims: Optional[dict] = None
 ) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
@@ -30,6 +31,8 @@ def create_access_token(
         "jti": jti,
         "iat": datetime.now(timezone.utc)
     }
+    if extra_claims:
+        to_encode.update(extra_claims)
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 

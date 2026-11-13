@@ -6,11 +6,13 @@ import {
   Search, 
   UserCheck, 
   Store, 
-  SlidersHorizontal,
-  LogOut,
-  User,
-  Lock,
-  ChevronDown
+  SlidersHorizontal, 
+  LogOut, 
+  User, 
+  Lock, 
+  ChevronDown,
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import { useStore, UserPersona } from '../store/useStore';
 import { api } from '../services/api';
@@ -25,34 +27,76 @@ export const Navbar: React.FC = () => {
     activeTab, 
     setActiveTab, 
     isAuthenticated, 
+    isDemoMode,
+    enterDemoSession,
+    exitDemoSession,
     currentUser, 
+    updateCurrentUser,
     loginUser,
     logoutUser, 
     setAuthModal 
   } = useStore();
 
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
-  const togglePersona = (newPersona: UserPersona) => {
-    // If the authenticated user already matches this role, simply change persona view and tab
-    const effectiveRole = currentUser?.role;
-    if (
-      (newPersona === 'PLATFORM_ADMIN' && effectiveRole === 'PLATFORM_ADMIN') ||
-      (newPersona === 'MERCHANT_ADMIN' && (effectiveRole === 'MERCHANT_ADMIN' || effectiveRole === 'PLATFORM_ADMIN')) ||
-      (newPersona === 'SHOPPER' && effectiveRole === 'USER')
-    ) {
-      setPersona(newPersona);
-      if (newPersona === 'MERCHANT_ADMIN') {
-        setActiveTab('merchants');
-      } else if (newPersona === 'PLATFORM_ADMIN') {
-        setActiveTab('system');
-      } else {
-        setActiveTab('overview');
+  const togglePersona = async (newPersona: UserPersona) => {
+    // 1. If in Demo Mode: call backend demo persona switch without requiring login
+    if (isDemoMode) {
+      setSwitching(true);
+      try {
+        const personaKey = newPersona === 'PLATFORM_ADMIN' ? 'platform_admin' : newPersona === 'MERCHANT_ADMIN' ? 'merchant' : 'shopper';
+        const session = await api.switchDemoPersona(personaKey);
+        enterDemoSession(session);
+        if (newPersona === 'MERCHANT_ADMIN') {
+          setActiveTab('merchants');
+        } else if (newPersona === 'PLATFORM_ADMIN') {
+          setActiveTab('system');
+        } else {
+          setActiveTab('overview');
+        }
+        window.dispatchEvent(new CustomEvent('paypath:persona-changed', { detail: { persona: newPersona } }));
+      } catch (err: any) {
+        console.error('Failed to switch demo persona:', err);
+      } finally {
+        setSwitching(false);
       }
       return;
     }
 
-    // Open login modal for manual authentication to target role
+    // 2. Normal authenticated account: verify server authorization
+    const effectiveRole = currentUser?.role;
+    const isAuthorized =
+      effectiveRole === 'PLATFORM_ADMIN' ||
+      (effectiveRole === 'MERCHANT_ADMIN' && newPersona !== 'PLATFORM_ADMIN') ||
+      (effectiveRole === 'USER' && newPersona === 'SHOPPER');
+
+    if (isAuthorized) {
+      setSwitching(true);
+      try {
+        const personaKey = newPersona === 'PLATFORM_ADMIN' ? 'platform_admin' : newPersona === 'MERCHANT_ADMIN' ? 'merchant' : 'shopper';
+        const res = await api.switchPersona(personaKey);
+        setPersona(newPersona);
+        if (currentUser) {
+          updateCurrentUser({ role: res.role as any });
+        }
+        if (newPersona === 'MERCHANT_ADMIN') {
+          setActiveTab('merchants');
+        } else if (newPersona === 'PLATFORM_ADMIN') {
+          setActiveTab('system');
+        } else {
+          setActiveTab('overview');
+        }
+        window.dispatchEvent(new CustomEvent('paypath:persona-changed', { detail: { persona: newPersona } }));
+      } catch (err: any) {
+        console.error('Failed to switch persona:', err);
+      } finally {
+        setSwitching(false);
+      }
+      return;
+    }
+
+    // 3. User is not authorized for requested persona: prompt explicit login
     setAuthModal('login');
   };
 
@@ -69,9 +113,16 @@ export const Navbar: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2">
             <span className="font-bold text-lg tracking-tight text-white group-hover:text-indigo-300 transition-colors">PAYPATH</span>
-            <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              AI Transaction Intelligence & Agentic Commerce
-            </span>
+            {isDemoMode ? (
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 animate-pulse">
+                <Sparkles className="w-2.5 h-2.5 text-amber-400" />
+                <span>DEMO MODE</span>
+              </span>
+            ) : (
+              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                AI Transaction Intelligence & Agentic Commerce
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-slate-400 font-medium">Understand. Decide. Act. Verify.</p>
         </div>
@@ -119,39 +170,69 @@ export const Navbar: React.FC = () => {
             {/* Persona Switcher */}
             <div className="hidden sm:flex items-center bg-slate-900 border border-slate-800 p-0.5 rounded-lg text-xs font-medium">
               <button
+                disabled={switching}
                 onClick={() => togglePersona('SHOPPER')}
                 className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                   persona === 'SHOPPER'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                } ${switching ? 'opacity-60 cursor-wait' : ''}`}
               >
-                <UserCheck className="w-3 h-3" />
+                {switching && persona === 'SHOPPER' ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <UserCheck className="w-3 h-3" />
+                )}
                 <span>Shopper</span>
               </button>
               <button
+                disabled={switching}
                 onClick={() => togglePersona('MERCHANT_ADMIN')}
                 className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                   persona === 'MERCHANT_ADMIN'
                     ? 'bg-indigo-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                } ${switching ? 'opacity-60 cursor-wait' : ''}`}
               >
-                <Store className="w-3 h-3" />
+                {switching && persona === 'MERCHANT_ADMIN' ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Store className="w-3 h-3" />
+                )}
                 <span>Merchant</span>
               </button>
               <button
+                disabled={switching}
                 onClick={() => togglePersona('PLATFORM_ADMIN')}
                 className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
                   persona === 'PLATFORM_ADMIN'
                     ? 'bg-purple-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
-                }`}
+                } ${switching ? 'opacity-60 cursor-wait' : ''}`}
               >
-                <SlidersHorizontal className="w-3 h-3" />
+                {switching && persona === 'PLATFORM_ADMIN' ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <SlidersHorizontal className="w-3 h-3" />
+                )}
                 <span>Control Center</span>
               </button>
             </div>
+
+            {/* Exit Demo Button in Demo Mode */}
+            {isDemoMode && (
+              <button
+                onClick={async () => {
+                  await api.exitDemoSession();
+                  exitDemoSession();
+                }}
+                className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-rose-300 hover:text-white hover:bg-rose-500/20 border border-rose-500/30 transition-colors cursor-pointer"
+                title="Exit Evaluator Demo Mode and return to Landing Page"
+              >
+                <LogOut className="w-3 h-3" />
+                <span>Exit Demo</span>
+              </button>
+            )}
 
             {/* Sandbox Indicator */}
             <div className="hidden lg:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">

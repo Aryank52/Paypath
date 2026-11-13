@@ -7,7 +7,10 @@ import {
   GuardEvaluation,
   SubscriptionItem,
   DuplicateSignal,
-  UserProfile
+  UserProfile,
+  SharedFeedResponse,
+  PersonaSwitchResponse,
+  DemoSessionResponse
 } from '../types';
 
 const API_ORIGIN = (
@@ -228,6 +231,97 @@ export const api = {
       throw new Error(err.detail || 'Failed to fetch transaction events');
     }
     return res.json();
+  },
+
+  getSharedFeed: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    risk_level?: string;
+    search?: string;
+  }): Promise<SharedFeedResponse> => {
+    const query = new URLSearchParams();
+    if (params?.page) query.append('page', params.page.toString());
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.status) query.append('status', params.status);
+    if (params?.risk_level) query.append('risk_level', params.risk_level);
+    if (params?.search) query.append('search', params.search);
+    const res = await fetchWithAuth(`${API_BASE}/transactions/feed?${query.toString()}`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to fetch transaction intelligence feed');
+    }
+    return res.json();
+  },
+
+  switchPersona: async (persona: string): Promise<PersonaSwitchResponse> => {
+    const res = await fetchWithAuth(`${API_BASE}/auth/persona/switch`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ persona })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to switch persona');
+    }
+    const data: PersonaSwitchResponse = await res.json();
+    if (data.access_token) {
+      localStorage.setItem('paypath_token', data.access_token);
+    }
+    return data;
+  },
+
+  createDemoSession: async (persona: string = 'shopper'): Promise<DemoSessionResponse> => {
+    const res = await fetch(`${API_BASE}/demo/session`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ persona })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to initiate evaluator demo session');
+    }
+    const data: DemoSessionResponse = await res.json();
+    if (data.access_token) {
+      localStorage.setItem('paypath_token', data.access_token);
+      localStorage.setItem('paypath_is_demo', 'true');
+    }
+    return data;
+  },
+
+  switchDemoPersona: async (persona: string): Promise<DemoSessionResponse> => {
+    const res = await fetchWithAuth(`${API_BASE}/demo/switch`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ persona })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || 'Failed to switch demo persona');
+    }
+    const data: DemoSessionResponse = await res.json();
+    if (data.access_token) {
+      localStorage.setItem('paypath_token', data.access_token);
+      localStorage.setItem('paypath_is_demo', 'true');
+    }
+    return data;
+  },
+
+  exitDemoSession: async (): Promise<void> => {
+    try {
+      await fetchWithAuth(`${API_BASE}/demo/exit`, {
+        method: 'POST',
+        headers: getAuthHeaders()
+      });
+    } catch {
+      // ignore
+    } finally {
+      localStorage.removeItem('paypath_token');
+      localStorage.removeItem('paypath_user');
+      localStorage.removeItem('paypath_is_demo');
+    }
   },
 
   // PayCore

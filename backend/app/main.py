@@ -25,6 +25,7 @@ from app.api.routes import (
     notifications_router,
     system_router,
     ml_router,
+    demo_router,
 )
 
 @asynccontextmanager
@@ -209,6 +210,7 @@ app.include_router(webhooks_router, prefix=settings.API_V1_STR)
 app.include_router(notifications_router, prefix=settings.API_V1_STR)
 app.include_router(system_router, prefix=settings.API_V1_STR)
 app.include_router(ml_router, prefix=settings.API_V1_STR)
+app.include_router(demo_router, prefix=settings.API_V1_STR)
 
 if __name__ == "__main__":
     import uvicorn

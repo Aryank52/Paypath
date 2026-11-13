@@ -13,7 +13,7 @@ from app.schemas.auth import (
     UserRegisterRequest, UserLoginRequest, TokenResponse, UserResponse,
     MFASetupResponse, MFAVerifyRequest, PasswordResetRequest, PasswordResetConfirm,
     EmailVerificationRequest, ResendVerificationRequest, UserProfileUpdateRequest,
-    PasswordChangeRequest
+    PasswordChangeRequest, PersonaSwitchRequest, PersonaSwitchResponse
 )
 from app.api.deps import get_current_user
 from app.core.rate_limiter import rate_limit
@@ -269,6 +269,9 @@ async def update_profile(
     db: AsyncSession = Depends(get_db)
 ):
     """Updates user profile information (name, mobile number, preferred currency)."""
+    if getattr(current_user, "is_demo", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Profile modification is disabled in Demo Mode.")
+
     if payload.full_name is not None:
         current_user.full_name = payload.full_name.strip()
     if payload.mobile_number is not None:
@@ -287,6 +290,9 @@ async def change_password(
     _limiter: bool = Depends(rate_limit(max_requests=5, window_seconds=60))
 ):
     """Updates account password after verifying the current password."""
+    if getattr(current_user, "is_demo", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Password modification is disabled in Demo Mode.")
+
     if not verify_password(payload.current_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Current password incorrect.")
 
@@ -297,3 +303,78 @@ async def change_password(
         "Your PayPath account password was changed successfully."
     )
     return {"message": "Password changed successfully."}
+
+@router.post("/persona/switch", response_model=PersonaSwitchResponse)
+async def switch_persona(
+    payload: PersonaSwitchRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Server-authoritative persona switching.
+    Validates that the authenticated session is legitimately authorized for the requested persona.
+    Prevents unauthorized privilege escalation.
+    """
+    requested = payload.persona.strip().lower()
+    is_demo = getattr(current_user, "is_demo", False)
+    caller_role = current_user.role
+
+    # Determine allowed personas
+    if caller_role == UserRole.PLATFORM_ADMIN or is_demo:
+        allowed = ["SHOPPER", "MERCHANT_ADMIN", "PLATFORM_ADMIN"]
+    elif caller_role in (UserRole.MERCHANT_ADMIN, UserRole.MERCHANT_USER):
+        allowed = ["SHOPPER", "MERCHANT_ADMIN"]
+    else:
+        allowed = ["SHOPPER"]
+
+    target_map = {
+        "shopper": ("SHOPPER", UserRole.USER.value),
+        "merchant": ("MERCHANT_ADMIN", UserRole.MERCHANT_ADMIN.value),
+        "merchant_admin": ("MERCHANT_ADMIN", UserRole.MERCHANT_ADMIN.value),
+        "platform_admin": ("PLATFORM_ADMIN", UserRole.PLATFORM_ADMIN.value),
+        "control_center": ("PLATFORM_ADMIN", UserRole.PLATFORM_ADMIN.value),
+        "admin": ("PLATFORM_ADMIN", UserRole.PLATFORM_ADMIN.value),
+    }
+
+    if requested not in target_map:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid persona '{payload.persona}'. Valid options: ['shopper', 'merchant', 'platform_admin']."
+        )
+
+    target_persona, target_role = target_map[requested]
+
+    if target_persona not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Access denied: current identity is not authorized for '{target_persona}' persona. Allowed: {allowed}"
+        )
+
+    # Issue a newly scoped access token representing this persona context
+    new_token = create_access_token(
+        subject=current_user.id,
+        role=target_role,
+        extra_claims={
+            "demo_mode": is_demo,
+            "active_persona": target_persona
+        }
+    )
+
+    permissions = ["READ_TRANSACTIONS"]
+    if target_persona in ("MERCHANT_ADMIN", "PLATFORM_ADMIN"):
+        permissions.extend(["MANAGE_POLICIES", "VIEW_MERCHANT_ANALYTICS"])
+    if target_persona == "PLATFORM_ADMIN":
+        permissions.extend(["VIEW_CONTROL_CENTER", "VIEW_AGENT_TRACES", "VIEW_AUDIT_TRAIL"])
+
+    return PersonaSwitchResponse(
+        access_token=new_token,
+        token_type="bearer",
+        user_id=current_user.id,
+        email=current_user.email,
+        role=target_role,
+        active_persona=target_persona,
+        allowed_personas=allowed,
+        full_name=current_user.full_name,
+        tenant="Nova Electronics" if target_persona == "MERCHANT_ADMIN" else None,
+        permissions=permissions
+    )
