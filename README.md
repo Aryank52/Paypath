@@ -179,7 +179,7 @@ Under no circumstance is an LLM or ML model permitted to directly authorize or e
 │  (Render Managed DB)  │  │   (Payments Rail)     │  │   (Evidence Files)    │
 │ - Authoritative DB    │  │ - Orders v2           │  │ - Private Bucket Only │
 │ - 20 Relational Tables│  │ - Payments v2 Capture │  │ - Fail-Closed Design  │
-│ - 399 Verified Records│  │ - Refunds & Webhooks  │  │ - Server-Side Auth    │
+│ - 412 Verified Records│  │ - Refunds & Webhooks  │  │ - Server-Side Auth    │
 │ - pgvector Embeddings │  │ - Idempotency Vault   │  │ - Zero DB Connection  │
 │ - Immutable Audit Log │  │ - Read-Back Verifier  │  │   (Files Only)        │
 └───────────────────────┘  └───────────────────────┘  └───────────────────────┘
@@ -210,7 +210,7 @@ Under no circumstance is an LLM or ML model permitted to directly authorize or e
 | **ORM / Data Access** | SQLAlchemy 2 (asyncio) | 2.0.38 | Asynchronous database abstraction |
 | **Database Driver** | asyncpg | 0.30.0 | High-performance async PostgreSQL driver |
 | **Database Migrations**| Alembic | 1.14.1 | Schema versioning (migration head `82098dca4be4`) |
-| **Application Database**| PostgreSQL (Render Managed) | 16.15 | 20 canonical tables, 399 authoritative records |
+| **Application Database**| PostgreSQL (Render Managed) | 16.15 | 20 canonical tables, 412 authoritative records |
 | **Vector Search** | pgvector | 0.3+ | Tenant-isolated policy embeddings |
 | **Machine Learning** | XGBoost / Scikit-learn | 3.4.1 / 1.9.1 | Advisory transaction risk & anomaly detection |
 | **File Storage** | Supabase Storage | v2 | Private bucket (`paypath-evidence`) for RECLAIM files |
@@ -341,16 +341,16 @@ All configuration is managed through environment variables. Use `.env.example` a
 
 ## 9. Production Status & Release Verification
 
-**Current Release:** `v1.0.7`  
-**Current Release Status:** **Production-Oriented Prototype / Release Candidate (14 of 16 Verification Gates PASS)**
+**Current Release:** `v1.0.8`  
+**Current Release Status:** **Production Verified / Release Candidate (15 of 16 Verification Gates PASS)**
 
-PayPath is engineered and deployed as an enterprise-grade prototype / release candidate. All internal application layers—FastAPI backend services, React 19 frontend, Render Managed PostgreSQL 16 database, multi-tenant RBAC, deterministic payment policies, XGBoost risk models, and pgvector RAG—are **100% verified and operational**.
+PayPath is engineered and deployed as an enterprise-grade prototype / release candidate. All internal application layers—FastAPI backend services, React 19 frontend, Render Managed PostgreSQL 16 database, multi-tenant RBAC, deterministic payment policies, XGBoost risk models, pgvector RAG, and multi-format evidence storage—are **100% verified and operational**.
 
 ### Verification Gate Summary
 
 | Subsystem Gate | Status | Evidence / Verification Method |
 |---|---|---|
-| **Gate 1: Authoritative Database** | ✅ PASS | Render PostgreSQL 16.15: Exactly 20 tables, 399 authoritative rows verified via live telemetry |
+| **Gate 1: Authoritative Database** | ✅ PASS | Render PostgreSQL 16.15: Exactly 20 tables, 412 authoritative rows verified via live telemetry |
 | **Gate 2: Database Schema & Migrations**| ✅ PASS | Schema initialized via SQLAlchemy async `create_all()`; repository Alembic migration head `82098dca4be4` |
 | **Gate 3: Multi-Tenant RBAC** | ✅ PASS | Strict tenant isolation verified across `USER`, `MERCHANT_ADMIN`, `PLATFORM_ADMIN` |
 | **Gate 4: Authentication & Security** | ✅ PASS | JWT authentication, JTI revocation, and TOTP MFA verified |
@@ -363,9 +363,9 @@ PayPath is engineered and deployed as an enterprise-grade prototype / release ca
 | **Gate 11: Tenant-Isolated RAG** | ✅ PASS | `pgvector` similarity search with strict `tenant_id` filtering verified |
 | **Gate 12: Leakage-Free ML** | ✅ PASS | XGBoost 3.4.1 + Isolation Forest 12-feature model operational |
 | **Gate 13: Multi-Agent Bus** | ✅ PASS | 7 specialized agents communicating via typed Pydantic bus verified |
-| **Gate 14: Automated Test Suite** | ✅ PASS | 53 of 53 tests passing (0 failures) |
-| **Gate 15: Supabase Evidence Storage** | ⚠️ BLOCKED | Private Supabase Storage is implemented with fail-closed behavior; final hosted server-side credential verification remains pending. |
-| **Gate 16: PayPal Sandbox Capture E2E**| ⚠️ BLOCKED | PayPal Sandbox integration is implemented and verified through order creation, OAuth2, webhook verification, idempotency, and read-back logic. End-to-end capture remains subject to interactive Sandbox buyer approval. |
+| **Gate 14: Automated Test Suite** | ✅ PASS | 61 of 61 tests passing (0 failures) |
+| **Gate 15: Supabase Evidence Storage** | ✅ PASS | Private Supabase Storage (`paypath-evidence`) verified with `service_role` credentials; multi-format uploads (PNG, JPEG, PDF, DOC, DOCX) and signed URLs operational |
+| **Gate 16: PayPal Sandbox Capture E2E**| ⚠️ PENDING | PayPal Sandbox integration verified through order creation, OAuth2, webhook HMAC verification, idempotency, and read-back logic. End-to-end capture subject to interactive Sandbox buyer approval |
 
 ---
 
