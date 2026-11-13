@@ -85,19 +85,36 @@ async def upload_evidence(
         user_description=case.description
     )
 
-    evidence = Evidence(
-        reclaim_case_id=case.id,
-        file_name=unique_name,
-        file_type=verified_mime,
-        file_url=file_url,
-        evidence_type="PHOTO_DAMAGE" if "image" in verified_mime else "DOCUMENT_EVIDENCE",
-        analysis_summary=analysis["analysis_summary"],
-        confidence_score=analysis["confidence_score"]
-    )
-    db.add(evidence)
-    case.status = "UNDER_REVIEW"
-    await db.commit()
-    await db.refresh(evidence)
+    # Ensure column file_url can store full signed URLs
+    try:
+        from sqlalchemy import text
+        await db.execute(text("ALTER TABLE evidence ALTER COLUMN file_url TYPE TEXT;"))
+        await db.commit()
+    except Exception:
+        await db.rollback()
+
+    try:
+        evidence = Evidence(
+            reclaim_case_id=case.id,
+            file_name=unique_name,
+            file_type=verified_mime,
+            file_url=file_url,
+            evidence_type="PHOTO_DAMAGE" if "image" in verified_mime else "DOCUMENT_EVIDENCE",
+            analysis_summary=analysis["analysis_summary"],
+            confidence_score=analysis["confidence_score"]
+        )
+        db.add(evidence)
+        case.status = "UNDER_REVIEW"
+        await db.commit()
+        await db.refresh(evidence)
+    except Exception as e:
+        await db.rollback()
+        from app.core.observability import logger
+        logger.error(f"Failed to persist evidence record: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to persist evidence record in database: {str(e)}"
+        )
 
     return EvidenceAnalysisResult(
         evidence_id=evidence.id,
